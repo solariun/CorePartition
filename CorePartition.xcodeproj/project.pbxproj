@@ -28,6 +28,7 @@
 		6719C16A22DBDFF3006F87F5 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		6719C17122DBE00D006F87F5 /* CorePartition.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CorePartition.cpp; sourceTree = "<group>"; };
 		6719C17222DBE00D006F87F5 /* CorePartition.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CorePartition.hpp; sourceTree = "<group>"; };
+		6719C17422DBE2DD006F87F5 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +61,7 @@
 		6719C16922DBDFF3006F87F5 /* CorePartition */ = {
 			isa = PBXGroup;
 			children = (
+				6719C17422DBE2DD006F87F5 /* README.md */,
 				6719C16A22DBDFF3006F87F5 /* main.cpp */,
 				6719C17122DBE00D006F87F5 /* CorePartition.cpp */,
 				6719C17222DBE00D006F87F5 /* CorePartition.hpp */,
