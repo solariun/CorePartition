@@ -27,10 +27,10 @@ int main ()
     join();
 }
 
-inside your partitioning program (function) uses the directive yield() to let the core process an other partition.
+inside your partitioning program (function) use the directive yield() to let the nano microkernel process next partition.
 
-Please not is not a regular thread, even though it behaves like one, it is more closed of core virutalization but, letting the programmer choose when to let the virutal kernel to take control over its time processing.
+Please not it is not a regular thread, even though it behaves like one, it is more closed related to a core virutalization but, letting the programmer choose when to let the virutal kernel to take control over its time processing.
 
-Since it uses the directive yield(), it will create an advange using oficial arduino boards. The oficial code use the yeld inside every I/O calling and sleep, but it implements is in a week way, which means it can be overwritten by this CorePartitioning nano microlib technology, allowing arduino to run, almost, whith out the need to use the yeild() directive. Some ports for using arduino framework may or not implement the yield(), but in case they do, it will make your project even more portable.
+Since it uses the directive yield(), it will create an advange using oficial arduino boards. The oficial code uses the yeld() directive inside every I/O calling and sleep, but, it implements it using a week function definition, which means, it can be overwritten by this CorePartitioning nano microlib technology, allowing arduino to run, almost, whithout the need to use the yeild() directive that will continue to be available. Some ports of arduino framework may or not implement the yield(), but in case they do, it will make your project even more portable.
 
 
