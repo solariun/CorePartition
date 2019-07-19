@@ -1,6 +1,12 @@
 # CorePartition
 Partitioning a CORE into several Threads with no prioritizing, this was designed to work, virutally, with any modern micro controller or Microchip as long it uses reverse bottom - up stack structure.
 
+Be aware that the CorePartitionLib is a pico Virutal Core emulation, it will slice your CPU into n Porcess Partitions and will create create a virtual stack page for each partition starting by the function it is using to initiate the virutal core.
+
+To calculate how much memory it will consume, start with the notion that each thread willl consume aroud 60 ~ 120 bites depending on your target bit channel size plus the virtual stack page. 
+
+ to calculate it sum the bigger virtal stack page size used + each thread and its virual stack page (60)
+
 be AWARE it stills a draft, but fully functional till this point. If you intend  to use this code, please make a reference of me as its creator. the comercial use is permitted as long as I am notifield and well referenced.
 
 Tested at:
@@ -26,6 +32,12 @@ int main ()
 
     join();
 }
+
+calculating size: 
+
+bigger stack page: 220, each 60+210 and 60+220 
+
+220 + (60+210) + (60 + 220) : 770 bites 
 
 inside your partitioning program (function) use the directive yield() to let the nano microkernel process next partition.
 

@@ -30,6 +30,9 @@ extern "C"{
     
     size_t getPartitionID();
     
+    size_t getPartitionStackSize();
+    
+    size_t getPartitionMemorySize();
     
 #ifdef __cplusplus
 } // extern "C"

@@ -183,8 +183,19 @@ void yield()
 }
 
 
-
 size_t getPartitionID()
 {
     return nCurrentThread;
+}
+
+
+size_t getPartitionStackSize()
+{
+    return pCurrentThread->nStackSize;
+}
+
+
+size_t getPartitionMemorySize()
+{
+    return sizeof (ThreadLight);
 }

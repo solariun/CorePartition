@@ -71,18 +71,20 @@ void Thread1 ()
     
     while (1)
     {
-        printf ("%lu:  Value: [%u]\r\n", getPartitionID(), nValue++);
-        Serial.println ("Thread1 ");
+        Serial.print ("Thread1: ");
+        Serial.println (nValue++);
         
         Serial.flush();
         
+        digitalWrite (2, LOW);
         yield();
+        digitalWrite (2, HIGH);
     }
 }
 
 
 
-void Sleep (uint64_t nSleep)
+void _Sleep (uint64_t nSleep)
 {
     uint32_t nMomentum =  micros();
     
@@ -97,18 +99,47 @@ void Sleep (uint64_t nSleep)
 
 void Thread2 ()
 {
+    unsigned long start = millis();
     size_t nValue = 2340000;
     
     while (1)
     {
-        printf ("%lu:  Value: [%u]\r\n", getPartitionID(), nValue++);
-        Serial.println ("*****Thread2 ");
+        Serial.print ("*****Thread2: ");
+        Serial.print (nValue++);
+        Serial.print (", ");
+        Serial.print (millis() - start);
+        Serial.print (" millis");
+        Serial.print (", StackSize: ");
+        Serial.println (getPartitionStackSize());
         Serial.flush();
         
-        Sleep(200000);
-        //delayMicroseconds (1000);
+        start = millis();
+        
+        
+        digitalWrite (3, LOW);
+        _Sleep(100000);
+        digitalWrite (3, HIGH);
+        
     }
 }
+
+
+void Thread3 ()
+{
+    size_t nValue = 10000;
+    
+    while (1)
+    {
+        Serial.print ("Thread3: ");
+        Serial.println (nValue++);
+        Serial.flush();
+        
+        digitalWrite (4, LOW);
+        yield();
+        digitalWrite (4, HIGH);
+    }
+}
+
 
 
 
@@ -131,7 +162,9 @@ void setup() {
      Serial.read();
      */
     
-    
+    pinMode (2, OUTPUT);
+    pinMode (3, OUTPUT);
+    pinMode (4, OUTPUT);
     
 }
 
@@ -143,12 +176,15 @@ void loop()
 {
     
     
-    ThreadLight_Start(2);
+    ThreadLight_Start(3);
     
     Serial.println ("Starting Thread.."); Serial.flush();
     
-    CreatePartition(Thread1, 210);
-    CreatePartition(Thread2, 220);
+    CreatePartition(Thread1, 100);
+    
+    CreatePartition(Thread2, 100);
+    
+    CreatePartition(Thread3, 100);
     
     join();
 }
