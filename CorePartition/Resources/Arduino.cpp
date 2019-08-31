@@ -39,7 +39,7 @@
 
 
 #include "Arduino.h"
-#include "ThreadLight.hpp"
+#include "CorePartition.hpp"
 
 
 // Set parameters
@@ -64,26 +64,6 @@
 
 // Functions
 
-
-void Thread1 ()
-{
-    size_t nValue = 100;
-    
-    while (1)
-    {
-        Serial.print ("Thread1: ");
-        Serial.println (nValue++);
-        
-        Serial.flush();
-        
-        digitalWrite (2, LOW);
-        yield();
-        digitalWrite (2, HIGH);
-    }
-}
-
-
-
 void _Sleep (uint64_t nSleep)
 {
     uint32_t nMomentum =  micros();
@@ -94,6 +74,29 @@ void _Sleep (uint64_t nSleep)
     
     Serial.println ("Voltando...");
 }
+
+
+
+void Thread1 ()
+{
+    size_t nValue = 100;
+    
+    while (1)
+    {
+        Serial.print ("Thread1: ");
+        Serial.print (nValue++);
+        Serial.print (", ");
+        Serial.println (getPartitionMemorySize());
+        
+        Serial.flush();
+        
+        digitalWrite (2, LOW);
+        
+        _Sleep(10);
+        digitalWrite (2, HIGH);
+    }
+}
+
 
 
 
@@ -117,7 +120,7 @@ void Thread2 ()
         
         
         digitalWrite (3, LOW);
-        _Sleep(100000);
+        _Sleep(50000);
         digitalWrite (3, HIGH);
         
     }
@@ -130,12 +133,12 @@ void Thread3 ()
     
     while (1)
     {
-        Serial.print ("Thread3: ");
+        Serial.print ( "Thread3: ");
         Serial.println (nValue++);
         Serial.flush();
         
         digitalWrite (4, LOW);
-        yield();
+        _Sleep (1000);
         digitalWrite (4, HIGH);
     }
 }
@@ -143,13 +146,11 @@ void Thread3 ()
 
 
 
-void setup() {
+void setup()
+{
     //Initialize serial and wait for port to open:
     Serial.begin(115200);
     
-    while (!Serial) {
-        ; // wait for serial port to connect. Needed for native USB port only
-    }
     
     /*
      // prints title with ending line break
@@ -176,15 +177,13 @@ void loop()
 {
     
     
-    ThreadLight_Start(3);
+    CorePartition_Start(3);
     
-    Serial.println ("Starting Thread.."); Serial.flush();
+    Serial.println ("Starting Thread...."); Serial.flush();
     
     CreatePartition(Thread1, 100);
     
     CreatePartition(Thread2, 100);
-    
-    CreatePartition(Thread3, 100);
     
     join();
 }

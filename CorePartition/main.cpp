@@ -66,13 +66,28 @@ void Thread2 ()
 
 
 
+void Thread3 ()
+{
+    uint nValue = 2340000;
+    
+    while (1)
+    {
+        yield();
+        printf ("%lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        
+        Sleep (100);
+    }
+}
+
+
 
 int main(int argc, const char * argv[])
 {
-    CorePartition_Start(2);
+    CorePartition_Start(3);
     
-    CreatePartition(Thread1, 1024);
-    CreatePartition(Thread2, 2024);
+    CreatePartition(Thread1, 256);
+    CreatePartition(Thread2, 256);
+    CreatePartition(Thread3, 256);
     
     join();
     

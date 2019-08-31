@@ -38,7 +38,6 @@ typedef struct
     
     uint8_t*            pnStackPage = nullptr;
     
-    char                strAssign [12] = "Assinged...";
 } ThreadLight;
 
 
@@ -51,21 +50,23 @@ static ThreadLight* pThreadLight = nullptr;
 static ThreadLight* pCurrentThread = nullptr;
 
 
-static void printStruct ()
-{
-    pCurrentThread = &pThreadLight [nCurrentThread];
-    
-    printf ("ThreadLight ID: (%lu) Struct\n", nCurrentThread);
-    printf ("\t        nStatus:  [%-17u]\n", pCurrentThread->nStatus);
-    printf ("\t     nErrorType:  [%-17u]\n\n", pCurrentThread->nErrorType);
-    printf ("\t  nStackMaxSize:  [%-17lu]\n", pCurrentThread->nStackMaxSize);
-    printf ("\t     nStackSize:  [%-17lu]\n", pCurrentThread->nStackSize);
-    printf ("\t     pStartStck:  [0x%-16lX]\n", (size_t) pCurrentThread->pStartStck);
-    printf ("\t     pLastStack:  [0x%-16lX]\n\n", (size_t) pCurrentThread->pLastStack);
-    printf ("\t    pnStackPage:  [0x%-16lX]\n\n", (size_t) pCurrentThread->pnStackPage);
-    
-    printf ("\t    strAssign:  [%-16s]\n\n",  pCurrentThread->strAssign);
-}
+/*
+ static void printStruct ()
+ {
+ pCurrentThread = &pThreadLight [nCurrentThread];
+ 
+ printf (ThreadLight ID: (%lu) Struct\n, nCurrentThread);
+ printf (\t        nStatus:  [%-17u]\n, pCurrentThread->nStatus);
+ printf (\t     nErrorType:  [%-17u]\n\n, pCurrentThread->nErrorType);
+ printf (\t  nStackMaxSize:  [%-17lu]\n, pCurrentThread->nStackMaxSize);
+ printf (\t     nStackSize:  [%-17lu]\n, pCurrentThread->nStackSize);
+ printf (\t     pStartStck:  [0x%-16lX]\n, (size_t) pCurrentThread->pStartStck);
+ printf (\t     pLastStack:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pLastStack);
+ printf (\t    pnStackPage:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pnStackPage);
+ 
+ printf (\t    strAssign:  [%-16s]\n\n,  pCurrentThread->strAssign);
+ }
+ */
 
 bool CorePartition_Start (size_t nThreadPartitions)
 {
@@ -91,8 +92,6 @@ bool CreatePartition (void(*pFunction)(), size_t nStackMaxSize)
     pThreadLight[nThreadCount].pFunction = pFunction;
     
     pThreadLight[nThreadCount].nStatus = THREADL_START;
-    
-    printStruct();
     
     nThreadCount++;
     return true;
@@ -152,7 +151,7 @@ void join ()
 }
 
 
-void yield() __attribute__ ((noinline));
+//void yield() __attribute__ ((noinline));
 
 void yield()
 {
@@ -176,7 +175,7 @@ void yield()
         longjmp(pCurrentThread->jmpJoinPointer, 1);
     }
     
-    pCurrentThread->pLastStack = alloca(0);
+    //pCurrentThread->pLastStack = alloca(0);
     pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
     
     RestoreStack();
@@ -199,3 +198,4 @@ size_t getPartitionMemorySize()
 {
     return sizeof (ThreadLight);
 }
+
