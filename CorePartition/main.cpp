@@ -14,24 +14,13 @@
 #include <sys/time.h>
 
 
-void Thread1 ()
-{
-    uint nValue = 100;
-    
-    while (1)
-    {
-        yield();
-        printf ("%lu:  Value: [%u]\n", getPartitionID(), nValue++);
-    }
-}
 
-
-long getUseconds()
+long getMiliseconds()
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     
-    return tp.tv_sec * 1000000 + tp.tv_usec; //get current timestamp in milliseconds
+    return tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
 }
 
 void sleepUseconds(uint32_t nTime)
@@ -42,25 +31,38 @@ void sleepUseconds(uint32_t nTime)
 
 void Sleep (uint64_t nSleep)
 {
-    uint64_t nMomentum =  getUseconds();
+    uint64_t nMomentum =  getMiliseconds();
     
     do {
         sleepUseconds (100);
         yield();
-    } while ((getUseconds() - nMomentum) < nSleep);
+    } while ((getMiliseconds() - nMomentum) < nSleep);
+}
+
+
+
+void Thread1 ()
+{
+    uint nValue = 100;
+    
+    while (1)
+    {
+        yield();
+        //printf (">> %lu:  Value: [%u]\n", getPartitionID(), nValue++);
+    }
 }
 
 
 void Thread2 ()
 {
-    uint nValue = 2340000;
+    uint nValue = 200;
     
     while (1)
     {
         yield();
-        printf ("%lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        printf ("** %lu:  Value: [%u]\n", getPartitionID(), nValue++);
         
-        Sleep (10000);
+        Sleep (1397);
     }
 }
 
@@ -73,9 +75,9 @@ void Thread3 ()
     while (1)
     {
         yield();
-        printf ("%lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        printf ("## %lu:  Value: [%u]\n", getPartitionID(), nValue++);
         
-        Sleep (100);
+        Sleep (2000);
     }
 }
 

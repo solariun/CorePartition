@@ -34,6 +34,16 @@ extern "C"{
     
     size_t getPartitionMemorySize();
     
+    bool isAllCoresStarted();
+    
+    void blockCore(bool boolBlocked);
+    
+    bool isCoreRunning();
+    
+    uint8_t getCoreNice();
+    
+    void setCoreNice (uint8_t nNice);
+    
 #ifdef __cplusplus
 } // extern "C"
 #endif

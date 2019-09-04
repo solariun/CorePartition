@@ -64,31 +64,46 @@
 
 // Functions
 
-void _Sleep (uint64_t nSleep)
+void safe_yield()
 {
-    uint32_t nMomentum =  micros();
-    
-    do {
-        delayMicroseconds (100); yield();
-    } while ((micros() - nMomentum) < nSleep);
-    
-    Serial.println ("Voltando...");
+    //noInterrupts();
+    _yield();
+    //interrupts();
 }
 
+void _Sleep (uint64_t nSleep)
+{
+    uint32_t nMomentum =  millis();
+    
+    //delay (nSleep); return;
+    
+    do {
+        safe_yield();
+    } while ((millis() - nMomentum ) <  nSleep);
+}
+
+
+volatile uint32_t nCount = 10;
 
 
 void Thread1 ()
 {
     size_t nValue = 100;
     
-    while (1)
+    safe_yield(); while (1)
     {
+        blockCore(true);
         Serial.print ("Thread1: ");
         Serial.print (nValue++);
         Serial.print (", ");
-        Serial.println (getPartitionMemorySize());
-        
+        Serial.print (getPartitionMemorySize());
+        Serial.print (", Interrupt Count: ");
+        Serial.println (nCount);
+        Serial.print (", All Cores: ");
+        Serial.println (isAllCoresStarted());
         Serial.flush();
+        Serial.flush();
+        blockCore (false);
         
         digitalWrite (2, LOW);
         
@@ -105,8 +120,9 @@ void Thread2 ()
     unsigned long start = millis();
     size_t nValue = 2340000;
     
-    while (1)
+    safe_yield(); while (1)
     {
+        blockCore (true);
         Serial.print ("*****Thread2: ");
         Serial.print (nValue++);
         Serial.print (", ");
@@ -115,12 +131,13 @@ void Thread2 ()
         Serial.print (", StackSize: ");
         Serial.println (getPartitionStackSize());
         Serial.flush();
+        blockCore (false);
         
         start = millis();
         
         
         digitalWrite (3, LOW);
-        _Sleep(50000);
+        _Sleep(500);
         digitalWrite (3, HIGH);
         
     }
@@ -131,19 +148,36 @@ void Thread3 ()
 {
     size_t nValue = 10000;
     
-    while (1)
+    safe_yield(); while (1)
     {
-        Serial.print ( "Thread3: ");
+        blockCore (true);
+        Serial.print ( ">>>>>> Thread3: ");
         Serial.println (nValue++);
-        Serial.flush();
+        Serial.flush ();
+        blockCore (false);
         
         digitalWrite (4, LOW);
-        _Sleep (1000);
+        _Sleep (100);
         digitalWrite (4, HIGH);
     }
 }
 
 
+
+void YieldPreemptive()
+{
+    static unsigned long time;
+    static bool status = LOW;
+    
+    if (isAllCoresStarted() && isCoreRunning() && millis() - time > 10 && (time = millis()))
+    {
+        nCount++;
+        
+        status = !status;
+        
+        digitalWrite (LED_BUILTIN, status);
+    }
+}
 
 
 void setup()
@@ -163,10 +197,20 @@ void setup()
      Serial.read();
      */
     
-    pinMode (2, OUTPUT);
     pinMode (3, OUTPUT);
     pinMode (4, OUTPUT);
+    pinMode (LED_BUILTIN, OUTPUT);
     
+    
+    int nPinOutput = 5;
+    int nPinInput  = 2;
+    
+    /* To test interrupts jump port 2 and 5 */
+    pinMode(nPinOutput, OUTPUT);
+    analogWrite(nPinOutput, 10);
+    
+    pinMode(nPinInput, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(nPinInput), YieldPreemptive, CHANGE);
 }
 
 
@@ -184,6 +228,9 @@ void loop()
     CreatePartition(Thread1, 100);
     
     CreatePartition(Thread2, 100);
+    
+    CreatePartition(Thread3, 100);
+    
     
     join();
 }

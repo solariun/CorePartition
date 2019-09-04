@@ -17,6 +17,7 @@
 #define THREADL_RUNNING     2
 #define THREADL_IDLE        3
 #define THREADL_STOPPED     4
+#define THREADL_SWITCHING   5
 
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
 
@@ -33,6 +34,8 @@ typedef struct
     
     void(*pFunction)();
     
+    uint8_t             nNice;
+    
     void*               pStartStck;
     void*               pLastStack;
     
@@ -41,10 +44,11 @@ typedef struct
 } ThreadLight;
 
 
-static size_t nMaxThreads = 0;
-static size_t nThreadCount = 0;
-static size_t nCurrentThread;
-
+static volatile size_t nMaxThreads = 0;
+static volatile size_t nThreadCount = 0;
+static volatile size_t nCurrentThread;
+static volatile size_t nStartedCores=0;
+static volatile bool   boolCtxBlocked  = false;
 
 static ThreadLight* pThreadLight = nullptr;
 static ThreadLight* pCurrentThread = nullptr;
@@ -93,6 +97,8 @@ bool CreatePartition (void(*pFunction)(), size_t nStackMaxSize)
     
     pThreadLight[nThreadCount].nStatus = THREADL_START;
     
+    pThreadLight[nThreadCount].nNice = 1;
+    
     nThreadCount++;
     return true;
 }
@@ -108,6 +114,31 @@ static inline void RestoreStack()
 {
     memcpy(pCurrentThread->pLastStack, pCurrentThread->pnStackPage, pCurrentThread->nStackSize);
 }
+
+
+
+inline size_t Scheduler ()
+{
+    static size_t nCounter = 1;
+    
+    while (1)
+    {
+        if (++nCurrentThread <= nMaxThreads)
+        {
+            if (pThreadLight [nCurrentThread].nNice > 0 && nCounter % pThreadLight [nCurrentThread].nNice == 0)
+            {
+                return nCurrentThread;
+            }
+        }
+        else
+        {
+            nCurrentThread = -1; nCounter++;
+            if (nCounter == 0) nCounter++;
+        }
+    }
+}
+
+
 
 void join ()
 {
@@ -127,17 +158,20 @@ void join ()
                     
                     if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
                     {
-                        pCurrentThread->nStatus = THREADL_RUNNING;
                         
                         pCurrentThread->pStartStck =  alloca(0);
+                        pCurrentThread->nStatus = THREADL_RUNNING;
+                        
+                        nStartedCores++;
+                        
                         pCurrentThread->pFunction ();
                         
                         
-                        pCurrentThread->nStatus = THREADL_START;
+                        pCurrentThread->nStatus = THREADL_STOPPED;
                     }
                     break;
                     
-                case THREADL_RUNNING:
+                case THREADL_SWITCHING:
                     
                     if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
                     {
@@ -147,17 +181,23 @@ void join ()
                     break;
             }
         }
-    } while ((nCurrentThread = (nCurrentThread + 1 >= nMaxThreads) ? 0 : nCurrentThread+1)+1);
+    } while ((nCurrentThread = Scheduler())+1);
+    //} while ((nCurrentThread = (nCurrentThread + 1 >= nMaxThreads) ? 0 : nCurrentThread+1)+1);
 }
+
 
 
 //void yield() __attribute__ ((noinline));
 
 void yield()
 {
-    if (nThreadCount == 0) return;
     
-    pCurrentThread->pLastStack = alloca(0);
+    if (nThreadCount == 0 || boolCtxBlocked == true) return;
+    
+    pCurrentThread->nStatus = THREADL_SWITCHING;
+    
+    volatile uint8_t nValue;
+    pCurrentThread->pLastStack = (void*) &nValue;
     
     pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
     
@@ -175,10 +215,11 @@ void yield()
         longjmp(pCurrentThread->jmpJoinPointer, 1);
     }
     
-    //pCurrentThread->pLastStack = alloca(0);
     pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
     
     RestoreStack();
+    
+    pCurrentThread->nStatus = THREADL_RUNNING;
 }
 
 
@@ -188,10 +229,12 @@ size_t getPartitionID()
 }
 
 
+
 size_t getPartitionStackSize()
 {
     return pCurrentThread->nStackSize;
 }
+
 
 
 size_t getPartitionMemorySize()
@@ -199,3 +242,35 @@ size_t getPartitionMemorySize()
     return sizeof (ThreadLight);
 }
 
+
+
+bool isAllCoresStarted()
+{
+    return nStartedCores == nMaxThreads;
+}
+
+
+
+void blockCore(bool boolBlocked)
+{
+    boolCtxBlocked = boolBlocked;
+}
+
+
+
+bool isCoreRunning()
+{
+    return pCurrentThread->nStatus == THREADL_RUNNING;
+}
+
+
+uint8_t getCoreNice()
+{
+    return pCurrentThread->nNice;
+}
+
+
+void setCoreNice (uint8_t nNice)
+{
+    pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
+}
