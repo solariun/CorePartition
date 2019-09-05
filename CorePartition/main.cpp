@@ -34,7 +34,7 @@ void Sleep (uint64_t nSleep)
     uint64_t nMomentum =  getMiliseconds();
     
     do {
-        sleepUseconds (100);
+        sleepUseconds (100000);
         yield();
     } while ((getMiliseconds() - nMomentum) < nSleep);
 }
@@ -57,9 +57,10 @@ void Thread2 ()
 {
     unsigned int nValue = 200;
     
+    setCoreNice(10);
+    
     while (1)
     {
-        yield();
         printf ("** %lu:  Value: [%u]\n", getPartitionID(), nValue++);
         
         Sleep (1397);
@@ -72,9 +73,10 @@ void Thread3 ()
 {
     unsigned int nValue = 2340000;
     
+    setCoreNice(100);
+    
     while (1)
     {
-        yield();
         printf ("## %lu:  Value: [%u]\n", getPartitionID(), nValue++);
         
         Sleep (2000);

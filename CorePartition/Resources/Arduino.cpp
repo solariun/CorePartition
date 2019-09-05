@@ -105,10 +105,10 @@ void Thread1 ()
         Serial.flush();
         blockCore (false);
         
-        digitalWrite (2, LOW);
+        //digitalWrite (2, LOW);
         
         _Sleep(10);
-        digitalWrite (2, HIGH);
+        //digitalWrite (2, HIGH);
     }
 }
 
@@ -199,18 +199,19 @@ void setup()
     
     pinMode (3, OUTPUT);
     pinMode (4, OUTPUT);
-    pinMode (LED_BUILTIN, OUTPUT);
     
-    
-    int nPinOutput = 5;
-    int nPinInput  = 2;
     
     /* To test interrupts jump port 2 and 5 */
-    pinMode(nPinOutput, OUTPUT);
-    analogWrite(nPinOutput, 10);
-    
-    pinMode(nPinInput, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(nPinInput), YieldPreemptive, CHANGE);
+    /*
+        int nPinOutput = 5;
+        int nPinInput  = 2;
+     
+        pinMode(nPinOutput, OUTPUT);
+        analogWrite(nPinOutput, 10);
+     
+        pinMode(nPinInput, INPUT_PULLUP);
+        attachInterrupt(digitalPinToInterrupt(nPinInput), YieldPreemptive, CHANGE);
+    */
 }
 
 

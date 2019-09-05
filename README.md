@@ -20,6 +20,8 @@ ESP8266
 Arduino Nano
 Arduino DUE
 Arduino MK ZERO
+Arduino DUE
+
 OSX
 Linux
 Linux PI Zero, 1, 3 
