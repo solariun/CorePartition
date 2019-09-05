@@ -1,5 +1,5 @@
 # CorePartition
-Partitioning a CORE into several Threads with no simple prioritizing, this was designed to work, virtally, with any modern micro controller or Microchip as long it uses reverse bottom - up stack addressing
+Partitioning a CORE into several Threads with a simple prioritizing scheduller (controled by nice), this was designed to work, virtally, with any modern micro controller or Microchip as long it uses reverse bottom - up stack addressing
 
 Be ware this Library will only work with C++, C will not use the needed memory model for creating and pagining the threads.
 
