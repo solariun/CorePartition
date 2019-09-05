@@ -6,8 +6,8 @@
 //  Copyright © 2019 GUSTAVO CAMPOS. All rights reserved.
 //
 
-#include <iostream>
-#include "CorePartition.hpp"
+
+#include "CorePartition.h"
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -43,19 +43,19 @@ void Sleep (uint64_t nSleep)
 
 void Thread1 ()
 {
-    uint nValue = 100;
+    unsigned int nValue = 100;
     
     while (1)
     {
-        yield();
-        //printf (">> %lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        printf (">> %lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        Sleep (665);
     }
 }
 
 
 void Thread2 ()
 {
-    uint nValue = 200;
+    unsigned int nValue = 200;
     
     while (1)
     {
@@ -70,7 +70,7 @@ void Thread2 ()
 
 void Thread3 ()
 {
-    uint nValue = 2340000;
+    unsigned int nValue = 2340000;
     
     while (1)
     {
