@@ -4,7 +4,7 @@ Version 1.0
 
 Partitioning a CORE into several Threads with a simple prioritising scheduler (controlled by nice), this was designed to work, virtually, with any modern micro controller or Microchip as long it uses reverse bottom - up stack addressing
 
-This version now is compatible with C and C++ also HIGHLY switable for Arduino (All official models included)
+This version now is compatible with C and C++ also HIGHLY suitable for Arduino (All official models included) as well.
 
 Be aware that the CorePartitionLib is a pico Virtual Core emulation, it will slice your CPU into n Process Partitions and will create  a virtual stack page (size defines by the moment you create a partition) for each partition starting by the function it is using to initiate the virtual core.
 

@@ -165,8 +165,8 @@ void join ()
                     
                     if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
                     {
-                        
-                        pCurrentThread->pStartStck =  alloca(0);
+                        volatile uint8_t nValue = 0xAA;
+                        pCurrentThread->pStartStck =  (void*) &nValue;
                         pCurrentThread->nStatus = THREADL_RUNNING;
                         
                         nStartedCores++;
@@ -201,7 +201,7 @@ void yield()
     
     if (nThreadCount == 0) return;
     
-    volatile uint8_t nValue;
+    volatile uint8_t nValue = 0xBB;
     pCurrentThread->pLastStack = (void*) &nValue;
     
     pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
