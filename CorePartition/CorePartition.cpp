@@ -11,7 +11,6 @@
 #include <alloca.h>
 #include <stdlib.h>
 
-
 #define THREADL_NONE        0
 #define THREADL_START       1
 #define THREADL_RUNNING     2
@@ -171,7 +170,7 @@ void join ()
                     }
                     break;
                     
-                case THREADL_SWITCHING:
+                case THREADL_RUNNING:
                     
                     if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
                     {
@@ -192,9 +191,7 @@ void join ()
 void yield()
 {
     
-    if (nThreadCount == 0 || boolCtxBlocked == true) return;
-    
-    pCurrentThread->nStatus = THREADL_SWITCHING;
+    if (nThreadCount == 0) return;
     
     volatile uint8_t nValue;
     pCurrentThread->pLastStack = (void*) &nValue;
@@ -218,8 +215,6 @@ void yield()
     pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
     
     RestoreStack();
-    
-    pCurrentThread->nStatus = THREADL_RUNNING;
 }
 
 
@@ -248,14 +243,6 @@ bool isAllCoresStarted()
 {
     return nStartedCores == nMaxThreads;
 }
-
-
-
-void blockCore(bool boolBlocked)
-{
-    boolCtxBlocked = boolBlocked;
-}
-
 
 
 bool isCoreRunning()

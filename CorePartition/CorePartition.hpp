@@ -18,6 +18,7 @@ extern "C"{
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+
     
     
     bool CorePartition_Start (size_t nThreadPartitions);
@@ -35,11 +36,7 @@ extern "C"{
     size_t getPartitionMemorySize();
     
     bool isAllCoresStarted();
-    
-    void blockCore(bool boolBlocked);
-    
-    bool isCoreRunning();
-    
+        
     uint8_t getCoreNice();
     
     void setCoreNice (uint8_t nNice);
