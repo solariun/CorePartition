@@ -8,7 +8,6 @@
 
 #include "CorePartition.h"
 
-#include <alloca.h>
 #include <stdlib.h>
 
 #define THREADL_NONE        0
@@ -126,13 +125,13 @@ static inline void RestoreStack()
 
 static inline size_t Scheduler ()
 {
-    static size_t nCounter = 1;
+    static size_t nCounter = 0;
     
     while (1)
     {
         if (++nCurrentThread <= nMaxThreads)
         {
-            if (pThreadLight [nCurrentThread].nNice > 0 && nCounter % pThreadLight [nCurrentThread].nNice == 0)
+            if (nCounter % pThreadLight [nCurrentThread].nNice == 0)
             {
                 return nCurrentThread;
             }
@@ -140,7 +139,6 @@ static inline size_t Scheduler ()
         else
         {
             nCurrentThread = -1; nCounter++;
-            if (nCounter == 0) nCounter++;
         }
     }
 }
