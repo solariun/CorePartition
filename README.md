@@ -2,7 +2,7 @@
 
 Version 1.0
 
-Partitioning a CORE into several Threads with a simple prioritising scheduler (controlled by nice), this was designed to work, virtually, with any modern micro controller or Microchip as long it uses reverse bottom - up stack addressing
+Partitioning a CORE into several Threads with a simple prioritising scheduler (controlled by nice), this was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing
 
 This version now is compatible with C and C++ also HIGHLY suitable for Arduino (All official models included) as well.
 
