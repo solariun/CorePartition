@@ -105,7 +105,7 @@
 		6719C15F22DBDFF3006F87F5 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1020;
+				LastUpgradeCheck = 1100;
 				ORGANIZATIONNAME = "GUSTAVO CAMPOS";
 				TargetAttributes = {
 					6719C16622DBDFF3006F87F5 = {
@@ -119,6 +119,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 6719C15E22DBDFF3006F87F5;
 			productRefGroup = 6719C16822DBDFF3006F87F5 /* Products */;

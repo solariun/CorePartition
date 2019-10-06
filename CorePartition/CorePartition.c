@@ -35,7 +35,8 @@ typedef struct
     
     void(*pFunction)(void);
     
-    uint8_t             nNice;
+    uint32_t            nNice;
+    uint64_t            nLastMomentun;
     
     void*               pStartStck;
     void*               pLastStack;
@@ -73,6 +74,29 @@ static ThreadLight* pCurrentThread = NULL;
  }
  */
 
+
+static uint64_t getDefaultCTime()
+{
+   static uint64_t nCounter=0;
+
+   return (++nCounter);
+}
+
+uint64_t (*getCTime)(void) = getDefaultCTime;
+
+
+uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void))
+{
+    if (getCTime != getDefaultCTime || getCurrentTimeInterface == NULL)
+        return false;
+    
+    getCTime = getCurrentTimeInterface;
+    
+    return true;
+}
+
+
+
 bool CorePartition_Start (size_t nThreadPartitions)
 {
     if (pThreadLight != NULL || nThreadPartitions == 0) return false;
@@ -86,7 +110,7 @@ bool CorePartition_Start (size_t nThreadPartitions)
 
 
 
-bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize)
+bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice)
 {
     if (nThreadCount >= nMaxThreads || pFunction == NULL) return false;
     
@@ -103,6 +127,10 @@ bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize)
     pThreadLight[nThreadCount].nNice = 1;
 
     pThreadLight [nThreadCount].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThreadCount].nStackMaxSize);
+    
+    pThreadLight [nThreadCount].nLastMomentun = getCTime();
+
+    pThreadLight [nThreadCount].nNice = nNice;
     
     nThreadCount++;
     
@@ -122,23 +150,42 @@ static inline void RestoreStack()
 }
 
 
+/*
+static inline size_t getNextCore (uint64_t nCurTime)
+{
+    size_t nThread = 0;
+    size_t nCThread = nMaxThreads;
+    
+    while (nCThread--)
+       if (pThreadLight [nCThread].nLastMomentun +  pThreadLight [nCThread].nNice
+       - nCurTime < pThreadLight [nThread].nLastMomentun +  pThreadLight [nThread].nNice - nCurTime)
+          nThread = nCThread;
+
+    return nThread;
+}
+*/
 
 static inline size_t Scheduler ()
 {
-    static size_t nCounter = 0;
+    static uint64_t nCounter = 0;
     
+    if (nCounter == 0) nCounter = getCTime ();
+        
     while (1)
     {
         if (++nCurrentThread <= nMaxThreads)
         {
-            if (nCounter % pThreadLight [nCurrentThread].nNice == 0)
+            if (nCounter > (pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice))
             {
+                pThreadLight [nCurrentThread].nLastMomentun = nCounter;
                 return nCurrentThread;
             }
         }
         else
         {
-            nCurrentThread = -1; nCounter++;
+            nCurrentThread = -1;
+            while (getCTime() == nCounter);
+            nCounter = getCTime ();
         }
     }
 }
@@ -224,46 +271,61 @@ void yield()
 }
 
 
-size_t getPartitionID()
+size_t CorePartition_GetPartitionID()
 {
     return nCurrentThread;
 }
 
 
 
-size_t getPartitionStackSize()
+size_t CorePartition_GetPartitionStackSize()
 {
     return pCurrentThread->nStackSize;
 }
 
+size_t CorePartition_GetPartitionMaxStackSize()
+{
+    return pCurrentThread->nStackMaxSize;
+}
 
 
-size_t getPartitionMemorySize()
+size_t CorePartition_GetPartitionAllocatedMemorySize(void)
+{
+    return CorePartition_GetThreadStructSize () + CorePartition_GetPartitionMaxStackSize ();
+}
+
+size_t CorePartition_GetPartitionUsedMemorySize(void)
+{
+    return CorePartition_GetThreadStructSize () + CorePartition_GetPartitionStackSize ();
+}
+
+
+size_t CorePartition_GetThreadStructSize(void)
 {
     return sizeof (ThreadLight);
 }
 
 
-
-bool isAllCoresStarted(void)
+bool CorePartition_IsAllCoresStarted(void)
 {
     return nStartedCores == nMaxThreads;
 }
 
 
-bool isCoreRunning(void)
+bool CorePartition_IsCoreRunning(void)
 {
     return pCurrentThread->nStatus == THREADL_RUNNING;
 }
 
 
-bool getCoreNice()
+uint32_t CorePartition_GetCoreNice()
 {
     return pCurrentThread->nNice;
 }
 
 
-void setCoreNice (uint8_t nNice)
+void CorePartition_SetCoreNice (uint32_t nNice)
 {
     pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
 }
+

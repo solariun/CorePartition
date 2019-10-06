@@ -24,27 +24,36 @@ extern "C"{
 #include <stdint.h>
 
     
-    static char CorePartition_version[] = "V2.0";
+    static char CorePartition_version[] = "V2.1";
     
     bool CorePartition_Start (size_t nThreadPartitions);
     
-    bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize);
+    bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice);
     
+    uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
+
     void join (void);
     
     void yield(void);
     
-    size_t getPartitionID(void);
+    size_t CorePartition_GetPartitionID(void);
     
-    size_t getPartitionStackSize(void);
+    size_t CorePartition_GetPartitionStackSize(void);
+    size_t CorePartition_GetPartitionMaxStackSize(void);
+
     
-    size_t getPartitionMemorySize(void);
+    size_t CorePartition_GetPartitionUsedMemorySize(void);
+    size_t CorePartition_GetPartitionAllocatedMemorySize(void);
+
+    size_t CorePartition_GetThreadStructSize (void);
+
+    size_t CorePartition_GetThreadStructSize(void);
     
-    bool isAllCoresStarted(void);
+    bool CorePartition_IsAllCoresStarted(void);
         
-    bool getCoreNice(void);
+    uint32_t CorePartition_GetCoreNice(void);
     
-    void setCoreNice (uint8_t nNice);
+    void CorePartition_SetCoreNice (uint32_t nNice);
     
 #ifdef __cplusplus
 } // extern "C"

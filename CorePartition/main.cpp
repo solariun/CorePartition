@@ -15,6 +15,7 @@
 
 
 
+
 long getMiliseconds()
 {
     struct timeval tp;
@@ -34,7 +35,7 @@ void Sleep (uint64_t nSleep)
     uint64_t nMomentum =  getMiliseconds();
     
     do {
-        sleepUseconds (100000);
+        //sleepUseconds (100000);
         yield();
     } while ((getMiliseconds() - nMomentum) < nSleep);
 }
@@ -47,8 +48,8 @@ void Thread1 ()
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u]\n", getPartitionID(), nValue++);
-        Sleep (665);
+        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetPartitionID(), nValue++, CorePartition_GetThreadStructSize(), CorePartition_GetPartitionAllocatedMemorySize());
+        yield (); //Sleep (10);
     }
 }
 
@@ -57,13 +58,13 @@ void Thread2 ()
 {
     unsigned int nValue = 200;
     
-    setCoreNice(10);
+    //setCoreNice(10);
     
     while (1)
     {
-        printf ("** %lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        printf ("** %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
         
-        Sleep (1397);
+        yield(); //Sleep (10);
     }
 }
 
@@ -73,25 +74,34 @@ void Thread3 ()
 {
     unsigned int nValue = 2340000;
     
-    setCoreNice(100);
+    //setCoreNice(200);
     
     while (1)
     {
-        printf ("## %lu:  Value: [%u]\n", getPartitionID(), nValue++);
+        printf ("## %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
         
-        Sleep (2000);
+        yield(); //Sleep (10);
     }
 }
 
 
+uint64_t getMsTicks(void)
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    
+    return tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+}
 
 int main(int argc, const char * argv[])
 {
     CorePartition_Start(3);
     
-    CreatePartition(Thread1, 256);
-    CreatePartition(Thread2, 256);
-    CreatePartition(Thread3, 256);
+    CorePartition_SetCurrentTimeInterface(getMsTicks);
+    
+    CreatePartition(Thread1, 256, 500);
+    CreatePartition(Thread2, 256, 1000);
+    CreatePartition(Thread3, 256, 2000);
     
     join();
     
