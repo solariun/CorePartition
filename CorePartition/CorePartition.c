@@ -174,16 +174,24 @@ static inline void RestoreStack()
 
 static inline uint64_t getSleepTime (uint64_t nCurTime)
 {
-    uint64_t nMin = 1 << sizeof (nMin);
+    uint64_t nMin;
     size_t nCThread=0;
-
     
-#define __CALC(TH) (uint64_t) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice - nCurTime)
+#define __NEXTIME(TH) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice)
+#define __CALC(TH) (uint64_t) ( __NEXTIME(TH) - nCurTime)
+    
+    nMin = __CALC(0);
     
     for (nCThread = 0; nCThread < nMaxThreads; nCThread++)
-       if (nMin > __CALC (nCThread)) nMin =  __CALC (nCThread);
-
-    return (uint64_t) (nMin > nCurTime ? 0 : nMin);
+    {
+        //printf ("--> Min: [%llu] - Calc: [%llu]: Menor? [%u]\n", nMin, __CALC (nCThread), nMin > __CALC(nCThread));
+        if (__NEXTIME (nCThread) <= nCurTime)
+            return 0;
+        else if (nMin > __CALC (nCThread))
+            nMin = __CALC (nCThread);
+    }
+        
+    return nMin;
 }
 
 static inline size_t Scheduler ()
@@ -204,8 +212,10 @@ static inline size_t Scheduler ()
         }
         else
         {
+            while (nCounter == getCTime ());
+            
+            sleepCTime (getSleepTime (getCTime ()));
             nCounter = getCTime ();
-            sleepCTime (getSleepTime (nCounter));
             
             nCurrentThread = -1;
         }

@@ -81,12 +81,15 @@ void Thread3 ()
         printf ("## %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
         
         yield(); //Sleep (10);
+        
     }
 }
 
 
 static void sleepMSTicks (uint64_t nSleepTime)
 {
+    printf ("Sleep: %llu\n", nSleepTime);
+    
     usleep ((useconds_t) nSleepTime * 1000);
 }
 
@@ -105,7 +108,7 @@ int main(int argc, const char * argv[])
     CorePartition_SetCurrentTimeInterface(getMsTicks);
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
     
-    CreatePartition(Thread1, 256, 500);
+    CreatePartition(Thread1, 256, 10);
     CreatePartition(Thread2, 256, 1000);
     CreatePartition(Thread3, 256, 2000);
     

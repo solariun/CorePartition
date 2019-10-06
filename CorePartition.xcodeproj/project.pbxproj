@@ -24,10 +24,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E7BADE3234A7F52002ABA3F /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
 		6719C16722DBDFF3006F87F5 /* CorePartition */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CorePartition; sourceTree = BUILT_PRODUCTS_DIR; };
 		6719C16A22DBDFF3006F87F5 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		6719C17422DBE2DD006F87F5 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
-		6719C17622E056C4006F87F5 /* Arduino.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Arduino.cpp; sourceTree = "<group>"; };
 		67CC273C2321622100868605 /* CorePartition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CorePartition.h; sourceTree = "<group>"; };
 		67CC273D2321622200868605 /* CorePartition.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CorePartition.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -62,21 +62,13 @@
 		6719C16922DBDFF3006F87F5 /* CorePartition */ = {
 			isa = PBXGroup;
 			children = (
+				0E7BADE3234A7F52002ABA3F /* Resources */,
 				67CC273D2321622200868605 /* CorePartition.c */,
 				67CC273C2321622100868605 /* CorePartition.h */,
-				6719C17522E0565D006F87F5 /* Resources */,
 				6719C17422DBE2DD006F87F5 /* README.md */,
 				6719C16A22DBDFF3006F87F5 /* main.cpp */,
 			);
 			path = CorePartition;
-			sourceTree = "<group>";
-		};
-		6719C17522E0565D006F87F5 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				6719C17622E056C4006F87F5 /* Arduino.cpp */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
