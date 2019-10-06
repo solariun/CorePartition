@@ -24,13 +24,14 @@ extern "C"{
 #include <stdint.h>
 
     
-    static char CorePartition_version[] = "V2.1";
+    static const char CorePartition_version[] = "V2.1 Compiled:" __TIMESTAMP__;
     
     bool CorePartition_Start (size_t nThreadPartitions);
     
     bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice);
     
     uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
+    uint8_t CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
 
     void join (void);
     

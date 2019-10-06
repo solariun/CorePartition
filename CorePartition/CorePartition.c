@@ -38,7 +38,6 @@ typedef struct
     uint32_t            nNice;
     uint64_t            nLastMomentun;
     
-    void*               pStartStck;
     void*               pLastStack;
     
     uint8_t*            pnStackPage;
@@ -54,6 +53,9 @@ static volatile size_t nStartedCores=0;
 
 static ThreadLight* pThreadLight = NULL;
 static ThreadLight* pCurrentThread = NULL;
+
+
+void*               pStartStck = NULL;
 
 
 /*
@@ -95,6 +97,25 @@ uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterfac
     return true;
 }
 
+static void sleepDefaultCTime (uint64_t nSleepTime)
+{
+    nSleepTime = getCTime() + nSleepTime;
+    
+    while (getCTime() <= nSleepTime);
+}
+
+
+void (*sleepCTime)(uint64_t nSleepTime) = sleepDefaultCTime;
+
+uint8_t CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime))
+{
+    if (sleepCTime != sleepDefaultCTime || getSleepTimeInterface == NULL)
+        return false;
+    
+    sleepCTime = getSleepTimeInterface;
+    
+    return true;
+}
 
 
 bool CorePartition_Start (size_t nThreadPartitions)
@@ -150,27 +171,27 @@ static inline void RestoreStack()
 }
 
 
-/*
-static inline size_t getNextCore (uint64_t nCurTime)
-{
-    size_t nThread = 0;
-    size_t nCThread = nMaxThreads;
-    
-    while (nCThread--)
-       if (pThreadLight [nCThread].nLastMomentun +  pThreadLight [nCThread].nNice
-       - nCurTime < pThreadLight [nThread].nLastMomentun +  pThreadLight [nThread].nNice - nCurTime)
-          nThread = nCThread;
 
-    return nThread;
+static inline uint64_t getSleepTime (uint64_t nCurTime)
+{
+    uint64_t nMin = 1 << sizeof (nMin);
+    size_t nCThread=0;
+
+    
+#define __CALC(TH) (uint64_t) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice - nCurTime)
+    
+    for (nCThread = 0; nCThread < nMaxThreads; nCThread++)
+       if (nMin > __CALC (nCThread)) nMin =  __CALC (nCThread);
+
+    return (uint64_t) (nMin > nCurTime ? 0 : nMin);
 }
-*/
 
 static inline size_t Scheduler ()
 {
     static uint64_t nCounter = 0;
     
     if (nCounter == 0) nCounter = getCTime ();
-        
+       
     while (1)
     {
         if (++nCurrentThread <= nMaxThreads)
@@ -183,9 +204,10 @@ static inline size_t Scheduler ()
         }
         else
         {
-            nCurrentThread = -1;
-            while (getCTime() == nCounter);
             nCounter = getCTime ();
+            sleepCTime (getSleepTime (nCounter));
+            
+            nCurrentThread = -1;
         }
     }
 }
@@ -195,6 +217,11 @@ static inline size_t Scheduler ()
 void join ()
 {
     if (nThreadCount == 0) return;
+
+
+    
+    volatile uint8_t nValue = 0xAA;
+    pStartStck =  (void*) &nValue;
     
     do
     {
@@ -210,8 +237,6 @@ void join ()
                     
                     if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
                     {
-                        volatile uint8_t nValue = 0xAA;
-                        pCurrentThread->pStartStck =  (void*) &nValue;
                         pCurrentThread->nStatus = THREADL_RUNNING;
                         
                         nStartedCores++;
@@ -249,7 +274,7 @@ void yield()
     volatile uint8_t nValue = 0xBB;
     pCurrentThread->pLastStack = (void*) &nValue;
     
-    pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
+    pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
     
     if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
     {
@@ -265,7 +290,7 @@ void yield()
         longjmp(pCurrentThread->jmpJoinPointer, 1);
     }
     
-    pCurrentThread->nStackSize = (size_t)pCurrentThread->pStartStck - (size_t)pCurrentThread->pLastStack;
+    pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
     
     RestoreStack();
 }
@@ -328,4 +353,3 @@ void CorePartition_SetCoreNice (uint32_t nNice)
 {
     pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
 }
-

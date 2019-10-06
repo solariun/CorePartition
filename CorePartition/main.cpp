@@ -85,7 +85,12 @@ void Thread3 ()
 }
 
 
-uint64_t getMsTicks(void)
+static void sleepMSTicks (uint64_t nSleepTime)
+{
+    usleep ((useconds_t) nSleepTime * 1000);
+}
+
+static uint64_t getMsTicks(void)
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -98,6 +103,7 @@ int main(int argc, const char * argv[])
     CorePartition_Start(3);
     
     CorePartition_SetCurrentTimeInterface(getMsTicks);
+    CorePartition_SetSleepTimeInterface (sleepMSTicks);
     
     CreatePartition(Thread1, 256, 500);
     CreatePartition(Thread2, 256, 1000);
