@@ -199,7 +199,9 @@ void setup()
 
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
-    Serial.println (", Starting Thread...."); Serial.flush();Serial.flush();
+    Serial.println ("");
+    
+    Serial.println ("Starting up Thread...."); Serial.flush();Serial.flush();
 
     delay (1000);
     
