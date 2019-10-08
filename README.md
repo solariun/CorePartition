@@ -23,6 +23,8 @@ Arduino DUE (Arm m3)
 Arduino MK ZERO (arm m0)
 Arduino Genuino zero
 STM32F103 (Bluepill)
+MEGA2506 
+MEGA1260
 
 
 OSX
