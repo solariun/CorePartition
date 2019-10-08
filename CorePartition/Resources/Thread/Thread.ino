@@ -225,7 +225,7 @@ void setup()
 
     CreatePartition(Thread1, 100, 2000);
     
-    CreatePartition(Thread2, 100, 21);
+    CreatePartition(Thread2, 100, 731);
 
     CreatePartition(Thread3, 100, 1000);
 }

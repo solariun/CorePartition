@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E3E1818234BE95900C031DA /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = 0E3E1817234BE95900C031DA /* makefile */; };
 		6719C16B22DBDFF3006F87F5 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6719C16A22DBDFF3006F87F5 /* main.cpp */; };
 		67CC273E2321622200868605 /* CorePartition.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC273D2321622200868605 /* CorePartition.c */; };
 /* End PBXBuildFile section */
@@ -24,6 +25,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E3E1817234BE95900C031DA /* makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
 		0E7BADE3234A7F52002ABA3F /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
 		6719C16722DBDFF3006F87F5 /* CorePartition */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CorePartition; sourceTree = BUILT_PRODUCTS_DIR; };
 		6719C16A22DBDFF3006F87F5 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -67,6 +69,7 @@
 				67CC273C2321622100868605 /* CorePartition.h */,
 				6719C17422DBE2DD006F87F5 /* README.md */,
 				6719C16A22DBDFF3006F87F5 /* main.cpp */,
+				0E3E1817234BE95900C031DA /* makefile */,
 			);
 			path = CorePartition;
 			sourceTree = "<group>";
@@ -130,6 +133,7 @@
 			files = (
 				6719C16B22DBDFF3006F87F5 /* main.cpp in Sources */,
 				67CC273E2321622200868605 /* CorePartition.c in Sources */,
+				0E3E1818234BE95900C031DA /* makefile in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
