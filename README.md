@@ -1,6 +1,6 @@
 # CorePartition
 
-Version 1.0
+Version 2.2
 
 Partitioning a CORE into several Threads with a fast schedule that can be specialised using Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing.
 
