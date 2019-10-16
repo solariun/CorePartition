@@ -72,20 +72,71 @@ int CLK = 10; //SS
 // Functions
 
 
-byte byteImages [][8]={
-   {0x7C,0x7C,0x60,0x7C,0x7C,0x60,0x7C,0x7C},
-    {0x78,0x7C,0x66,0x66,0x66,0x66,0x7C,0x78},
-   {0x66,0x66,0x66,0x66,0x66,0x66,0x7E,0x7E},
-   {0x7E,0x7E,0x60,0x60,0x60,0x60,0x7E,0x7E},
-   {0x7E,0x7E,0x66,0x7E,0x7E,0x66,0x7E,0x7E},
-   {0x7E,0x7C,0x60,0x7C,0x3E,0x06,0x3E,0x7E}, 
-   {0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x18},
-   {0x7E,0x7E,0x66,0x66,0x66,0x66,0x7E,0x7E},
-   {0xE7,0xFF,0xFF,0xDB,0xDB,0xDB,0xC3,0xC3},
-   {0x3C,0x42,0xA5,0x81,0xA5,0x99,0x42,0x3C},
-   {0x3C,0x42,0xA5,0x81,0xBD,0x81,0x42,0x3C},
-   {0x3C,0x42,0xA5,0x81,0x99,0xA5,0x42,0x3C}
-}; 
+static const uint64_t byteImages[] PROGMEM = {
+  0x7e1818181c181800,
+  0x7e060c3060663c00,
+  0x3c66603860663c00,
+  0x30307e3234383000,
+  0x3c6660603e067e00,
+  0x3c66663e06663c00,
+  0x1818183030667e00,
+  0x3c66663c66663c00,
+  0x3c66607c66663c00,
+  0x3c66666e76663c00,
+  0x6666667e66663c00,
+  0x3e66663e66663e00,
+  0x3c66060606663c00,
+  0x3e66666666663e00,
+  0x7e06063e06067e00,
+  0x0606063e06067e00,
+  0x3c66760606663c00,
+  0x6666667e66666600,
+  0x3c18181818183c00,
+  0x1c36363030307800,
+  0x66361e0e1e366600,
+  0x7e06060606060600,
+  0xc6c6c6d6feeec600,
+  0xc6c6e6f6decec600,
+  0x3c66666666663c00,
+  0x06063e6666663e00,
+  0x603c766666663c00,
+  0x66361e3e66663e00,
+  0x3c66603c06663c00,
+  0x18181818185a7e00,
+  0x7c66666666666600,
+  0x183c666666666600,
+  0xc6eefed6c6c6c600,
+  0xc6c66c386cc6c600,
+  0x1818183c66666600,
+  0x7e060c1830607e00,
+  0x0000000000000000,
+  0x7c667c603c000000,
+  0x3e66663e06060600,
+  0x3c6606663c000000,
+  0x7c66667c60606000,
+  0x3c067e663c000000,
+  0x0c0c3e0c0c6c3800,
+  0x3c607c66667c0000,
+  0x6666663e06060600,
+  0x3c18181800180000,
+  0x1c36363030003000,
+  0x66361e3666060600,
+  0x1818181818181800,
+  0xd6d6feeec6000000,
+  0x6666667e3e000000,
+  0x3c6666663c000000,
+  0x06063e66663e0000,
+  0xf0b03c36363c0000,
+  0x060666663e000000,
+  0x3e403c027c000000,
+  0x1818187e18180000,
+  0x7c66666666000000,
+  0x183c666600000000,
+  0x7cd6d6d6c6000000,
+  0x663c183c66000000,
+  0x3c607c6666000000,
+  0x3c0c18303c000000
+};
 
 LedControl lc=LedControl(DIN,CLK,CS,2);
 
@@ -98,13 +149,18 @@ void printByte(byte character [])
   }
 }
 
-void printScrollBytes(uint8_t nDevice, byte charLeft [], byte charRight [], uint8_t nOffset)
+
+
+
+
+void printScrollBytes(uint8_t nDevice, uint64_t charLeft, uint64_t charRight, uint8_t nOffset)
 {
   int i = 0;
   for(i=0;i<8;i++)
-  {
-    lc.setColumn(nDevice,i,(charLeft [i] << (8-nOffset) | charRight [i] >> nOffset));
+  {        
+      lc.setColumn(nDevice,i, (((uint8_t*) &charLeft) [i] << (8-nOffset) | ((uint8_t*) &charRight) [i] >> nOffset));
   }
+
 }
 
 
@@ -124,6 +180,22 @@ volatile uint32_t nCount = 10;
 
 char szTemp [40];
 
+uint64_t getImage (unsigned int nIndex)
+{
+    uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
+    uint64_t nBuffer= 0xAA;
+    
+    nIndex = nIndex > nImagesItens ? nImagesItens - nIndex : nIndex;
+
+
+    memcpy_PF(&nBuffer, byteImages + nIndex, sizeof (uint64_t));
+    
+    return nBuffer;
+}
+
+
+
+
 void Thread1 ()
 {
     unsigned long start = millis();
@@ -131,7 +203,7 @@ void Thread1 ()
     uint8_t a = 0;
     uint8_t b = 0;
     uint8_t nOffset = 0;
-    
+    uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
     //setCoreNice (100);
 
     
@@ -142,31 +214,30 @@ void Thread1 ()
           Serial.print (", Sleep Time: ");                 
           Serial.print (millis() - start); 
           Serial.print (", ");
-          Serial.print (CorePartition_GetPartitionUsedMemorySize());
-          Serial.print (", All Cores Started? [ ");
-          Serial.print (CorePartition_IsAllCoresStarted() ? "YES" : "NO");
-          Serial.print ("], Nice: ");
-          Serial.print (CorePartition_GetCoreNice());
+          Serial.print (CorePartition_GetCoreNice ());
+          Serial.print (", nImagesItens [ ");
+          Serial.print (nImagesItens);
+          Serial.print ("]");
           Serial.println ("\n");
-
+  
           Serial.flush();
          
           start = millis();
 
-          printScrollBytes (1, byteImages [((a+1 >= sizeof (byteImages)/8) ? 0 : a+1)], byteImages [a], nOffset);
-          b = (a+1 >= sizeof (byteImages)/8) ? 0 : a+1;
-          printScrollBytes (0, byteImages [((b+1 >= sizeof (byteImages)/8) ? 0 : b+1)], byteImages [b], nOffset);
+          
+          printScrollBytes (1, getImage ( ((a+1 >= nImagesItens) ? 0 : a+1) ), getImage (a), nOffset);
+          b = (a+1 >= nImagesItens) ? 0 : a+1;
+          printScrollBytes (0, getImage ( ((b+1 >= nImagesItens) ? 0 : b+1) ), getImage (b), nOffset);
           
           if (nOffset + 1 >= 8)
           {
               nOffset = 0;
-              a = (a+1 >= sizeof (byteImages)/8) ? 0 : a+1;
+              a = (a+1 >= nImagesItens ) ? 0 : a+1;
           }
           else
           {
               nOffset++;
           }
-          
           
           
         //digitalWrite (2, LOW);
@@ -330,7 +401,7 @@ void setup()
     lc.clearDisplay(0);         // and clear the display
     
     lc.shutdown(1,false);       //The MAX72XX is in power-saving mode on startup
-    lc.setIntensity(1,8);      // Set the brightness to maximum value
+    lc.setIntensity(1,4);      // Set the brightness to maximum value
     lc.clearDisplay(1);         // and clear the display
 
     delay (1000);
@@ -354,9 +425,9 @@ void setup()
 
     CreatePartition(Thread1, 100, 100);
     
-    CreatePartition(Thread2, 100, 150);
+    CreatePartition(Thread2, 100, 50);
 
-    CreatePartition(Thread3, 100, 1);
+    CreatePartition(Thread3, 100, 100);
 }
 
 
