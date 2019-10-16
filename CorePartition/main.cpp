@@ -108,7 +108,7 @@ int main(int argc, const char * argv[])
     CorePartition_SetCurrentTimeInterface(getMsTicks);
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
     
-    CreatePartition(Thread1, 256, 10);
+    CreatePartition(Thread1, 256, 3000);
     CreatePartition(Thread2, 256, 1000);
     CreatePartition(Thread3, 256, 2000);
     

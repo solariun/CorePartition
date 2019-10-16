@@ -38,10 +38,10 @@
 ///
 
 
-
+#include "Arduino.h"
 #include "CorePartition.h"
 
-#include "Arduino.h"
+
 
 
 // Set parameters

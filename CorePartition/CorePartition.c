@@ -30,8 +30,7 @@ typedef struct
     size_t    nStackMaxSize;
     size_t    nStackSize;
     
-    jmp_buf   jmpJoinPointer;
-    jmp_buf   jmpYieldPointer;
+    jmp_buf   jmpRegisterBuffer;
     
     void(*pFunction)(void);
     
@@ -57,6 +56,7 @@ static ThreadLight* pCurrentThread = NULL;
 
 void*               pStartStck = NULL;
 
+jmp_buf jmpJoinPointer;
 
 /*
  static void printStruct ()
@@ -241,30 +241,28 @@ void join ()
         
         if (pCurrentThread->nStatus != THREADL_NONE)
         {
-            switch (pCurrentThread->nStatus)
+            if (setjmp(jmpJoinPointer) == 0) switch (pCurrentThread->nStatus)
             {
                 case THREADL_START:
+                
+                    pCurrentThread->nStatus = THREADL_RUNNING;
                     
-                    if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
-                    {
-                        pCurrentThread->nStatus = THREADL_RUNNING;
-                        
-                        nStartedCores++;
-                        
-                        pCurrentThread->pFunction ();
-                        
-                        
-                        pCurrentThread->nStatus = THREADL_STOPPED;
-                    }
+                    nStartedCores++;
+                    
+                    pCurrentThread->pFunction ();
+                    
+                    
+                    pCurrentThread->nStatus = THREADL_STOPPED;
+
                     break;
                     
                 case THREADL_RUNNING:
-                    
-                    if (setjmp(pCurrentThread->jmpJoinPointer) == 0)
-                    {
-                        longjmp(pCurrentThread->jmpYieldPointer, 1);
-                    }
-                    
+                
+                    longjmp(pCurrentThread->jmpRegisterBuffer, 1);
+                
+                    break;
+                
+                default:
                     break;
             }
         }
@@ -291,14 +289,16 @@ void yield()
         free (pCurrentThread->pnStackPage);
         pCurrentThread->nStatus = THREADL_STOPPED;
         
-        longjmp(pCurrentThread->jmpJoinPointer, 1);
+        longjmp(jmpJoinPointer, 1);
     }
     
     BackupStack();
-    if (setjmp(pCurrentThread->jmpYieldPointer) == 0)
+    
+    if (setjmp(pCurrentThread->jmpRegisterBuffer) == 0)
     {
-        longjmp(pCurrentThread->jmpJoinPointer, 1);
+        longjmp(jmpJoinPointer, 1);
     }
+    
     
     pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
     
