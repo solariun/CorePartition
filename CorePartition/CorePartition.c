@@ -215,6 +215,7 @@ static inline size_t Scheduler ()
             while (nCounter == getCTime ());
             
             sleepCTime (getSleepTime (getCTime ()));
+            
             nCounter = getCTime ();
             
             nCurrentThread = -1;

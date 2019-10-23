@@ -1,4 +1,11 @@
 
+//
+//  Thread.ino
+//  CorePartition Arduini example
+//
+//  Created by GUSTAVO CAMPOS on 14/07/2019.
+//  Copyright © 2019 GUSTAVO CAMPOS. All rights reserved.
+//
 
 
 #include "Arduino.h"
@@ -242,17 +249,7 @@ void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nN
 {
     uint8_t nCount; 
    
-          
-    for (nCount=0; nCount < nNumberDigits; nCount++)
-    {   
-        printScrollBytes (nLocY, nLocX + (nCount * 8), getLetter(*nIndex + 1, pszMessage, nMessageLen), getLetter(*nIndex, pszMessage, nMessageLen), (uint8_t) *nOffset);
     
-        *nIndex =  (int) *nIndex + 1;
-    }   
-      
-     *nIndex = (int) *nIndex - (nCount-1);
-  
-
     do
     { 
       if (*nOffset >= 7)
@@ -266,6 +263,17 @@ void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nN
           *nOffset = (int) *nOffset + 1;
       }
     } while (*nOffset >= 7);
+
+          
+    for (nCount=0; nCount < nNumberDigits; nCount++)
+    {   
+        printScrollBytes (nLocY, nLocX + (nCount * 8), getLetter(*nIndex + 1, pszMessage, nMessageLen), getLetter(*nIndex, pszMessage, nMessageLen), (uint8_t) *nOffset);
+    
+        *nIndex =  (int) *nIndex + 1;
+    }   
+      
+     *nIndex = (int) *nIndex - (nCount-1);
+ 
 }
 
       
@@ -276,8 +284,8 @@ void Thread1 ()
 {
     size_t nValue = 100;
 
-    static char szMessage [30] = "Thread #1";
-    static int nNumberDigits = 10;
+    static char szMessage [40] = "Thread #1";
+    static int nNumberDigits = 15;
     
 
     uint8_t nOffset = 0;
@@ -316,7 +324,7 @@ void Thread2 ()
 {
     size_t nValue = 100;
 
-    static char szMessage [] = "#2 - CorePartition is for Small processors as well";
+    static char szMessage [] = "#2 - CorePartition Is Multi Thread, Is Universal and Is for Small processors as well";
      
     static int nNumberDigits = 8;
 
@@ -393,7 +401,7 @@ static uint64_t getTimeTick()
 
 static void sleepTick (uint64_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime * 1000);
+    if (nSleepTime)  delayMicroseconds  (nSleepTime * 1000);
 }
 
 void setup()
