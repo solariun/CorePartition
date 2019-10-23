@@ -114,12 +114,14 @@ const int byteImagesLen = sizeof(byteImages)/8;
 
 void setLocation (uint16_t nY, uint16_t nX)
 {
-    Serial.flush ();
-    Serial.print ("\e[");
+    //Serial.flush ();
+    
+    Serial.print ("\033[");
     Serial.print (nY);
     Serial.print (";");
     Serial.print (nX);
-    Serial.print ("H");
+    Serial.print ("f");
+    
     Serial.flush ();
 }
 
@@ -127,14 +129,17 @@ void setLocation (uint16_t nY, uint16_t nX)
 //workis with 256 colors
 void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
+    Serial.flush ();
 
-    Serial.print ("\e[");
-    Serial.print ("38:5:");
+    Serial.print ("\033[");
+    Serial.print ("38;5;");
     Serial.print (nFgColor);
     Serial.print ("m");
 
-    Serial.print ("\e[");
-    Serial.print ("48:5:");
+    Serial.flush ();
+
+    Serial.print ("\033[");
+    Serial.print ("48;5;");
     Serial.print (nBgColor);
     Serial.print ("m");
 
@@ -144,35 +149,40 @@ void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 
 void resetColor ()
 {
-    Serial.print ("\e[0m");
+    Serial.flush ();
+    Serial.print ("\033[0m");
     Serial.flush ();
 }
 
 
 void hideCursor ()
 {
-    Serial.print ("\e[?25l");
+    Serial.flush ();
+    Serial.print ("\033[?25l");
     Serial.flush ();
 }
 
 
 void showCursor ()
 {
-    Serial.print ("\e[?25h");
+    Serial.flush ();
+    Serial.print ("\033[?25h");
     Serial.flush ();
 }
 
 
 void clearConsole ()
 {
-    Serial.print ("\e[3J");
+    Serial.flush ();
+    Serial.print ("\033[2J");
     Serial.flush ();  
 }
 
 
 void reverseColor ()
 {
-    Serial.print ("\e[7m");
+    Serial.flush ();
+    Serial.print ("\033[7m");
     Serial.flush ();   
 }
 
@@ -301,7 +311,7 @@ void Thread1 ()
     while (1)
     {
 
-        setColor (9, 0);
+        setColor (9, 17);
         hideCursor ();
 
         snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
@@ -324,7 +334,7 @@ void Thread2 ()
 {
     size_t nValue = 100;
 
-    static char szMessage [] = "#2 - CorePartition Is Multi Thread, Is Universal and Is for Small processors as well";
+    static char szMessage [] = "#2 - CorePartition I  s Multi Thread, Is Universal and Is for Small processors as well";
      
     static int nNumberDigits = 8;
 
@@ -341,7 +351,7 @@ void Thread2 ()
     while (1)
     {
 
-        setColor (10, 0);
+        setColor (10, 17);
         hideCursor ();
         
         ScrollText (15, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1);
@@ -407,8 +417,10 @@ static void sleepTick (uint64_t nSleepTime)
 void setup()
 {
     //Initialize serial and wait for port to open:
-    Serial.begin(230400);
+    Serial.begin(115200);
 
+    setLocation (1,1);
+    resetColor ();
     clearConsole ();
     
     Serial.print ("CoreThread ");
