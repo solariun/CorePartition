@@ -88,7 +88,7 @@ const uint64_t byteImages[] PROGMEM = {
   0x06063e66663e0000,
   0xf0b03c36363c0000,
   0x060666663e000000,
-  0x3e403c027c000000,
+  0x3e603c067c000000,
   0x1818187e18180000,
   0x7c66666666000000,
   0x183c666600000000,
@@ -107,17 +107,20 @@ const int byteImagesLen = sizeof(byteImages)/8;
 
 void setLocation (uint16_t nY, uint16_t nX)
 {
+    Serial.flush ();
     Serial.print ("\e[");
     Serial.print (nY);
     Serial.print (";");
     Serial.print (nX);
     Serial.print ("H");
+    Serial.flush ();
 }
 
 
 //workis with 256 colors
 void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
+
     Serial.print ("\e[");
     Serial.print ("38:5:");
     Serial.print (nFgColor);
@@ -127,25 +130,45 @@ void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
     Serial.print ("48:5:");
     Serial.print (nBgColor);
     Serial.print ("m");
+
+    Serial.flush ();
 }
 
 
 void resetColor ()
 {
     Serial.print ("\e[0m");
+    Serial.flush ();
 }
 
 
 void hideCursor ()
 {
     Serial.print ("\e[?25l");
+    Serial.flush ();
 }
 
 
 void showCursor ()
 {
     Serial.print ("\e[?25h");
+    Serial.flush ();
 }
+
+
+void clearConsole ()
+{
+    Serial.print ("\e[3J");
+    Serial.flush ();  
+}
+
+
+void reverseColor ()
+{
+    Serial.print ("\e[7m");
+    Serial.flush ();   
+}
+
 
 
 uint64_t getImage (int nIndex)
@@ -227,22 +250,22 @@ void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nN
         *nIndex =  (int) *nIndex + 1;
     }   
       
-      *nIndex = (int) *nIndex - (nCount-1);
+     *nIndex = (int) *nIndex - (nCount-1);
   
-          
-    if (*nOffset >= 7)
-    {   
-        *nIndex = *nIndex + 1 > (int) nMessageLen ? (int) nNumberDigits * (-1) : *nIndex + 1;
-        *nOffset = 0;
- 
-    }
-    else
-    {
-        *nOffset = (int) *nOffset + 1;
 
-        Serial.println ();
-        Serial.print (*nOffset);
-    }
+    do
+    { 
+      if (*nOffset >= 7)
+      {   
+          *nIndex = *nIndex + 1 > (int) nMessageLen ? (int) nNumberDigits * (-1) : *nIndex + 1;
+          *nOffset = 0;
+   
+      }
+      else
+      {
+          *nOffset = (int) *nOffset + 1;
+      }
+    } while (*nOffset >= 7);
 }
 
       
@@ -253,9 +276,9 @@ void Thread1 ()
 {
     size_t nValue = 100;
 
-    static char szMessage [] = "Thread #1 - CorePartition Thread manager";
-     
+    static char szMessage [30] = "Thread #1";
     static int nNumberDigits = 10;
+    
 
     uint8_t nOffset = 0;
     
@@ -265,15 +288,17 @@ void Thread1 ()
     //setCoreNice (100);
 
 
-    Serial.println ("Starting up Thread #1");
+    Serial.println ("Starting up Thread #1 loop");
     
     while (1)
     {
 
-        setColor (168, 52);
+        setColor (9, 0);
         hideCursor ();
+
+        snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
         
-        ScrollText (5, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1);
+        ScrollText (5, 10, &nIndex, &nOffset, nNumberDigits, szMessage, strlen (szMessage));
 
         showCursor ();
         resetColor ();
@@ -291,7 +316,7 @@ void Thread2 ()
 {
     size_t nValue = 100;
 
-    static char szMessage [] = "Thread #2 - CorePartition is for Small processors as well";
+    static char szMessage [] = "#2 - CorePartition is for Small processors as well";
      
     static int nNumberDigits = 8;
 
@@ -303,12 +328,12 @@ void Thread2 ()
     //setCoreNice (100);
 
 
-    Serial.println ("Starting up Thread #1");
+    Serial.println ("Starting up Thread #2 loop");
     
     while (1)
     {
 
-        setColor (46, 22);
+        setColor (10, 0);
         hideCursor ();
         
         ScrollText (15, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1);
@@ -327,7 +352,7 @@ void Thread3 ()
 {
     size_t nValue = 100;
 
-    static char szMessage [] = "Thread #3 - Works on Windows, Mac and Linux";
+    static char szMessage [] = "#3 - Works on Windows, Mac and Linux, AVR, ESP, ARM, ARDUINO.";
      
     static int nNumberDigits = 10;
 
@@ -339,12 +364,12 @@ void Thread3 ()
     //setCoreNice (100);
 
 
-    Serial.println ("Starting up Thread #1");
+    Serial.println ("Starting up Thread #3 loop");
     
     while (1)
     {
 
-        setColor (27, 17);
+        reverseColor ();
         hideCursor ();
         
         ScrollText (25, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1);
@@ -374,8 +399,10 @@ static void sleepTick (uint64_t nSleepTime)
 void setup()
 {
     //Initialize serial and wait for port to open:
-    Serial.begin(115200);
+    Serial.begin(230400);
 
+    clearConsole ();
+    
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
     Serial.println ("");
@@ -399,6 +426,7 @@ void setup()
 
 
     //Thread1 ();
+
 
     CorePartition_Start(3);
     
