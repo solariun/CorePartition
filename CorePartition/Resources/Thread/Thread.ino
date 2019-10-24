@@ -114,76 +114,64 @@ const int byteImagesLen = sizeof(byteImages)/8;
 
 void setLocation (uint16_t nY, uint16_t nX)
 {
+    byte szTemp [10];
+    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uf", nY, nX);
+
+    Serial.write (szTemp, nLen);
+    
     //Serial.flush ();
-    
-    Serial.print ("\033[");
-    Serial.print (nY);
-    Serial.print (";");
-    Serial.print (nX);
-    Serial.print ("f");
-    
-    Serial.flush ();
+    //Serial.print ("\033[");
+    //Serial.print (nY);
+    //Serial.print (";");
+    //Serial.print (nX);
+    //Serial.print ("f");
 }
 
 
 //workis with 256 colors
 void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
-    Serial.flush ();
+    byte szTemp [10];
+    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
 
-    Serial.print ("\033[");
-    Serial.print ("38;5;");
-    Serial.print (nFgColor);
-    Serial.print ("m");
-
-    Serial.flush ();
-
-    Serial.print ("\033[");
-    Serial.print ("48;5;");
-    Serial.print (nBgColor);
-    Serial.print ("m");
-
-    Serial.flush ();
+    Serial.write (szTemp, nLen);
+    
+    //Serial.flush ();
+    //Serial.print ("\033[1;");
+    //Serial.print (nFgColor + 30);
+    //Serial.print (";");
+    //Serial.print (nBgColor + 40);
+    //Serial.print ("m");
 }
 
 
 void resetColor ()
 {
-    Serial.flush ();
     Serial.print ("\033[0m");
-    Serial.flush ();
 }
 
 
 void hideCursor ()
 {
-    Serial.flush ();
     Serial.print ("\033[?25l");
-    Serial.flush ();
 }
 
 
 void showCursor ()
 {
-    Serial.flush ();
     Serial.print ("\033[?25h");
-    Serial.flush ();
 }
 
 
 void clearConsole ()
 {
-    Serial.flush ();
-    Serial.print ("\033[2J");
-    Serial.flush ();  
+    Serial.print ("\033[2J"); 
 }
 
 
 void reverseColor ()
 {
-    Serial.flush ();
-    Serial.print ("\033[7m");
-    Serial.flush ();   
+    Serial.print ("\033[7m");   
 }
 
 
@@ -214,8 +202,8 @@ void PrintRow (uint16_t nLocY, uint16_t nLocX, uint8_t nRowIndex, uint8_t nRow)
        nRow >>= 1;
     }
 
-    setLocation (nLocY + nRowIndex, nLocX); 
-    Serial.println (nLine);
+    setLocation (nLocY + nRowIndex, nLocX);
+    Serial.print (nLine);
 }
 
 
@@ -255,10 +243,11 @@ uint64_t getLetter (int nIndex, const char* pszMessage, uint16_t nMessageLen)
 }
 
 
-void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nNumberDigits, const char* pszMessage, const uint16_t nMessageLen)
+void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nNumberDigits, const char* pszMessage, const uint16_t nMessageLen, uint8_t nSpeed)
 {
     uint8_t nCount; 
    
+    if (nSpeed % 8 == 0) nSpeed++;
     
     do
     { 
@@ -270,7 +259,7 @@ void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nN
       }
       else
       {
-          *nOffset = (int) *nOffset + 1;
+          *nOffset = (int) *nOffset + (nSpeed  % 8);
       }
     } while (*nOffset >= 7);
 
@@ -278,11 +267,11 @@ void ScrollText (int nLocY, int nLocX, int* nIndex, uint8_t* nOffset, uint8_t nN
     for (nCount=0; nCount < nNumberDigits; nCount++)
     {   
         printScrollBytes (nLocY, nLocX + (nCount * 8), getLetter(*nIndex + 1, pszMessage, nMessageLen), getLetter(*nIndex, pszMessage, nMessageLen), (uint8_t) *nOffset);
-    
+      
         *nIndex =  (int) *nIndex + 1;
     }   
       
-     *nIndex = (int) *nIndex - (nCount-1);
+     *nIndex = (int) *nIndex - (nCount - (nSpeed / 8));
  
 }
 
@@ -305,25 +294,25 @@ void Thread1 ()
 
     //setCoreNice (100);
 
-
+    Serial.println();
     Serial.println ("Starting up Thread #1 loop");
     
     while (1)
     {
 
-        setColor (9, 17);
+        setColor (1, 0);
         hideCursor ();
-
-        snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
         
-        ScrollText (5, 10, &nIndex, &nOffset, nNumberDigits, szMessage, strlen (szMessage));
+        snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
+
+        ScrollText (5, 10, &nIndex, &nOffset, nNumberDigits, szMessage, strlen (szMessage), 8);
 
         showCursor ();
         resetColor ();
+
         
-        Serial.flush();
-        
-      yield ();
+        yield ();
+        Serial.flush ();
     }
 }
 
@@ -345,23 +334,22 @@ void Thread2 ()
 
     //setCoreNice (100);
 
-
+    Serial.println();
     Serial.println ("Starting up Thread #2 loop");
     
     while (1)
     {
 
-        setColor (10, 17);
+        setColor (4, 0);
         hideCursor ();
         
-        ScrollText (15, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1);
+        ScrollText (15, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1,12);
 
         showCursor ();
         resetColor ();
-        
-        Serial.flush();
-        
-      yield ();
+
+        yield ();
+        Serial.flush ();
     }
 }
 
@@ -381,7 +369,7 @@ void Thread3 ()
 
     //setCoreNice (100);
 
-
+    Serial.println();
     Serial.println ("Starting up Thread #3 loop");
     
     while (1)
@@ -390,14 +378,13 @@ void Thread3 ()
         reverseColor ();
         hideCursor ();
         
-        ScrollText (25, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1);
+        ScrollText (25, 10, &nIndex, &nOffset, nNumberDigits, szMessage, sizeof (szMessage) - 1, 4);
 
         showCursor ();
         resetColor ();
-        
-        Serial.flush();
-        
-      yield ();
+
+        yield ();
+        Serial.flush ();
     }
 }
 
@@ -417,8 +404,12 @@ static void sleepTick (uint64_t nSleepTime)
 void setup()
 {
     //Initialize serial and wait for port to open:
-    Serial.begin(115200);
+    Serial.begin(230400);
 
+   while (!Serial);
+
+    delay (1000);
+   
     setLocation (1,1);
     resetColor ();
     clearConsole ();
@@ -429,7 +420,7 @@ void setup()
     
     Serial.println ("Starting up Thread...."); Serial.flush();Serial.flush();
 
-    delay (1000);
+
     
     //pinMode (2, OUTPUT);
     //pinMode (3, OUTPUT);
@@ -450,8 +441,8 @@ void setup()
 
     CorePartition_Start(3);
     
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
+    //CorePartition_SetCurrentTimeInterface(getTimeTick);
+    //CorePartition_SetSleepTimeInterface(sleepTick);
 
     CreatePartition(Thread1, 150, 0);
     
