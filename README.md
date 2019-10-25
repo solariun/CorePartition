@@ -84,3 +84,4 @@ Please note it is not a regular thread, even though it behaves like one, it is a
 Since it uses the directive yield(), it will create an advantage using oficial arduino boards. The oficial code uses the yield() directive inside every I/O blockings and sleep procedures. Arduino implements a  null  yeld  using a week function definition, which means, it will be override by this CorePartitioning nano microlib technology, allowing arduino to run, almost, without the need of using the yield() directive that will continue to be available. Some ports of arduino framework may or not call the yield() inside their I/O and Sleep functions, but in case they do, it will make your project even more portable and feeling like preemptive cores.
 
 This thread is HIGHLY SUITABLE for small arduinos like NANO (Works like magic) and ATTINY85
+
