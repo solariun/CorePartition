@@ -127,14 +127,7 @@ int main(int argc, const char * argv[])
 {
     uint64_t nValue = 0x00000000000000ffLL;
     int nCount = 0;
-    
-    for (nCount=0; nCount < 8; nCount++)
-    {
-        printf ("Byte: %u, value: [%u]\n", nCount, ((uint8_t*) &nValue)[nCount] );
-    }
-    
-    _exit (0);
-    
+
     
     CorePartition_Start(3);
     

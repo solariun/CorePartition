@@ -31,6 +31,7 @@
 		6719C16A22DBDFF3006F87F5 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		6719C17422DBE2DD006F87F5 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		67627CF023629F0C0037E3F0 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		67627CF12362A1A60037E3F0 /* License.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = License.png; sourceTree = "<group>"; };
 		67CC273C2321622100868605 /* CorePartition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CorePartition.h; sourceTree = "<group>"; };
 		67CC273D2321622200868605 /* CorePartition.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CorePartition.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -49,6 +50,7 @@
 		6719C15E22DBDFF3006F87F5 = {
 			isa = PBXGroup;
 			children = (
+				67627CF12362A1A60037E3F0 /* License.png */,
 				67627CF023629F0C0037E3F0 /* LICENSE */,
 				6719C17422DBE2DD006F87F5 /* README.md */,
 				6719C16922DBDFF3006F87F5 /* CorePartition */,

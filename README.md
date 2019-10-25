@@ -2,6 +2,8 @@
 
 Version 2.2
 
+![License information](https://raw.githubusercontent.com/solariun/CorePartition/master/License.png)
+
 Partitioning a CORE into several Threads with a fast schedule that can be specialised using Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to replace pthread for a more controled execution envirionment. 
 
 HIGHLY suitable for Arduino (All official models included) as well, a .ino project is also provided with an example.
