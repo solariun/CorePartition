@@ -26,25 +26,28 @@ STM32F103 (Bluepill)
 MEGA2506 
 MEGA1260
 
+I2C chain connections
+ISP chain connections 
 
 OSX
 Linux
 Linux PI Zero, 1, 3 
-STM32F1
+
 
 This is how to use it 
 
-
+```
 int main ()
 {
 
-ThreadLight_Start(2);   
-CreatePartition(Thread1, 210);
-CreatePartition(Thread2, 220);
+    ThreadLight_Start(2);
+    
+    CreatePartition(Thread1, 210, 100);
+    CreatePartition(Thread2, 220, 10);
 
-join();
+    join();
 }
-
+```
 
 inside your partitioned program (function) use the directive yield() to let the nano microkernel process next thread.
 
