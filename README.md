@@ -37,13 +37,37 @@ Linux PI Zero, 1, 3
 This is how to use it 
 
 ```
+void Thread1()
+{
+    int nValue = 100;
+    
+    while (1)
+    {
+        printf ("Thread1: Value [%d]\n", nValue++);
+    }
+}
+
+void Thread2()
+{
+    int nValue = 1000;
+
+    while (1)
+    {
+        printf ("Thread2: Value [%d]\n", nValue++);
+    }
+}
+
+
 int main ()
 {
 
     ThreadLight_Start(2);
     
-    CreatePartition(Thread1, 210, 100);
-    CreatePartition(Thread2, 220, 10);
+    //Every 1000 cycles
+    CreatePartition(Thread1, 210, 1000);
+    
+    //All the time
+    CreatePartition(Thread2, 220, 0);
 
     join();
 }
