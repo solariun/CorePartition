@@ -44,6 +44,8 @@ void Thread1()
     while (1)
     {
         printf ("Thread1: Value [%d]\n", nValue++);
+        
+        yield();
     }
 }
 
@@ -54,6 +56,8 @@ void Thread2()
     while (1)
     {
         printf ("Thread2: Value [%d]\n", nValue++);
+        
+        yield();
     }
 }
 
@@ -63,11 +67,11 @@ int main ()
 
     ThreadLight_Start(2);
     
-    //Every 1000 cycles
+    //Every 1000 cycles with a Stack page of 210 bytes
     CreatePartition(Thread1, 210, 1000);
     
-    //All the time
-    CreatePartition(Thread2, 220, 0);
+    //All the time with a Stack page of 150 bytes
+    CreatePartition(Thread2, 150, 0);
 
     join();
 }
