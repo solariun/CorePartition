@@ -56,9 +56,9 @@ extern "C"{
     uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
     uint8_t CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
 
-    void join (void);
-    
-    void yield(void);
+    void CorePartition_Join (void);
+       
+    void CorePartition_Yield(void);
     
     size_t CorePartition_GetPartitionID(void);
     

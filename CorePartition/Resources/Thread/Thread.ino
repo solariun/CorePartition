@@ -250,7 +250,7 @@ void Delay (uint64_t nSleep)
     //delay (nSleep); return;
     
     do {
-        yield();
+        CorePartition_Yield();
     } while ((millis() - nMomentum ) <  nSleep);    
 }
 
@@ -334,7 +334,7 @@ void Thread1 ()
         resetColor ();
 
         
-        yield ();
+        CorePartition_Yield ();
         Serial.flush ();
     }
 }
@@ -371,7 +371,7 @@ void Thread2 ()
         showCursor ();
         resetColor ();
 
-        yield ();
+        CorePartition_Yield ();
         Serial.flush ();
     }
 }
@@ -406,7 +406,7 @@ void Thread3 ()
         showCursor ();
         resetColor ();
 
-        yield ();
+        CorePartition_Yield ();
         Serial.flush ();
     }
 }
@@ -456,7 +456,7 @@ void setup()
 
 
     //pinMode(nPinInput, INPUT_PULLUP);
-    //attachInterrupt(digitalPinToInterrupt(nPinInput), YieldPreemptive, CHANGE);
+    //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
 
 
     //Thread1 ();
@@ -464,8 +464,8 @@ void setup()
 
     CorePartition_Start(3);
     
-    //CorePartition_SetCurrentTimeInterface(getTimeTick);
-    //CorePartition_SetSleepTimeInterface(sleepTick);
+    CorePartition_SetCurrentTimeInterface(getTimeTick);
+    CorePartition_SetSleepTimeInterface(sleepTick);
 
     CreatePartition(Thread1, 150, 0);
     
@@ -479,5 +479,5 @@ void setup()
 
 void loop()
 {
-    join();
+    CorePartition_Join();
 }

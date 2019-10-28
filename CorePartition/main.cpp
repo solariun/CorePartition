@@ -58,7 +58,7 @@ void Sleep (uint64_t nSleep)
     
     do {
         //sleepUseconds (100000);
-        yield();
+        CorePartition_Yield();
     } while ((getMiliseconds() - nMomentum) < nSleep);
 }
 
@@ -71,7 +71,7 @@ void Thread1 ()
     while (1)
     {
         printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetPartitionID(), nValue++, CorePartition_GetThreadStructSize(), CorePartition_GetPartitionAllocatedMemorySize());
-        yield (); //Sleep (10);
+        CorePartition_Yield (); //Sleep (10);
     }
 }
 
@@ -86,7 +86,7 @@ void Thread2 ()
     {
         printf ("** %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
         
-        yield(); //Sleep (10);
+        CorePartition_Yield(); //Sleep (10);
     }
 }
 
@@ -102,7 +102,7 @@ void Thread3 ()
     {
         printf ("## %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
         
-        yield(); //Sleep (10);
+        CorePartition_Yield(); //Sleep (10);
         
     }
 }
@@ -138,7 +138,7 @@ int main(int argc, const char * argv[])
     CreatePartition(Thread2, 256, 1000);
     CreatePartition(Thread3, 256, 2000);
     
-    join();
+    CorePartition_Join();
     
     
     return 0;

@@ -189,6 +189,70 @@ static const uint64_t byteImages[] PROGMEM = {
 
 LedControl lc=LedControl(DIN,CLK,CS,2);
 
+
+void setLocation (uint16_t nY, uint16_t nX)
+{
+    byte szTemp [10];
+    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uf", nY, nX);
+
+    Serial.write (szTemp, nLen);
+    
+    //Serial.flush ();
+    //Serial.print ("\033[");
+    //Serial.print (nY);
+    //Serial.print (";");
+    //Serial.print (nX);
+    //Serial.print ("f");
+}
+
+
+//workis with 256 colors
+void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+{
+    byte szTemp [10];
+    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
+
+    Serial.write (szTemp, nLen);
+    
+    //Serial.flush ();
+    //Serial.print ("\033[1;");
+    //Serial.print (nFgColor + 30);
+    //Serial.print (";");
+    //Serial.print (nBgColor + 40);
+    //Serial.print ("m");
+}
+
+
+void resetColor ()
+{
+    Serial.print ("\033[0m");
+}
+
+
+void hideCursor ()
+{
+    Serial.print ("\033[?25l");
+}
+
+
+void showCursor ()
+{
+    Serial.print ("\033[?25h");
+}
+
+
+void clearConsole ()
+{
+    Serial.print ("\033[2J"); 
+}
+
+
+void reverseColor ()
+{
+    Serial.print ("\033[7m");   
+}
+
+
 void printByte(byte character [])
 {
   int i = 0;
@@ -197,10 +261,6 @@ void printByte(byte character [])
     lc.setColumn(0,i,character[i]);
   }
 }
-
-
-
-
 
 void printScrollBytes(uint8_t nDevice, uint64_t charLeft, uint64_t charRight, uint8_t nOffset)
 {
@@ -220,7 +280,7 @@ void Delay (uint64_t nSleep)
     //delay (nSleep); return;
     
     do {
-        yield();
+        CorePartition_Yield();
     } while ((millis() - nMomentum ) <  nSleep);    
 }
 
@@ -291,7 +351,7 @@ void Thread1 ()
           
         //digitalWrite (2, LOW);
         //Delay (2000);
-        yield ();
+        CorePartition_Yield ();
         //digitalWrite (2, HIGH);
     }
 }
@@ -371,7 +431,7 @@ void Thread2 ()
   
         //digitalWrite (3, LOW);
         //Delay (1000);
-        yield ();
+        CorePartition_Yield ();
         //digitalWrite (3, HIGH);
         
     }
@@ -404,7 +464,7 @@ void Thread3 ()
                     
         //digitalWrite (4, LOW);
         //Delay (500);
-        yield ();
+        CorePartition_Yield ();
         //digitalWrite (4, HIGH);
     }
 }
@@ -426,7 +486,7 @@ void setup()
     bool status; 
     
     //Initialize serial and wait for port to open:
-    Serial.begin(115200);
+    Serial.begin(230400);
 
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
@@ -454,7 +514,8 @@ void setup()
     lc.clearDisplay(1);         // and clear the display
 
     delay (1000);
-    
+
+    hideCursor ();
     //pinMode (2, OUTPUT);
     //pinMode (3, OUTPUT);
     //pinMode (4, OUTPUT);
@@ -465,7 +526,7 @@ void setup()
     
 
     //pinMode(nPinInput, INPUT_PULLUP);
-    //attachInterrupt(digitalPinToInterrupt(nPinInput), YieldPreemptive, CHANGE);
+    //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
 
     CorePartition_Start(3);
     
@@ -483,5 +544,5 @@ void setup()
 
 void loop()
 {
-    join();
+    CorePartition_Join();
 }

@@ -247,7 +247,7 @@ static inline size_t Scheduler ()
 
 
 
-void join ()
+void CorePartition_Join ()
 {
     if (nThreadCount == 0) return;
 
@@ -297,7 +297,7 @@ void join ()
 
 //void yield() __attribute__ ((noinline));
 
-void yield()
+void CorePartition_Yield ()
 {
     
     if (nThreadCount == 0) return;
