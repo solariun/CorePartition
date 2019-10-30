@@ -98,7 +98,9 @@ Since it uses the directive yield(), it will create an advantage using oficial a
 This thread is HIGHLY SUITABLE for small arduinos like NANO (Works like magic) and ATTINY85
 
 ATmega238p with Thermal cam (I2C) and 2 DotMatrix 8x8 ISP chained. 3 threads 1: reading cam, 2: showing cam, 3-Text Scroller
+
 ![GIF-2019-10-15-22-17-50](https://user-images.githubusercontent.com/1805792/66883029-7812a280-ef9a-11e9-9a61-f04ce62eb25f.gif)
 
 ATTiny with 4 threads at 1Mhz
+
 ![regift](https://user-images.githubusercontent.com/1805792/67900756-1dae4000-fb5d-11e9-9cc4-b648c7680208.gif)
