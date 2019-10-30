@@ -1,11 +1,4 @@
 ///
-/// @mainpage  Threaduino
-///
-/// @details  Description of the project  
-/// @n
-/// @n
-/// @n @a   Developed with [embedXcode+](https://embedXcode.weebly.com)
-///
 /// @author   GUSTAVO CAMPOS
 /// @author   GUSTAVO CAMPOS
 /// @date   28/05/2019 19:44
@@ -38,27 +31,6 @@
 //your programs, too.
 //
 // See LICENSE file for the complete information
-
-
-
-///
-/// @file   Threaduino.ino
-/// @brief    Main sketch
-///
-/// @details  <#details#>
-/// @n @a   Developed with [embedXcode+](https://embedXcode.weebly.com)
-///
-/// @author   GUSTAVO CAMPOS
-/// @author   GUSTAVO CAMPOS
-/// @date   28/05/2019 19:44
-/// @version  <#version#>
-///
-/// @copyright  (c) GUSTAVO CAMPOS, 2019
-/// @copyright  Licence
-///
-/// @see    ReadMe.txt for references
-/// @n
-///
 
 
 

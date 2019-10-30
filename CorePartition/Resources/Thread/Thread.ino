@@ -1,11 +1,14 @@
-
-//
-//  Thread.ino
-//  CorePartition Arduini example
-//
-//  Created by GUSTAVO CAMPOS on 14/07/2019.
-//  Copyright © 2019 GUSTAVO CAMPOS. All rights reserved.
-//
+///
+/// @author   GUSTAVO CAMPOS
+/// @author   GUSTAVO CAMPOS
+/// @date   28/05/2019 19:44
+/// @version  <#version#>
+///
+/// @copyright  (c) GUSTAVO CAMPOS, 2019
+/// @copyright  Licence
+///
+/// @see    ReadMe.txt for references
+///
 //               GNU GENERAL PUBLIC LICENSE
 //                Version 3, 29 June 2007
 //
@@ -28,6 +31,7 @@
 //your programs, too.
 //
 // See LICENSE file for the complete information
+
 
 
 
