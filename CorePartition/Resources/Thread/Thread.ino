@@ -380,7 +380,7 @@ void setup()
 
     //pinMode(nPinInput, INPUT_PULLUP);
     //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
-
+  
 
     //Thread1 ();
 

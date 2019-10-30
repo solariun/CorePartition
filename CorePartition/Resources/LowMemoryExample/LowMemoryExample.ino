@@ -141,17 +141,14 @@ void Thread2 ()
           Serial.print (nValue++);
           Serial.print (", Sleep Time: ");
           Serial.print (millis() - start);  start = millis();
-          Serial.print (" millis");
-          Serial.print (", StackSize: ");
-          Serial.print (CorePartition_GetPartitionStackSize());
           Serial.print (", Nice: ");
           Serial.print (CorePartition_GetCoreNice());
-          Serial.print (", struct Size: [");
+          Serial.print (", CTX: [");
           Serial.print (CorePartition_GetThreadStructSize ());
-          Serial.print ("] bytes, Core Mem: [");
-          Serial.print (CorePartition_GetPartitionUsedMemorySize ());
-          Serial.print (" from ");
-          Serial.print (CorePartition_GetPartitionAllocatedMemorySize ());
+          Serial.print ("] bytes, Stack (used/max): [");
+          Serial.print (CorePartition_GetPartitionStackSize ());
+          Serial.print ("/");
+          Serial.print (CorePartition_GetPartitionMaxStackSize ());
           Serial.println ("]\n");
       
  
@@ -235,138 +232,6 @@ void Thread5 ()
 
 
 
-void Thread6 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 9000;
-    
-    while (1)
-    {
-        Serial.print ("\e[16;10H\e[K>> Thread");
-        Serial.print (CorePartition_GetPartitionID()+1);
-        Serial.print (": ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-
-void Thread7 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 300;
-    
-    while (1)
-    {
-        Serial.print ("\e[18;10H\e[K>> Thread");
-        Serial.print (CorePartition_GetPartitionID()+1);
-        Serial.print (": ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-
-
-void Thread8 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 50;
-    
-    while (1)
-    {
-        Serial.print ("\e[20;10H\e[K>> Thread");
-        Serial.print (CorePartition_GetPartitionID()+1);
-        Serial.print (": ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-
-void Thread9 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 10000;
-    
-    while (1)
-    {
-        Serial.print ("\e[22;10H\e[K>> Thread");
-        Serial.print (CorePartition_GetPartitionID()+1);
-        Serial.print (": ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-
-
-void Thread10 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 20000;
-    
-    while (1)
-    {
-        Serial.print ("\e[24;10H\e[K>> Thread");
-        Serial.print (CorePartition_GetPartitionID()+1);
-        Serial.print (": ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-
 static uint64_t getTimeTick()
 {
    return (uint64_t) millis();
@@ -383,12 +248,12 @@ void setup()
     bool status; 
     
     //Initialize serial and wait for port to open:
-    Serial.begin(230400);
+    Serial.begin(115200);
 
     resetColor ();
     clearConsole ();
     hideCursor ();
-
+    setLocation (1,1);
 
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
@@ -397,7 +262,7 @@ void setup()
     Serial.println ("Starting up Thread...."); Serial.flush();Serial.flush();
 
     
-    CorePartition_Start (6);
+    CorePartition_Start (5);
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
@@ -411,12 +276,6 @@ void setup()
     CreatePartition(Thread4, 40, 200);
     
     CreatePartition(Thread5, 40, 50);
-
-    CreatePartition(Thread6, 40, 530);
-
-    //CreatePartition(Thread7, 40, 2000);
-
-    //CreatePartition(Thread8, 40, 569);
 
 }
 
