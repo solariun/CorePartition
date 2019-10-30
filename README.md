@@ -17,21 +17,33 @@ Be AWARE comes with no warrant or guarantees, since I still have a limited numbe
 Tested at:
 
 ESP8266 8 different boars including ESP-01
+
 Arduino Nano (avr 328p)
+Arduino Nano (avr 168) -> Thread.ino must have 2 threads due to memory
+Arduino Nano (avr 168p) -> Thread.ino must have 2 threads due to memory
+
+ATTiny85 (1Mhz / 512 bytes ram / 8K rom) -> Use BlinkThread.ino for testing
+
 Sparkfun micro pro (Atmel32u4)
+
 Arduino DUE (Arm m3)
+
 Arduino MK ZERO (arm m0)
+
 Arduino Genuino zero
+
 STM32F103 (Bluepill)
+
 MEGA2506 
+
 MEGA1260
 
-I2C chain connections
-ISP chain connections 
+testes with I2C chain connections
+tested with ISP chain connections 
 
-OSX
-Linux
-Linux PI Zero, 1, 3 
+tested and developed at OSX
+tested at Linux
+tested at Linux PI Zero, 1, 3 
 
 
 This is how to use it 
