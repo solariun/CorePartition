@@ -70,7 +70,7 @@ void Thread1 ()
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetPartitionID(), nValue++, CorePartition_GetThreadStructSize(), CorePartition_GetPartitionAllocatedMemorySize());
+        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue++, CorePartition_GetThreadStructSize(), CorePartition_GetAllocatedMemorySize());
         CorePartition_Yield (); //Sleep (10);
     }
 }
@@ -84,7 +84,7 @@ void Thread2 ()
     
     while (1)
     {
-        printf ("** %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
+        printf ("** %lu:  Value: [%u]\n", CorePartition_GetID(), nValue++);
         
         CorePartition_Yield(); //Sleep (10);
     }
@@ -100,7 +100,7 @@ void Thread3 ()
     
     while (1)
     {
-        printf ("## %lu:  Value: [%u]\n", CorePartition_GetPartitionID(), nValue++);
+        printf ("## %lu:  Value: [%u]\n", CorePartition_GetID(), nValue++);
         
         CorePartition_Yield(); //Sleep (10);
         

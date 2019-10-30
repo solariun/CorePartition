@@ -115,7 +115,7 @@ void Thread1 ()
           Serial.print (", Sleep Time: ");                 
           Serial.print (millis() - start); 
           Serial.print (", ");
-          Serial.print (CorePartition_GetCoreNice ());
+          Serial.print (CorePartition_GetNice ());
           Serial.println ("\n");
   
           Serial.flush();
@@ -142,13 +142,13 @@ void Thread2 ()
           Serial.print (", Sleep Time: ");
           Serial.print (millis() - start);  start = millis();
           Serial.print (", Nice: ");
-          Serial.print (CorePartition_GetCoreNice());
+          Serial.print (CorePartition_GetNice());
           Serial.print (", CTX: [");
           Serial.print (CorePartition_GetThreadStructSize ());
           Serial.print ("] bytes, Stack (used/max): [");
-          Serial.print (CorePartition_GetPartitionStackSize ());
+          Serial.print (CorePartition_GetStackSize ());
           Serial.print ("/");
-          Serial.print (CorePartition_GetPartitionMaxStackSize ());
+          Serial.print (CorePartition_GetMaxStackSize ());
           Serial.println ("]\n");
       
  
@@ -171,7 +171,7 @@ void Thread3 ()
         Serial.print (", Sleep Time: ");
         Serial.print (millis() - start);  //start = millis();
         Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
+        Serial.print (CorePartition_GetNice());
         Serial.println ("\n");
 
         Serial.flush ();
@@ -195,7 +195,7 @@ void Thread4 ()
         Serial.print (", Sleep Time: ");
         Serial.print (millis() - start);  //start = millis();
         Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
+        Serial.print (CorePartition_GetNice());
         Serial.println ("\n");
 
         Serial.flush ();
@@ -214,13 +214,13 @@ void Thread5 ()
     while (1)
     {
         Serial.print ("\e[14;10H\e[K>> Thread");
-        Serial.print (CorePartition_GetPartitionID()+1);
+        Serial.print (CorePartition_GetID()+1);
         Serial.print (": ");
         Serial.print (nValue++);
         Serial.print (", Sleep Time: ");
         Serial.print (millis() - start);  //start = millis();
         Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
+        Serial.print (CorePartition_GetNice());
         Serial.println ("\n");
 
         Serial.flush ();

@@ -329,32 +329,32 @@ void CorePartition_Yield ()
 }
 
 
-size_t CorePartition_GetPartitionID()
+size_t CorePartition_GetID()
 {
     return nCurrentThread;
 }
 
 
 
-size_t CorePartition_GetPartitionStackSize()
+size_t CorePartition_GetStackSize()
 {
     return pCurrentThread->nStackSize;
 }
 
-size_t CorePartition_GetPartitionMaxStackSize()
+size_t CorePartition_GetMaxStackSize()
 {
     return pCurrentThread->nStackMaxSize;
 }
 
 
-size_t CorePartition_GetPartitionAllocatedMemorySize(void)
+size_t CorePartition_GetAllocatedMemorySize(void)
 {
-    return CorePartition_GetThreadStructSize () + CorePartition_GetPartitionMaxStackSize ();
+    return CorePartition_GetThreadStructSize () + CorePartition_GetMaxStackSize ();
 }
 
-size_t CorePartition_GetPartitionUsedMemorySize(void)
+size_t CorePartition_GetUsedMemorySize(void)
 {
-    return CorePartition_GetThreadStructSize () + CorePartition_GetPartitionStackSize ();
+    return CorePartition_GetThreadStructSize () + CorePartition_GetStackSize ();
 }
 
 
@@ -364,7 +364,7 @@ size_t CorePartition_GetThreadStructSize(void)
 }
 
 
-bool CorePartition_IsAllCoresStarted(void)
+bool CorePartition_IsAllThreadsStarted(void)
 {
     return nStartedCores == nMaxThreads;
 }
@@ -376,13 +376,13 @@ bool CorePartition_IsCoreRunning(void)
 }
 
 
-uint32_t CorePartition_GetCoreNice()
+uint32_t CorePartition_GetNice()
 {
     return pCurrentThread->nNice;
 }
 
 
-void CorePartition_SetCoreNice (uint32_t nNice)
+void CorePartition_SetNice (uint32_t nNice)
 {
     pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
 }

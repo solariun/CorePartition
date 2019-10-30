@@ -295,7 +295,7 @@ void Thread1 ()
           Serial.print (", Sleep Time: ");                 
           Serial.print (millis() - start); 
           Serial.print (", ");
-          Serial.print (CorePartition_GetCoreNice ());
+          Serial.print (CorePartition_GetNice ());
           Serial.print (", nImagesItens [ ");
           Serial.print (nImagesItens);
           Serial.print ("]");
@@ -341,15 +341,15 @@ void Thread2 ()
           Serial.print (millis() - start);  start = millis();
           Serial.print (" millis");
           Serial.print (", StackSize: ");
-          Serial.print (CorePartition_GetPartitionStackSize());
+          Serial.print (CorePartition_GetStackSize());
           Serial.print (", Nice: ");
-          Serial.print (CorePartition_GetCoreNice());
+          Serial.print (CorePartition_GetNice());
           Serial.print (", struct Size: [");
           Serial.print (CorePartition_GetThreadStructSize ());
           Serial.print ("] bytes, Core Mem: [");
-          Serial.print (CorePartition_GetPartitionUsedMemorySize ());
+          Serial.print (CorePartition_GetUsedMemorySize ());
           Serial.print (" from ");
-          Serial.print (CorePartition_GetPartitionAllocatedMemorySize ());
+          Serial.print (CorePartition_GetAllocatedMemorySize ());
           Serial.println ("]\n");
       
           fMin = 1000, fMax = 0; 
@@ -403,7 +403,7 @@ void Thread3 ()
         Serial.print (", Sleep Time: ");
         Serial.print (millis() - start);  //start = millis();
         Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetCoreNice());
+        Serial.print (CorePartition_GetNice());
         Serial.println ("\n");
 
         Serial.flush ();

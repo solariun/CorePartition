@@ -54,7 +54,7 @@ void Delay (uint64_t nSleep)
 
 void Thread1 ()
 {
-    uint8_t nPin = CorePartition_GetPartitionID() + 1;
+    uint8_t nPin = CorePartition_GetID() + 1;
     
     pinMode (nPin, OUTPUT);
     

@@ -60,24 +60,24 @@ extern "C"{
        
     void CorePartition_Yield(void);
     
-    size_t CorePartition_GetPartitionID(void);
+    size_t CorePartition_GetID(void);
     
-    size_t CorePartition_GetPartitionStackSize(void);
-    size_t CorePartition_GetPartitionMaxStackSize(void);
+    size_t CorePartition_GetStackSize(void);
+    size_t CorePartition_GetMaxStackSize(void);
 
     
-    size_t CorePartition_GetPartitionUsedMemorySize(void);
-    size_t CorePartition_GetPartitionAllocatedMemorySize(void);
+    size_t CorePartition_GetUsedMemorySize(void);
+    size_t CorePartition_GetAllocatedMemorySize(void);
 
     size_t CorePartition_GetThreadStructSize (void);
 
     size_t CorePartition_GetThreadStructSize(void);
     
-    bool CorePartition_IsAllCoresStarted(void);
+    bool CorePartition_IsAllThreadsStarted(void);
         
-    uint32_t CorePartition_GetCoreNice(void);
+    uint32_t CorePartition_GetNice(void);
     
-    void CorePartition_SetCoreNice (uint32_t nNice);
+    void CorePartition_SetNice (uint32_t nNice);
     
 #ifdef __cplusplus
 } // extern "C"
