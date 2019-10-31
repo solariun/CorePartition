@@ -390,11 +390,11 @@ void setup()
     //CorePartition_SetCurrentTimeInterface(getTimeTick);
     //CorePartition_SetSleepTimeInterface(sleepTick);
 
-    CreatePartition(Thread1, 100, 0);
+    CreatePartition(Thread1, 80, 0);
 
-    CreatePartition(Thread2, 100, 0);
+    CreatePartition(Thread2, 80, 0);
 
-    CreatePartition(Thread3, 100, 0);
+    CreatePartition(Thread3, 80, 0);
 
 }
 

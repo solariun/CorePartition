@@ -101,119 +101,16 @@ void Delay (uint64_t nSleep)
 }
 
 
-
-void Thread1 ()
+void Thread ()
 {
     unsigned long start = millis();
-    size_t nValue = 100;
-
+    size_t nValue = 0;
     
     while (1)
     {
-          Serial.print ("\e[6;10H\e[K## Thread1: ");
-          Serial.print (nValue++);
-          Serial.print (", Sleep Time: ");                 
-          Serial.print (millis() - start); 
-          Serial.print (", ");
-          Serial.print (CorePartition_GetNice ());
-          Serial.println ("\n");
-  
-          Serial.flush();
-         
-          start = millis();
-
-        CorePartition_Yield ();
-    }
-}
-
-
-float fMin = 1000, fMax = 0; 
-
-
-void Thread2 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 2340000;
-    
-    while (1)
-    {          
-          Serial.print ("\e[8;10H\e[K++ Thread2: ");
-          Serial.print (nValue++);
-          Serial.print (", Sleep Time: ");
-          Serial.print (millis() - start);  start = millis();
-          Serial.print (", Nice: ");
-          Serial.print (CorePartition_GetNice());
-          Serial.print (", CTX: [");
-          Serial.print (CorePartition_GetThreadStructSize ());
-          Serial.print ("] bytes, Stack (used/max): [");
-          Serial.print (CorePartition_GetStackSize ());
-          Serial.print ("/");
-          Serial.print (CorePartition_GetMaxStackSize ());
-          Serial.println ("]\n");
-      
- 
-          Serial.flush();
-              
-        CorePartition_Yield ();
-    }
-}
-
-
-void Thread3 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 10000;
-    
-    while (1)
-    {
-        Serial.print ("\e[10;10H\e[K>> Thread3: ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-
-void Thread4 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 50000;
-    
-    while (1)
-    {
-        Serial.print ("\e[12;10H\e[K>> Thread4: ");
-        Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
-        Serial.print (CorePartition_GetNice());
-        Serial.println ("\n");
-
-        Serial.flush ();
-          
-        start = millis();
-        CorePartition_Yield ();
-    }
-}
-
-
-void Thread5 ()
-{
-    unsigned long start = millis();
-    size_t nValue = 30000;
-    
-    while (1)
-    {
-        Serial.print ("\e[14;10H\e[K>> Thread");
+        Serial.print ("\e[");
+        Serial.print ((CorePartition_GetID()*2) + 6);
+        Serial.print (";10H\e[K>> Thread");
         Serial.print (CorePartition_GetID()+1);
         Serial.print (": ");
         Serial.print (nValue++);
@@ -221,6 +118,12 @@ void Thread5 ()
         Serial.print (millis() - start);  //start = millis();
         Serial.print (", Nice: ");
         Serial.print (CorePartition_GetNice());
+        Serial.print (", CTX: ");
+        Serial.print (CorePartition_GetThreadStructSize ());
+        Serial.print ("b, Stack: ");
+        Serial.print (CorePartition_GetStackSize ());
+        Serial.print ("/");
+        Serial.print (CorePartition_GetMaxStackSize ());
         Serial.println ("\n");
 
         Serial.flush ();
@@ -262,20 +165,16 @@ void setup()
     Serial.println ("Starting up Thread...."); Serial.flush();Serial.flush();
 
     
-    CorePartition_Start (5);
+    CorePartition_Start (3);
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
 
-    CreatePartition(Thread1, 40, 500);
+    CreatePartition(Thread, 70, 612);
     
-    CreatePartition(Thread2, 40, 1000);
+    CreatePartition(Thread, 70, 1000);
 
-    CreatePartition(Thread3, 40, 812);
-
-    CreatePartition(Thread4, 40, 200);
-    
-    CreatePartition(Thread5, 40, 50);
+    CreatePartition(Thread, 70, 100);
 
 }
 

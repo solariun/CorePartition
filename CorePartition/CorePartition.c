@@ -250,12 +250,7 @@ static inline size_t Scheduler ()
 void CorePartition_Join ()
 {
     if (nThreadCount == 0) return;
-
-
-    
-    volatile uint8_t nValue = 0xAA;
-    pStartStck =  (void*) &nValue;
-    
+ 
     do
     {
         pCurrentThread = &pThreadLight [nCurrentThread];
@@ -267,13 +262,17 @@ void CorePartition_Join ()
             if (setjmp(jmpJoinPointer) == 0) switch (pCurrentThread->nStatus)
             {
                 case THREADL_START:
-                
+
                     pCurrentThread->nStatus = THREADL_RUNNING;
                     
                     nStartedCores++;
                     
-                    pCurrentThread->pFunction ();
-                    
+                    {                    
+                        volatile uint8_t nValue = 0xAA;
+                        pStartStck =  (void*) &nValue;
+                      
+                        pCurrentThread->pFunction ();
+                    }
                     
                     pCurrentThread->nStatus = THREADL_STOPPED;
 
