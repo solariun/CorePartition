@@ -153,7 +153,7 @@ bool CorePartition_Start (size_t nThreadPartitions)
 
 
 
-bool CreatePartition (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice)
+bool CorePartition_CreateThread (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice)
 {
     if (nThreadCount >= nMaxThreads || pFunction == NULL) return false;
     

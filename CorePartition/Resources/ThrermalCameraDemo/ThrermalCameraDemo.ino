@@ -523,13 +523,13 @@ void setup()
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
 
-    CreatePartition(Thread1, 100, 50);
+    CorePartition_CreateThread (Thread1, 100, 50);
     
-    CreatePartition(Thread2, 100, 2);
+    CorePartition_CreateThread (Thread2, 100, 2);
 
-    CreatePartition(Thread3, 100, 4);
+    CorePartition_CreateThread (Thread3, 100, 4);
 
-    CreatePartition(Thread4, 100, 200);
+    CorePartition_CreateThread (Thread4, 100, 200);
 }
 
 

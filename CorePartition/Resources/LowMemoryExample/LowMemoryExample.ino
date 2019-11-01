@@ -170,11 +170,11 @@ void setup()
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
 
-    CreatePartition(Thread, 70, 612);
+    CorePartition_CreateThread (Thread, 70, 612);
     
-    CreatePartition(Thread, 70, 1000);
+    CorePartition_CreateThread (Thread, 70, 1000);
 
-    CreatePartition(Thread, 70, 100);
+    CorePartition_CreateThread (Thread, 70, 100);
 
 }
 
