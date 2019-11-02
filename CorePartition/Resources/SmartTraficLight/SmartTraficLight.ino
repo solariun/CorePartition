@@ -215,9 +215,52 @@ void ShowRunningThreads ()
     Serial.println ();
 }
 
+int GetPromptCommand (char * pszCommand, uint16_t nCommandSize)
+{
+    if (pszCommand == NULL || nCommandSize < 1)
+        return -1;
+    
+    while (CorePartition_Yield() || Serial)
+   {
+       Serial.print (F("\0A\033[0m"));
+
+       Serial.print ((int) nTime);
+       
+       Serial.print (F("\033[0m["));
+       
+       if (TraficLightData.boolRedLight == true)
+           Serial.print (F("\033[1;91m"));
+       else if (TraficLightData.boolYellowLight == true)
+           Serial.print (F("\033[1;93m"));
+       else if (TraficLightData.boolGreenLight == true)
+           Serial.print (F("\033[1;92m"));
+       
+       Serial.print (F("*\033[0m]"));
+       
+       Serial.print (F(": \033[92mTraficLigth \033[94m>\033[0m "));
+       Serial.print (pszCommand);
+       Serial.flush ();
+       
+       if (Serial.available () > 0)
+       {
+           while (Serial.available () > 0)
+           {
+               Serial.print ("Read: ");
+               Serial.println (Serial.read (), HEX);
+           }
+           
+           Serial.println ("----------");
+           Serial.flush ();
+
+       }
+   }
+}
+
+
+
 void TerminalHandler ()
 {
-    uint8_t nLineBuffer [81];
+    char pszLineBuffer [81];
     bool    boolPrintPrompt = true;
     
     setLocation(1,1);
@@ -228,35 +271,13 @@ void TerminalHandler ()
     Serial.println (F("By Gustavo Campos"));
     Serial.println ();
     
-    ShowRunningThreads ();
+    ShowRunningThreads (pszLineBuffer);
     
     Serial.flush ();
 
     while (CorePartition_Yield() || Serial)
     {   
-        if (Serial.available () > 0)
-        {
-
-
-            while (Serial.available () > 0)
-            {
-                Serial.print ("Read: ");
-                Serial.println (Serial.read (), HEX); 
-            }
-            
-            Serial.println ("----------");
-            Serial.flush ();
-
-            boolPrintPrompt = true;
-        }
-
-        if (boolPrintPrompt == true )
-        {
-            Serial.print (Serial.available ());
-            Serial.print (": \033[92mTraficLigth \033[94m>\033[0m ");
-            Serial.flush ();
-            boolPrintPrompt = false;
-        }
+        GetPromptCommand (pszLineBuffer, sizeof (pszLineBuffer));
     }
 }
 
@@ -283,9 +304,11 @@ void Terminal ()
 
 void TraficLightKernel ()
 {
+    float nFactor = (float) CorePartition_GetNice() / 1000;
+    
     while (CorePartition_Yield ())
     {
-        nTime += 0.25;
+        nTime += nFactor;
         
         if (TraficLightData.boolGreenLight == true)
         {
