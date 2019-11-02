@@ -33,6 +33,7 @@
 // See LICENSE file for the complete information
 
 
+#pragma noinline
 
 #include "CorePartition.h"
 
@@ -53,17 +54,18 @@ struct
     bool boolGreenLight = true;
     bool boolWalkerWait = true;
 
-    uint16_t nRedTime = 30;
-    uint16_t nYellowTime = 20;
-    uint16_t nGreenTime = 25;
+    uint16_t nRedTime = 10;
+    uint16_t nYellowTime = 6;
+    uint16_t nGreenTime = 10;
 
     uint16_t nNotifyAtTime=5;
     
 } TraficLightData;
 
+bool boolAction = false;
 float nTime = 0;
 
-void setLocation (uint16_t nY, uint16_t nX)
+void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
 {
     uint8_t szTemp [10];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
@@ -74,7 +76,7 @@ void setLocation (uint16_t nY, uint16_t nX)
 
 
 //workis with 256 colors
-void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
     byte szTemp [10];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
@@ -84,31 +86,31 @@ void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 }
 
 
-void resetColor ()
+void __attribute__ ((noinline)) resetColor ()
 {
     Serial.print (F("\033[0m"));
 }
 
 
-void hideCursor ()
+void __attribute__ ((noinline)) hideCursor ()
 {
     Serial.print (F("\033[?25l"));
 }
 
 
-void showCursor ()
+void __attribute__ ((noinline)) showCursor ()
 {
     Serial.print (F("\033[?25h"));
 }
 
 
-void clearConsole ()
+void __attribute__ ((noinline)) clearConsole ()
 {
     Serial.print (F("\033[2J")); 
 }
 
 
-void reverseColor ()
+void __attribute__ ((noinline)) reverseColor ()
 {
     Serial.print (F("\033[7m"));   
 }
@@ -195,7 +197,7 @@ void ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStk\Max"));
+    Serial.println (F("ID\tStatus\tNice\tStk/Max"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -215,71 +217,76 @@ void ShowRunningThreads ()
     Serial.println ();
 }
 
+
 int GetPromptCommand (char * pszCommand, uint16_t nCommandSize)
 {
+    char chChar;
+    bool boolRedraw = true;
+    uint16_t nStrLen = strlen (pszCommand);
+    
+    
     if (pszCommand == NULL || nCommandSize < 1)
         return -1;
     
     while (CorePartition_Yield() || Serial)
    {
-       Serial.print (F("\0A\033[0m"));
+       if (boolRedraw == true || boolAction == true)
+       {
+           hideCursor ();
+           Serial.print (F("\r\033[0m[\033["));
+           
+           Serial.print (TraficLightData.boolRedLight ? 91 :
+                         TraficLightData.boolYellowLight ? 93 :
+                         TraficLightData.boolGreenLight ? 92 : 0);
+           
+           Serial.print (F(";40m "));
 
-       Serial.print ((int) nTime);
-       
-       Serial.print (F("\033[0m["));
-       
-       if (TraficLightData.boolRedLight == true)
-           Serial.print (F("\033[1;91m"));
-       else if (TraficLightData.boolYellowLight == true)
-           Serial.print (F("\033[1;93m"));
-       else if (TraficLightData.boolGreenLight == true)
-           Serial.print (F("\033[1;92m"));
-       
-       Serial.print (F("*\033[0m]"));
-       
-       Serial.print (F(": \033[92mTraficLigth \033[94m>\033[0m "));
-       Serial.print (pszCommand);
-       Serial.flush ();
+           Serial.print (TraficLightData.boolRedLight ? F("RD") :
+                         TraficLightData.boolYellowLight ? F("YE") :
+                         TraficLightData.boolGreenLight ? F("GR") : F("--"));
+           
+           Serial.print (F(" \033[0m]\033[92mTraficLigth \033[94m>\033[0m "));
+           Serial.print (pszCommand);
+           showCursor ();
+           Serial.flush ();
+           
+           boolRedraw = false;
+           boolAction = false;
+       }
        
        if (Serial.available () > 0)
        {
            while (Serial.available () > 0)
            {
-               Serial.print ("Read: ");
-               Serial.println (Serial.read (), HEX);
+               chChar = Serial.read ();
+               
+               if (chChar == 0xD) return nStrLen;
+               
+               //Serial.print (F("Read: "));
+               //Serial.print (chChar, HEX);
+               //Serial.print (F(","));
+               //Serial.println (chChar, DEC);
+               
+               if (chChar == 0x8 && nStrLen > 0)
+               {
+                   Serial.print ((char) 8);
+                   Serial.print ((char) 32);
+                   Serial.print ((char) 8);
+                   nStrLen--;
+                   pszCommand [nStrLen] = 0;
+               }
+               else if ((chChar >= 32 && chChar <= 127) && nStrLen < nCommandSize)
+               {
+                   pszCommand [nStrLen++] = chChar;
+                   pszCommand [nStrLen] = 0;
+               }
+               
+               boolRedraw = true;
            }
-           
-           Serial.println ("----------");
-           Serial.flush ();
-
        }
    }
 }
 
-
-
-void TerminalHandler ()
-{
-    char pszLineBuffer [81];
-    bool    boolPrintPrompt = true;
-    
-    setLocation(1,1);
-    resetColor();
-    clearConsole ();
-    
-    Serial.println (F("Trafic Light Manager v1.0"));
-    Serial.println (F("By Gustavo Campos"));
-    Serial.println ();
-    
-    ShowRunningThreads (pszLineBuffer);
-    
-    Serial.flush ();
-
-    while (CorePartition_Yield() || Serial)
-    {   
-        GetPromptCommand (pszLineBuffer, sizeof (pszLineBuffer));
-    }
-}
 
 void Terminal ()
 {
@@ -290,15 +297,38 @@ void Terminal ()
     {
         if (Serial)
         {
-           TerminalHandler ();
+            char pszLineBuffer [81]= "show threads";
+            bool    boolPrintPrompt = true;
+            
+            setLocation(1,1);
+            resetColor();
+            clearConsole ();
+            
+            Serial.println (F("Trafic Light Manager v1.0"));
+            Serial.println (F("By Gustavo Campos"));
+            Serial.println ();
+            
+            ShowRunningThreads ();
+            
+            Serial.flush ();
+
+            while (CorePartition_Yield() || Serial)
+            {
+                GetPromptCommand (pszLineBuffer, sizeof (pszLineBuffer));
+                Serial.println ();
+                Serial.flush ();
+             
+                if (strcmp ("show threads", pszLineBuffer) == 0)
+                {
+                    ShowRunningThreads ();
+                }
+            }
         }
         else
         {
             Serial.println ("Turining Serial off...");
         }
     }
-
-    
 }
 
 
@@ -309,6 +339,8 @@ void TraficLightKernel ()
     while (CorePartition_Yield ())
     {
         nTime += nFactor;
+        
+       boolAction = false;
         
         if (TraficLightData.boolGreenLight == true)
         {
@@ -321,6 +353,7 @@ void TraficLightKernel ()
                 TraficLightData.boolWalkerWait = true;
                 
                 nTime=0;
+                boolAction = true;
             }
         }
         else if (TraficLightData.boolYellowLight == true)
@@ -332,6 +365,7 @@ void TraficLightKernel ()
                 TraficLightData.boolGreenLight = false;
                 
                 nTime=0;
+                boolAction = true;
             }
         }
         else if (TraficLightData.boolRedLight == true)
@@ -343,6 +377,7 @@ void TraficLightKernel ()
                 TraficLightData.boolGreenLight = true;
                 
                 nTime=0;
+                boolAction = true;
             }
         }
     }
@@ -368,7 +403,7 @@ void setup()
     bool status; 
 
     //Initialize serial and wait for port to open:
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     //Terminal ();
     //exit(0);
@@ -380,13 +415,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
 
 
-    CorePartition_CreateThread (TraficLight, 20, 50);
+    CorePartition_CreateThread (TraficLight, 20, 100);
     
     CorePartition_CreateThread (WalkerSign, 20, 500);
 
     CorePartition_CreateThread (TraficLightKernel, 100, 250);
     
-    CorePartition_CreateThread (Terminal, 100, 50);
+    CorePartition_CreateThread (Terminal, 200, 100);
 }
 
 
