@@ -70,8 +70,6 @@ extern "C"{
     size_t CorePartition_GetAllocatedMemorySize(void);
 
     size_t CorePartition_GetThreadStructSize (void);
-
-    size_t CorePartition_GetThreadStructSize(void);
     
     bool CorePartition_IsAllThreadsStarted(void);
         
@@ -79,6 +77,14 @@ extern "C"{
     
     void CorePartition_SetNice (uint32_t nNice);
     
+
+    size_t CorePartition_GetStackSizeByID (size_t nID);
+    size_t CorePartition_GetMaxStackSizeByID (size_t nID);
+    uint32_t CorePartition_GetNiceByID (size_t nID);
+    int CorePartition_GetStatusByID (size_t nID);
+
+    size_t CorePartition_GetNumberOfThreads(void);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

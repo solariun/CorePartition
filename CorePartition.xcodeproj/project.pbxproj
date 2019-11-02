@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0E3E1818234BE95900C031DA /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = 0E3E1817234BE95900C031DA /* makefile */; };
 		6719C16B22DBDFF3006F87F5 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6719C16A22DBDFF3006F87F5 /* main.cpp */; };
 		67CC273E2321622200868605 /* CorePartition.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC273D2321622200868605 /* CorePartition.c */; };
 /* End PBXBuildFile section */
@@ -137,7 +136,6 @@
 			files = (
 				6719C16B22DBDFF3006F87F5 /* main.cpp in Sources */,
 				67CC273E2321622200868605 /* CorePartition.c in Sources */,
-				0E3E1818234BE95900C031DA /* makefile in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

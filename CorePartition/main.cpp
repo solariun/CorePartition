@@ -124,11 +124,7 @@ static uint64_t getMsTicks(void)
 }
 
 int main(int argc, const char * argv[])
-{
-    uint64_t nValue = 0x00000000000000ffLL;
-    int nCount = 0;
-
-    
+{    
     CorePartition_Start(3);
     
     CorePartition_SetCurrentTimeInterface(getMsTicks);

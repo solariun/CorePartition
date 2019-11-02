@@ -53,13 +53,15 @@ struct
     bool boolGreenLight = true;
     bool boolWalkerWait = true;
 
-    uint16_t nRedTime = 60;
-    uint16_t nYellowTime = 25;
-    uint16_t nGreenTime = 70;
+    uint16_t nRedTime = 30;
+    uint16_t nYellowTime = 20;
+    uint16_t nGreenTime = 25;
 
-    uint16_t nNotifyAtTime=10;
+    uint16_t nNotifyAtTime=5;
+    
 } TraficLightData;
 
+float nTime = 0;
 
 void setLocation (uint16_t nY, uint16_t nX)
 {
@@ -143,19 +145,75 @@ void TraficLight ()
 
 void WalkerSign ()
 {
+    bool nBlink = true;
+    
     pinMode (TraficLightData.nWalkerWaitPin, OUTPUT);
     pinMode (TraficLightData.nWalkerGoPin, OUTPUT);
     
     while (CorePartition_Yield ())
     {
-        if (TraficLightData.boolGreenLight == true) 
-          digitalWrite (TraficLightData.nWalkerWaitPin, TraficLightData.boolWalkerWait ? HIGH : LOW);
-        if (TraficLightData.boolGreenLight == false) 
-          digitalWrite (TraficLightData.nWalkerGoPin, TraficLightData.boolWalkerWait ? LOW : HIGH);
+        if (TraficLightData.boolRedLight == true)
+        {
+            if (TraficLightData.nRedTime < TraficLightData.nNotifyAtTime
+                     || nTime >= (TraficLightData.nRedTime - TraficLightData.nNotifyAtTime))
+            {
+                nBlink ^= 1;
+            }
+            else
+            {
+                nBlink = HIGH;
+            }
+            
+            digitalWrite (TraficLightData.nWalkerWaitPin, LOW);
+            digitalWrite (TraficLightData.nWalkerGoPin, nBlink);
+        }
+        else
+        {
+            if (TraficLightData.boolYellowLight == true &&
+                (TraficLightData.nYellowTime < TraficLightData.nNotifyAtTime
+                || nTime >= (TraficLightData.nYellowTime - TraficLightData.nNotifyAtTime)))
+            {
+                nBlink ^= 1;
+            }
+            else
+            {
+                nBlink = HIGH;
+            }
+            
+            digitalWrite (TraficLightData.nWalkerWaitPin, nBlink);
+            digitalWrite (TraficLightData.nWalkerGoPin, LOW);
+        }
     }
 
 }
 
+
+void ShowRunningThreads ()
+{
+    size_t nCount = 0;
+    
+    Serial.println ();
+    Serial.println (F("Listing all running threads"));
+    Serial.println (F("--------------------------------------"));
+    Serial.println (F("ID\tStatus\tNice\tStk\Max"));
+    
+    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    {
+        Serial.print (nCount);
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (F("/"));
+        Serial.println (CorePartition_GetMaxStackSizeByID (nCount));
+        
+        CorePartition_Yield ();
+    }
+    
+    Serial.println ();
+}
 
 void TerminalHandler ()
 {
@@ -163,11 +221,14 @@ void TerminalHandler ()
     bool    boolPrintPrompt = true;
     
     setLocation(1,1);
+    resetColor();
     clearConsole ();
     
     Serial.println (F("Trafic Light Manager v1.0"));
     Serial.println (F("By Gustavo Campos"));
     Serial.println ();
+    
+    ShowRunningThreads ();
     
     Serial.flush ();
 
@@ -220,20 +281,47 @@ void Terminal ()
 }
 
 
-
 void TraficLightKernel ()
 {
-    uint8_t nPin = CorePartition_GetID() + 1;
-    
-    pinMode (nPin, OUTPUT);
-    
     while (CorePartition_Yield ())
     {
-        digitalWrite (nPin, HIGH);
+        nTime += 0.25;
         
-        CorePartition_Yield ();
-
-        digitalWrite (nPin, LOW);
+        if (TraficLightData.boolGreenLight == true)
+        {
+            if (nTime >= TraficLightData.nGreenTime)
+            {
+                TraficLightData.boolRedLight = false;
+                TraficLightData.boolYellowLight = true;
+                TraficLightData.boolGreenLight = false;
+                
+                TraficLightData.boolWalkerWait = true;
+                
+                nTime=0;
+            }
+        }
+        else if (TraficLightData.boolYellowLight == true)
+        {
+            if (nTime >= TraficLightData.nYellowTime)
+            {
+                TraficLightData.boolRedLight = true;
+                TraficLightData.boolYellowLight = false;
+                TraficLightData.boolGreenLight = false;
+                
+                nTime=0;
+            }
+        }
+        else if (TraficLightData.boolRedLight == true)
+        {
+            if (nTime >= TraficLightData.nRedTime)
+            {
+                TraficLightData.boolRedLight = false;
+                TraficLightData.boolYellowLight = false;
+                TraficLightData.boolGreenLight = true;
+                
+                nTime=0;
+            }
+        }
     }
 
 }
@@ -269,13 +357,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
 
 
-    CorePartition_CreateThread (Terminal, 100, 200);
-
     CorePartition_CreateThread (TraficLight, 20, 50);
     
-    CorePartition_CreateThread (WalkerSign, 20, 400);
+    CorePartition_CreateThread (WalkerSign, 20, 500);
 
-    CorePartition_CreateThread (TraficLightKernel, 100, 823);
+    CorePartition_CreateThread (TraficLightKernel, 100, 250);
+    
+    CorePartition_CreateThread (Terminal, 100, 50);
 }
 
 

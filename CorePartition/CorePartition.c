@@ -35,8 +35,8 @@
 #define THREADL_NONE        0
 #define THREADL_START       1
 #define THREADL_RUNNING     2
-#define THREADL_IDLE        3
-#define THREADL_STOPPED     4
+#define THREADL_STOPPED     3
+#define THREADL_IDLE        4
 #define THREADL_SWITCHING   5
 
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
@@ -291,9 +291,6 @@ void CorePartition_Join ()
 }
 
 
-
-//void yield() __attribute__ ((noinline));
-
 bool CorePartition_Yield ()
 {
     volatile uint8_t nValue = 0xBB;
@@ -332,7 +329,38 @@ size_t CorePartition_GetID()
     return nCurrentThread;
 }
 
+size_t CorePartition_GetStackSizeByID(size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nStackSize;
+}
 
+size_t CorePartition_GetMaxStackSizeByID(size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nStackMaxSize;
+}
+
+uint32_t CorePartition_GetNiceByID(size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nNice;
+}
+
+size_t CorePartition_GetNumberOfThreads()
+{
+    return nMaxThreads;
+}
+
+int CorePartition_GetStatusByID (size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nStatus;
+}
 
 size_t CorePartition_GetStackSize()
 {
