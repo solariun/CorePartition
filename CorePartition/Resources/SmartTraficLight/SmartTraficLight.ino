@@ -251,7 +251,6 @@ int GetPromptCommand (char * pszCommand, uint16_t nCommandSize)
            Serial.flush ();
            
            boolRedraw = false;
-           boolAction = false;
        }
        
        if (Serial.available () > 0)
@@ -284,6 +283,8 @@ int GetPromptCommand (char * pszCommand, uint16_t nCommandSize)
                boolRedraw = true;
            }
        }
+       
+       boolAction = false;
    }
 }
 
@@ -339,8 +340,6 @@ void TraficLightKernel ()
     while (CorePartition_Yield ())
     {
         nTime += nFactor;
-        
-       boolAction = false;
         
         if (TraficLightData.boolGreenLight == true)
         {
