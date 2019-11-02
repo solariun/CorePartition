@@ -249,6 +249,9 @@ static inline size_t Scheduler ()
 
 void CorePartition_Join ()
 {
+    volatile uint8_t nValue = 0xAA;
+    pStartStck =  (void*) &nValue;
+    
     if (nThreadCount == 0) return;
  
     do
@@ -267,12 +270,7 @@ void CorePartition_Join ()
                     
                     nStartedCores++;
                     
-                    {                    
-                        volatile uint8_t nValue = 0xAA;
-                        pStartStck =  (void*) &nValue;
-                      
-                        pCurrentThread->pFunction ();
-                    }
+                    pCurrentThread->pFunction ();
                     
                     pCurrentThread->nStatus = THREADL_STOPPED;
 
@@ -296,13 +294,12 @@ void CorePartition_Join ()
 
 //void yield() __attribute__ ((noinline));
 
-void CorePartition_Yield ()
+bool CorePartition_Yield ()
 {
-    
-    if (nThreadCount == 0) return;
-    
     volatile uint8_t nValue = 0xBB;
     pCurrentThread->pLastStack = (void*) &nValue;
+    
+    if (nThreadCount == 0) return false;
     
     pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
     
@@ -325,6 +322,8 @@ void CorePartition_Yield ()
     pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
     
     RestoreStack();
+    
+    return true;
 }
 
 

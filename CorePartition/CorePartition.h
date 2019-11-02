@@ -58,7 +58,7 @@ extern "C"{
 
     void CorePartition_Join (void);
        
-    void CorePartition_Yield(void);
+    bool CorePartition_Yield(void);
     
     size_t CorePartition_GetID(void);
     
