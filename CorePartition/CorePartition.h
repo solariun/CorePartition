@@ -65,11 +65,7 @@ extern "C"{
     size_t CorePartition_GetStackSize(void);
     size_t CorePartition_GetMaxStackSize(void);
 
-    
-    size_t CorePartition_GetUsedMemorySize(void);
-    size_t CorePartition_GetAllocatedMemorySize(void);
-
-    size_t CorePartition_GetThreadStructSize (void);
+    size_t CorePartition_GetThreadContextSize (void);
     
     bool CorePartition_IsAllThreadsStarted(void);
         

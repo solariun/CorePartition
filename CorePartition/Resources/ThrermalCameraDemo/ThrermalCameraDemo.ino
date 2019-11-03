@@ -345,7 +345,7 @@ void Thread2 ()
           Serial.print (", Nice: ");
           Serial.print (CorePartition_GetNice());
           Serial.print (", struct Size: [");
-          Serial.print (CorePartition_GetThreadStructSize ());
+          Serial.print (CorePartition_GetThreadContextSize ());
           Serial.print ("] bytes, Core Mem: [");
           Serial.print (CorePartition_GetUsedMemorySize ());
           Serial.print (" from ");

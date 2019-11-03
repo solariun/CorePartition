@@ -40,52 +40,54 @@
 #include "Arduino.h"
 
 
-void setLocation (uint16_t nY, uint16_t nX)
+void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
 {
-    byte szTemp [10];
-    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uf", nY, nX);
+    uint8_t szTemp [15];
+    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
 
     Serial.write (szTemp, nLen);
+    Serial.flush();
 }
 
 
 //workis with 256 colors
-void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
-    byte szTemp [10];
+    byte szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
 
     Serial.write (szTemp, nLen);
+    Serial.flush();
 }
 
 
-void resetColor ()
+void __attribute__ ((noinline)) resetColor ()
 {
-    Serial.print ("\033[0m");
+    Serial.print (F("\033[0m"));
 }
 
 
-void hideCursor ()
+void __attribute__ ((noinline)) hideCursor ()
 {
-    Serial.print ("\033[?25l");
+    Serial.print (F("\033[?25l"));
 }
 
 
-void showCursor ()
+void __attribute__ ((noinline)) showCursor ()
 {
-    Serial.print ("\033[?25h");
+    Serial.print (F("\033[?25h"));
 }
 
 
-void clearConsole ()
+void __attribute__ ((noinline)) clearConsole ()
 {
-    Serial.print ("\033[2J"); 
+    Serial.print (F("\033[2J"));
 }
 
 
-void reverseColor ()
+void __attribute__ ((noinline)) reverseColor ()
 {
-    Serial.print ("\033[7m");   
+    Serial.print (F("\033[7m"));
 }
 
 
@@ -119,7 +121,7 @@ void Thread ()
         Serial.print (", Nice: ");
         Serial.print (CorePartition_GetNice());
         Serial.print (", CTX: ");
-        Serial.print (CorePartition_GetThreadStructSize ());
+        Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print ("b, Stack: ");
         Serial.print (CorePartition_GetStackSize ());
         Serial.print ("/");
@@ -152,6 +154,10 @@ void setup()
     
     //Initialize serial and wait for port to open:
     Serial.begin(115200);
+        
+    while (!Serial);
+    
+    delay (1000);
 
     resetColor ();
     clearConsole ();

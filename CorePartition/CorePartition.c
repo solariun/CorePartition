@@ -148,6 +148,8 @@ bool CorePartition_Start (size_t nThreadPartitions)
     
     pThreadLight = (ThreadLight*) malloc (sizeof (ThreadLight) * nThreadPartitions);
     
+    memset(pThreadLight, 0, sizeof (ThreadLight) * nThreadPartitions);
+    
     return true;
 }
 
@@ -216,7 +218,7 @@ static inline uint64_t getSleepTime (uint64_t nCurTime)
     return nMin;
 }
 
-static inline size_t Scheduler ()
+static size_t Scheduler ()
 {
     static uint64_t nCounter = 0;
     
@@ -246,7 +248,6 @@ static inline size_t Scheduler ()
 }
 
 
-
 void CorePartition_Join ()
 {
     volatile uint8_t nValue = 0xAA;
@@ -257,8 +258,6 @@ void CorePartition_Join ()
     do
     {
         pCurrentThread = &pThreadLight [nCurrentThread];
-        
-        //printStruct();
         
         if (pCurrentThread->nStatus != THREADL_NONE)
         {
@@ -287,7 +286,6 @@ void CorePartition_Join ()
             }
         }
     } while ((nCurrentThread = Scheduler())+1);
-    //} while ((nCurrentThread = (nCurrentThread + 1 >= nMaxThreads) ? 0 : nCurrentThread+1)+1);
 }
 
 
@@ -372,19 +370,7 @@ size_t CorePartition_GetMaxStackSize()
     return pCurrentThread->nStackMaxSize;
 }
 
-
-size_t CorePartition_GetAllocatedMemorySize(void)
-{
-    return CorePartition_GetThreadStructSize () + CorePartition_GetMaxStackSize ();
-}
-
-size_t CorePartition_GetUsedMemorySize(void)
-{
-    return CorePartition_GetThreadStructSize () + CorePartition_GetStackSize ();
-}
-
-
-size_t CorePartition_GetThreadStructSize(void)
+size_t CorePartition_GetThreadContextSize(void)
 {
     return sizeof (ThreadLight);
 }
