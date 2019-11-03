@@ -414,9 +414,9 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
 
 
-    CorePartition_CreateThread (TraficLight, 20, 100);
+    CorePartition_CreateThread (TraficLight, 50, 100);
     
-    CorePartition_CreateThread (WalkerSign, 20, 500);
+    CorePartition_CreateThread (WalkerSign, 50, 500);
 
     CorePartition_CreateThread (TraficLightKernel, 100, 250);
     
