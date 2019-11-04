@@ -347,9 +347,9 @@ void Thread2 ()
           Serial.print (", struct Size: [");
           Serial.print (CorePartition_GetThreadContextSize ());
           Serial.print ("] bytes, Core Mem: [");
-          Serial.print (CorePartition_GetUsedMemorySize ());
+          Serial.print (CorePartition_GetThreadContextSize() + CorePartition_GetStackSize());
           Serial.print (" from ");
-          Serial.print (CorePartition_GetAllocatedMemorySize ());
+          Serial.print (CorePartition_GetThreadContextSize() + CorePartition_GetMaxStackSize());
           Serial.println ("]\n");
       
           fMin = 1000, fMax = 0; 

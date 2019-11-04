@@ -70,7 +70,7 @@ void Thread1 ()
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue++, CorePartition_GetThreadContextSize(), CorePartition_GetAllocatedMemorySize());
+        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue++, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize() + CorePartition_GetMaxStackSize());
         CorePartition_Yield (); //Sleep (10);
     }
 }

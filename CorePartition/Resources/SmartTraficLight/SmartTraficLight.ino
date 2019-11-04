@@ -300,7 +300,6 @@ void WalkerSign ()
             digitalWrite (TraficLightData.nWalkerGoPin, LOW);
         }
     }
-
 }
 
 
@@ -481,7 +480,7 @@ static uint64_t getTimeTick()
 
 static void sleepTick (uint64_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime * 1000);
+    delayMicroseconds  ((nSleepTime + 1) * 1000);
 }
 
 void StackOverflowHandler ()
@@ -500,7 +499,7 @@ void setup()
     bool status; 
 
     //Initialize serial and wait for port to open:
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     //Terminal ();
     //exit(0);
