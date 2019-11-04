@@ -223,7 +223,7 @@ public:
           {
               nOffset = (int) nOffset + (nSpeed  % 8);
           }
-        } while (nOffset >= 7);
+        } while (nOffset >= 8);
 
               
         for (nCount=0; nCount < nNumberDigits; nCount++)
@@ -239,6 +239,37 @@ public:
     }
 };
 
+
+void __attribute__ ((noinline)) ShowRunningThreads ()
+{
+    size_t nCount = 0;
+    
+    Serial.println ();
+    Serial.println (F("Listing all running threads"));
+    Serial.println (F("--------------------------------------"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    
+    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    {
+        Serial.print (F("\e[K"));
+        Serial.print (nCount);
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.print (F("\t"));
+        Serial.print ((uint32_t) CorePartition_GetExecutionTicksByID (nCount)) ;
+        Serial.println (F("ms"));
+    }
+}
 
 
 
@@ -259,13 +290,11 @@ void Thread1 ()
     {
 
         setColor (1, 0);
-        hideCursor ();
         
         snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
 
         textScroller.show (5, 10, szMessage, strlen (szMessage));
 
-        showCursor ();
         resetColor ();
 
         
@@ -294,15 +323,14 @@ void Thread2 ()
     {
 
         setColor (4, 0);
-        hideCursor ();
         
         textScroller.show (15, 10, szMessage, sizeof (szMessage) - 1);
 
-        showCursor ();
         resetColor ();
 
-        CorePartition_Yield ();
         Serial.flush ();
+
+        CorePartition_Yield ();
     }
 }
 
@@ -325,15 +353,20 @@ void Thread3 ()
     {
 
         reverseColor ();
-        hideCursor ();
         
         textScroller.show (25, 10, szMessage, sizeof (szMessage) - 1);
 
-        showCursor ();
         resetColor ();
 
-        CorePartition_Yield ();
+        Serial.println ();
+        
+        setLocation (35,1);
+        
+        ShowRunningThreads ();
         Serial.flush ();
+        
+        CorePartition_Yield ();
+        
     }
 }
 
@@ -350,19 +383,33 @@ static void sleepTick (uint64_t nSleepTime)
     if (nSleepTime)  delayMicroseconds  (nSleepTime * 1000);
 }
 
+void StackOverflowHandler ()
+{
+    while  (!Serial);
+    
+    Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
+    Serial.println (CorePartition_GetID ());
+    Serial.println (F("--------------------------------------"));
+    ShowRunningThreads ();
+    Serial.flush ();
+}
+
+
 void setup()
 {
     //Initialize serial and wait for port to open:
-    Serial.begin(115200);
+    Serial.begin(230400);
 
     delay (1000);
     
     while (!Serial);
 
+    
     delay (1000);
    
     setLocation (1,1);
     resetColor ();
+    hideCursor ();
     clearConsole ();
     
     Serial.print ("CoreThread ");
@@ -392,9 +439,11 @@ void setup()
 
     CorePartition_Start(3);
     
-    //CorePartition_SetCurrentTimeInterface(getTimeTick);
-    //CorePartition_SetSleepTimeInterface(sleepTick);
-
+    CorePartition_SetCurrentTimeInterface(getTimeTick);
+    CorePartition_SetSleepTimeInterface(sleepTick);
+    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    
+    
     CorePartition_CreateThread (Thread1, 80, 0);
 
     CorePartition_CreateThread (Thread2, 80, 0);

@@ -62,7 +62,7 @@ extern "C"{
        
     bool CorePartition_Yield(void);
     
-    inline void CorePartition_Sleep (uint32_t nDelayTickTime);
+    void CorePartition_Sleep (uint32_t nDelayTickTime);
 
     size_t CorePartition_GetID(void);
     
@@ -71,17 +71,20 @@ extern "C"{
 
     size_t CorePartition_GetThreadContextSize (void);
     
-    uint8_t CorePartition_GetStatus ();
+    uint8_t CorePartition_GetStatus (void);
 
     uint32_t CorePartition_GetNice(void);
     
     void CorePartition_SetNice (uint32_t nNice);
     
+    uint64_t CorePartition_GetExecutionTicks(void);
 
     size_t CorePartition_GetStackSizeByID (size_t nID);
     size_t CorePartition_GetMaxStackSizeByID (size_t nID);
     uint32_t CorePartition_GetNiceByID (size_t nID);
     int CorePartition_GetStatusByID (size_t nID);
+
+    uint64_t CorePartition_GetExecutionTicksByID(size_t nID);
 
     size_t CorePartition_GetNumberOfThreads(void);
 

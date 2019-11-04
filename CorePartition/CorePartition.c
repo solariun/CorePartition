@@ -57,9 +57,9 @@ typedef struct
     
     uint32_t            nNice;
     uint64_t            nLastMomentun;
-    
+    uint64_t            nExecutionTime;
+
     void*               pLastStack;
-    
     uint8_t*            pnStackPage;
     
 } ThreadLight;
@@ -71,6 +71,7 @@ static volatile size_t nCurrentThread;
 
 static ThreadLight* pThreadLight = NULL;
 static ThreadLight* pCurrentThread = NULL;
+
 
 
 static void*  pStartStck = NULL;
@@ -234,7 +235,9 @@ static size_t Scheduler ()
     static uint64_t nCounter = 0;
     
     if (nCounter == 0) nCounter = getCTime ();
-       
+    
+    pCurrentThread->nExecutionTime = (uint64_t) (getCTime () - pCurrentThread->nLastMomentun);
+    
     while (1)
     {
         if (++nCurrentThread <= nMaxThreads)
@@ -277,7 +280,7 @@ void CorePartition_Join ()
                 case THREADL_START:
 
                     pCurrentThread->nStatus = THREADL_RUNNING;
-                                        
+                    
                     pCurrentThread->pFunction ();
                     
                     pCurrentThread->nStatus = THREADL_STOPPED;
@@ -302,12 +305,13 @@ void CorePartition_Join ()
 bool CorePartition_Yield ()
 {
     volatile uint8_t nValue = 0xBB;
+    
+    if (pCurrentThread == NULL) return false;
+
     pCurrentThread->pLastStack = (void*) &nValue;
     
-    if (nThreadCount == 0) return false;
-    
     pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
-    
+
     if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
     {
         free (pCurrentThread->pnStackPage);
@@ -325,7 +329,6 @@ bool CorePartition_Yield ()
         longjmp(jmpJoinPointer, 1);
     }
     
-    
     pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
     
     RestoreStack();
@@ -334,7 +337,7 @@ bool CorePartition_Yield ()
 }
 
 
-void CorePartition_Sleep (uint32_t nDelayTickTime)
+inline void CorePartition_Sleep (uint32_t nDelayTickTime)
 {
     uint32_t nBkpNice = 0;
     
@@ -388,6 +391,18 @@ int CorePartition_GetStatusByID (size_t nID)
     if (nID >= nMaxThreads) return 0;
     
     return pThreadLight [nID].nStatus;
+}
+
+uint64_t CorePartition_GetExecutionTicksByID(size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nExecutionTime;
+}
+
+uint64_t CorePartition_GetExecutionTicks ()
+{
+    return pCurrentThread == NULL ? 0 : pCurrentThread->nExecutionTime;
 }
 
 uint8_t CorePartition_GetStatus ()

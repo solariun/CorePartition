@@ -60,7 +60,6 @@ void Thread1 ()
     
     while (1)
     {
-  
         digitalWrite (nPin, HIGH);
         
         CorePartition_Yield ();
@@ -105,15 +104,65 @@ void StackOverflowHandler ()
     }
 }
 
+//#define  _DEBUG
+
+#ifdef _DEBUG
+void __attribute__ ((noinline)) ShowRunningThreads ()
+{
+    size_t nCount = 0;
+    
+    Serial.println ();
+    Serial.println (F("Listing all running threads"));
+    Serial.println (F("--------------------------------------"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    
+    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    {
+        Serial.print (F("\e[K"));
+        Serial.print (nCount);
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetExecutionTicksByID (nCount)) ;
+        Serial.println (F("ms"));
+    }
+}
+
+
+void WhachDog ()
+{
+    Serial.begin(230400);
+    
+    while (CorePartition_Yield ())
+    {
+        ShowRunningThreads ();
+    }
+}
+#endif
+
 
 void setup()
 {
     bool status; 
     
     //Initialize serial and wait for port to open:
-    
+
+#ifdef _DEBUG
+    CorePartition_Start (5);
+#else
     CorePartition_Start (4);
-    
+#endif
+
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
@@ -125,6 +174,11 @@ void setup()
     CorePartition_CreateThread (Thread1, 20, 812);
 
     CorePartition_CreateThread (Thread1, 20, 200);
+
+#ifdef _DEBUG
+    CorePartition_CreateThread (WhachDog, 20, 200);
+#endif
+    
 }
 
 

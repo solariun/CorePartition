@@ -303,17 +303,18 @@ void WalkerSign ()
 }
 
 
-void ShowRunningThreads ()
+void __attribute__ ((noinline)) ShowRunningThreads ()
 {
     size_t nCount = 0;
     
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
+        Serial.print (F("\e[K"));
         Serial.print (nCount);
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetStatusByID (nCount));
@@ -327,13 +328,12 @@ void ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.println (F(""));
-        
-        //CorePartition_Yield ();
+        Serial.print (F("\t"));
+        Serial.print ((uint32_t) CorePartition_GetExecutionTicksByID (nCount)) ;
+        Serial.println (F("ms"));
     }
-    
-    Serial.println ();
 }
+
 
 
 /*

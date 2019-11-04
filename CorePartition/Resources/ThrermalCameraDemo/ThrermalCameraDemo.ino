@@ -139,10 +139,11 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
+        Serial.print (F("\e[K"));
         Serial.print (nCount);
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetStatusByID (nCount));
@@ -156,7 +157,9 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.println (F(""));
+        Serial.print (F("\t"));
+        Serial.print ((uint32_t) CorePartition_GetExecutionTicksByID (nCount)) ;
+        Serial.println (F("ms"));
         
         //CorePartition_Yield ();
     }
@@ -278,7 +281,7 @@ public:
           {
               nOffset = (int) nOffset + (nSpeed  % 8);
           }
-        } while (nOffset >= 7);
+        } while (nOffset >= 8);
 
               
         for (nCount=0; nCount < nNumberDigits; nCount++)
@@ -324,7 +327,7 @@ void Thread1 ()
     uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
     //setCoreNice (100);
 
-    MatrixTextScroller matrixTextScroller (4, 1);
+    MatrixTextScroller matrixTextScroller (4, 2);
     
     char szMessage[25] = "";
     uint8_t nStep = 0;
@@ -582,11 +585,11 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, 60, 100);
+    CorePartition_CreateThread (Thread1, 60, 50);
     
-    CorePartition_CreateThread (Thread2, 25, 2);
+    CorePartition_CreateThread (Thread2, 30, 160);
 
-    CorePartition_CreateThread (Thread3, 25, 4);
+    CorePartition_CreateThread (Thread3, 30, 4);
 
     CorePartition_CreateThread (Thread4, 60, 200);
 }
