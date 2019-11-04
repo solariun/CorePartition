@@ -53,8 +53,10 @@ extern "C"{
     
     bool CorePartition_CreateThread (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice);
     
-    uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
-    uint8_t CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
+    bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
+    bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
+    
+    bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void));
 
     void CorePartition_Join (void);
        

@@ -311,7 +311,7 @@ void ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStk/Max\tCtx\tUsedMem"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -322,7 +322,7 @@ void ShowRunningThreads ()
         Serial.print (CorePartition_GetNiceByID (nCount));
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetStackSizeByID (nCount));
-        Serial.print (F("/"));
+        Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetThreadContextSize ());
@@ -484,6 +484,16 @@ static void sleepTick (uint64_t nSleepTime)
     delayMicroseconds  (nSleepTime * 1000);
 }
 
+void StackOverflowHandler ()
+{
+    while  (!Serial);
+    
+    Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
+    Serial.println (CorePartition_GetID ());
+    Serial.println (F("--------------------------------------"));
+    ShowRunningThreads ();
+    Serial.flush ();
+}
 
 void setup()
 {
@@ -495,12 +505,14 @@ void setup()
     //Terminal ();
     //exit(0);
     
+    pinMode (13, OUTPUT);
+    
     CorePartition_Start (4);
 
 
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
-
+    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
     CorePartition_CreateThread (TraficLight, 20 * sizeof (size_t), 100);
     
@@ -508,7 +520,7 @@ void setup()
 
     CorePartition_CreateThread (TraficLightKernel, 30 * sizeof (size_t), 250);
     
-    CorePartition_CreateThread (Terminal, 20 * sizeof (size_t), 50);
+    CorePartition_CreateThread (Terminal, 35 * sizeof (size_t), 50);
 }
 
 

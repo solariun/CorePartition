@@ -42,7 +42,6 @@
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
 
 
-
 typedef struct
 {
     uint8_t   nStatus;
@@ -99,6 +98,19 @@ jmp_buf jmpJoinPointer;
  */
 
 
+void (*stackOverflowHandler)(void) = NULL;
+
+bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
+{
+    if (pStackOverflowHandler == NULL || stackOverflowHandler != NULL)
+        return false;
+    
+    stackOverflowHandler = pStackOverflowHandler;
+    
+    return true;
+}
+
+
 static uint64_t getDefaultCTime()
 {
    static uint64_t nCounter=0;
@@ -109,7 +121,7 @@ static uint64_t getDefaultCTime()
 uint64_t (*getCTime)(void) = getDefaultCTime;
 
 
-uint8_t CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void))
+bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void))
 {
     if (getCTime != getDefaultCTime || getCurrentTimeInterface == NULL)
         return false;
@@ -129,7 +141,7 @@ static void sleepDefaultCTime (uint64_t nSleepTime)
 
 void (*sleepCTime)(uint64_t nSleepTime) = sleepDefaultCTime;
 
-uint8_t CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime))
+bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime))
 {
     if (sleepCTime != sleepDefaultCTime || getSleepTimeInterface == NULL)
         return false;
@@ -302,6 +314,8 @@ bool CorePartition_Yield ()
     {
         free (pCurrentThread->pnStackPage);
         pCurrentThread->nStatus = THREADL_STOPPED;
+        
+        if (stackOverflowHandler != NULL) stackOverflowHandler ();
         
         longjmp(jmpJoinPointer, 1);
     }
