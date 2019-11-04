@@ -62,6 +62,8 @@ extern "C"{
        
     bool CorePartition_Yield(void);
     
+    void CorePartition_Sleep (uint32_t nDelayTickTime);
+
     size_t CorePartition_GetID(void);
     
     size_t CorePartition_GetStackSize(void);

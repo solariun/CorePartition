@@ -74,8 +74,6 @@ void Thread1 ()
 
 
 
-
-
 static uint64_t getTimeTick()
 {
    return (uint64_t) millis();
@@ -84,6 +82,27 @@ static uint64_t getTimeTick()
 static void sleepTick (uint64_t nSleepTime)
 {
     delayMicroseconds  (nSleepTime * 1000);
+}
+
+void StackOverflowHandler ()
+{
+    size_t nThreadID = CorePartition_GetID() + 1;
+    uint8_t nCount;
+    
+    pinMode (nThreadID, OUTPUT);
+    
+    while (1)
+    {
+        for (nCount=0; nCount < nThreadID; nCount++)
+        {
+            digitalWrite (nThreadID, HIGH);
+            delay (150);
+            digitalWrite (nThreadID, LOW);
+            delay (150);
+        }
+        
+        delay (400); //500ms off
+    }
 }
 
 
@@ -97,6 +116,7 @@ void setup()
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
+    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
     CorePartition_CreateThread (Thread1, 20, 50);
     

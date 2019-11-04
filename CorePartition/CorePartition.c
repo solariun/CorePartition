@@ -35,9 +35,9 @@
 #define THREADL_NONE        0
 #define THREADL_START       1
 #define THREADL_RUNNING     2
-#define THREADL_STOPPED     3
-#define THREADL_IDLE        4
-#define THREADL_SWITCHING   5
+#define THREADL_SLEEP       3
+#define THREADL_STOPPED     4
+
 
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
 
@@ -68,8 +68,6 @@ typedef struct
 static volatile size_t nMaxThreads = 0;
 static volatile size_t nThreadCount = 0;
 static volatile size_t nCurrentThread;
-static volatile size_t nStartedCores=0;
-
 
 static ThreadLight* pThreadLight = NULL;
 static ThreadLight* pCurrentThread = NULL;
@@ -220,8 +218,9 @@ static inline uint64_t getSleepTime (uint64_t nCurTime)
     
     for (nCThread = 0; nCThread < nMaxThreads; nCThread++)
     {
-        //printf ("--> Min: [%llu] - Calc: [%llu]: Menor? [%u]\n", nMin, __CALC (nCThread), nMin > __CALC(nCThread));
-        if (__NEXTIME (nCThread) <= nCurTime)
+        if (pThreadLight [nCThread].nStatus == THREADL_STOPPED)
+            continue;
+        else if (__NEXTIME (nCThread) <= nCurTime)
             return 0;
         else if (nMin > __CALC (nCThread))
             nMin = __CALC (nCThread);
@@ -278,9 +277,7 @@ void CorePartition_Join ()
                 case THREADL_START:
 
                     pCurrentThread->nStatus = THREADL_RUNNING;
-                    
-                    nStartedCores++;
-                    
+                                        
                     pCurrentThread->pFunction ();
                     
                     pCurrentThread->nStatus = THREADL_STOPPED;
@@ -288,7 +285,8 @@ void CorePartition_Join ()
                     break;
                     
                 case THREADL_RUNNING:
-                
+                case THREADL_SLEEP:
+                    
                     longjmp(pCurrentThread->jmpRegisterBuffer, 1);
                 
                     break;
@@ -333,6 +331,24 @@ bool CorePartition_Yield ()
     RestoreStack();
     
     return true;
+}
+
+void CorePartition_Sleep (uint32_t nDelayTickTime)
+{
+    uint32_t nBkpNice = 0;
+    
+    if (nMaxThreads == 0)
+        return;
+    
+    nBkpNice = pCurrentThread->nNice;
+    
+    pCurrentThread->nStatus = THREADL_SLEEP;
+    pCurrentThread->nNice = nDelayTickTime;
+    
+    CorePartition_Yield();
+    
+    pCurrentThread->nStatus = THREADL_RUNNING;
+    pCurrentThread->nNice = nBkpNice;
 }
 
 
@@ -389,26 +405,26 @@ size_t CorePartition_GetThreadContextSize(void)
     return sizeof (ThreadLight);
 }
 
-
-bool CorePartition_IsAllThreadsStarted(void)
-{
-    return nStartedCores == nMaxThreads;
-}
-
-
 bool CorePartition_IsCoreRunning(void)
 {
+    if (nMaxThreads > 0)
+        return false;
+    
     return pCurrentThread->nStatus == THREADL_RUNNING;
 }
 
-
 uint32_t CorePartition_GetNice()
 {
+    if (nMaxThreads > 0)
+        return 0;
+
     return pCurrentThread->nNice;
 }
 
-
 void CorePartition_SetNice (uint32_t nNice)
 {
+    if (nMaxThreads > 0)
+        return;
+
     pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
 }

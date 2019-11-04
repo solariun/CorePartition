@@ -66,35 +66,24 @@ void Sleep (uint64_t nSleep)
 
 void Thread1 ()
 {
-    unsigned int nValue = 100;
+    unsigned int nValue = 0;
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue++, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize() + CorePartition_GetMaxStackSize());
+        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue++, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize());
+        
+        
         CorePartition_Yield (); //Sleep (10);
+        
+        
     }
 }
+
 
 
 void Thread2 ()
 {
-    unsigned int nValue = 200;
-    
-    //setCoreNice(10);
-    
-    while (1)
-    {
-        printf ("** %lu:  Value: [%u]\n", CorePartition_GetID(), nValue++);
-        
-        CorePartition_Yield(); //Sleep (10);
-    }
-}
-
-
-
-void Thread3 ()
-{
-    unsigned int nValue = 2340000;
+    unsigned int nValue = 0;
     
     //setCoreNice(200);
     
@@ -102,16 +91,30 @@ void Thread3 ()
     {
         printf ("## %lu:  Value: [%u]\n", CorePartition_GetID(), nValue++);
         
-        CorePartition_Yield(); //Sleep (10);
-        
+        CorePartition_Yield();
     }
 }
 
 
+
+void Thread3 ()
+{
+    unsigned int nValue = 0;
+    
+    //setCoreNice(10);
+    
+    while (1)
+    {
+        printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu]\n", CorePartition_GetID(), nValue++,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2));
+        
+        CorePartition_Sleep (2000);//Sleep (10);
+    }
+}
+
+
+
 static void sleepMSTicks (uint64_t nSleepTime)
 {
-    printf ("Sleep: %llu\n", nSleepTime);
-    
     usleep ((useconds_t) nSleepTime * 1000);
 }
 
@@ -123,16 +126,22 @@ static uint64_t getMsTicks(void)
     return tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
 }
 
+static void StackOverflowHandler ()
+{
+    printf ("Error, Thread#%zu Stack %zu / %zu max\n", CorePartition_GetID(), CorePartition_GetStackSize(), CorePartition_GetMaxStackSize());
+}
+
 int main(int argc, const char * argv[])
 {    
     CorePartition_Start(3);
     
     CorePartition_SetCurrentTimeInterface(getMsTicks);
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
+    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
     CorePartition_CreateThread (Thread1, 256, 3000);
     CorePartition_CreateThread (Thread2, 256, 1000);
-    CorePartition_CreateThread (Thread3, 256, 2000);
+    CorePartition_CreateThread (Thread3, 256, 0);
     
     CorePartition_Join();
     

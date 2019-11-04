@@ -66,22 +66,23 @@ int CLK = 10; //SS
 
 // Functions
 
-LedControl lc=LedControl(DIN,CLK,CS,2);
+#define MAX_LED_MATRIX 4
+LedControl lc=LedControl(DIN,CLK,CS, MAX_LED_MATRIX);
 
 
-void setLocation (uint16_t nY, uint16_t nX)
+void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
 {
-    byte szTemp [10];
-    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uf", nY, nX);
+    uint8_t szTemp [15];
+    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
 
     Serial.write (szTemp, nLen);
 }
 
 
 //workis with 256 colors
-void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
-    byte szTemp [10];
+    byte szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
 
     Serial.write (szTemp, nLen);
@@ -127,6 +128,40 @@ void Delay (uint64_t nSleep)
     do {
         CorePartition_Yield();
     } while ((millis() - nMomentum ) <  nSleep);    
+}
+
+
+
+void __attribute__ ((noinline)) ShowRunningThreads ()
+{
+    size_t nCount = 0;
+    
+    Serial.println ();
+    Serial.println (F("Listing all running threads"));
+    Serial.println (F("--------------------------------------"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
+    
+    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    {
+        Serial.print (nCount);
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.println (F(""));
+        
+        //CorePartition_Yield ();
+    }
+    
+    Serial.println ();
 }
 
 
@@ -264,7 +299,7 @@ protected:
 
     void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow) override
     {
-        lc.setColumn(nDigit, nRowIndex, nRow);
+        lc.setRow(nDigit, 7-nRowIndex, nRow);
     }
 
 public:
@@ -277,30 +312,28 @@ public:
 void Thread1 ()
 {
     unsigned long start = millis();
-    size_t nValue = 100;
+    size_t nValue = 0;
+    
     uint8_t a = 0;
     uint8_t b = 0;
     uint8_t nOffset = 0;
     uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
     //setCoreNice (100);
 
-    MatrixTextScroller matrixTextScroller (2, 1);
+    MatrixTextScroller matrixTextScroller (4, 2);
     
     const char szMessage[] = "CorePartition! :) works!";
     
     while (1)
     {
-          Serial.print ("\e[2;20H\e[K## Thread1: ");
+          Serial.print (F("\e[2;20H\e[K## Thread1: "));
           Serial.print (nValue++);
-          Serial.print (", Sleep Time: ");                 
-          Serial.print (millis() - start); 
-          Serial.print (", ");
-          Serial.print (CorePartition_GetNice ());
-          Serial.print (", nImagesItens [ ");
-          Serial.print (nImagesItens);
-          Serial.print ("]");
+          Serial.print (F(", Sleep Time: "));
+          Serial.print (millis() - start);  start = millis();
+          Serial.print (F("ms, Nice: "));
+          Serial.print (CorePartition_GetNice());
           Serial.println ("\n");
-  
+
           Serial.flush();
          
           start = millis();
@@ -321,7 +354,7 @@ float fMin = 1000, fMax = 0;
 void Thread2 ()
 {
     unsigned long start = millis();
-    size_t nValue = 2340000;
+    size_t nValue = 0;
     bool boolCls = false;
 
     //setCoreNice (500);
@@ -335,22 +368,13 @@ void Thread2 ()
              Serial.print ("\e[2J");
           }
           
-          Serial.print ("\e[4;20H\e[K++ Thread2: ");
+          Serial.print (F("\e[4;20H\e[K++ Thread2: "));
           Serial.print (nValue++);
-          Serial.print (", Sleep Time: ");
+          Serial.print (F(", Sleep Time: "));
           Serial.print (millis() - start);  start = millis();
-          Serial.print (" millis");
-          Serial.print (", StackSize: ");
-          Serial.print (CorePartition_GetStackSize());
-          Serial.print (", Nice: ");
+          Serial.print (F("ms, Nice: "));
           Serial.print (CorePartition_GetNice());
-          Serial.print (", struct Size: [");
-          Serial.print (CorePartition_GetThreadContextSize ());
-          Serial.print ("] bytes, Core Mem: [");
-          Serial.print (CorePartition_GetThreadContextSize() + CorePartition_GetStackSize());
-          Serial.print (" from ");
-          Serial.print (CorePartition_GetThreadContextSize() + CorePartition_GetMaxStackSize());
-          Serial.println ("]\n");
+          Serial.println (F("]\n"));
       
           fMin = 1000, fMax = 0; 
           
@@ -368,10 +392,10 @@ void Thread2 ()
           
           for(int i=AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
           {
-            Serial.print ("\033[48;5;");
+            Serial.print (F("\033[48;5;"));
             //Serial.print (nHotColor [map (pixels[i-1], fMin, fMin + 8, 0, sizeof (nHotColor)-1)]);
             Serial.print (map (pixels[i-1], fMin, fMax, 232, 255 ));
-            Serial.print ("m  \033[0m");
+            Serial.print (F("m  \033[0m"));
             
             if( (i-1)%8 == 0 ) Serial.println();
           }
@@ -392,19 +416,19 @@ void Thread2 ()
 void Thread3 ()
 {
     unsigned long start = millis();
-    size_t nValue = 10000;
+    size_t nValue = 0;
 
     //setCoreNice (50);
     
     while (1)
     {
-        Serial.print ("\e[6;20H\e[K>> Thread3: ");
+        Serial.print (F("\e[6;20H\e[K>> Thread3: "));
         Serial.print (nValue++);
-        Serial.print (", Sleep Time: ");
+        Serial.print (F(", Sleep Time: "));
         Serial.print (millis() - start);  //start = millis();
-        Serial.print (", Nice: ");
+        Serial.print (F("ms, Nice: "));
         Serial.print (CorePartition_GetNice());
-        Serial.println ("\n");
+        Serial.println (F("\n"));
 
         Serial.flush ();
 
@@ -441,14 +465,15 @@ void Thread4 ()
         
         Serial.println();
         
-        Serial.print ("Min: ");
+        Serial.print (F("Min: "));
         Serial.print (fMin);
-        Serial.print (" Max: ");
+        Serial.print (F(" Max: "));
         Serial.println (fMax);
     
         Serial.println();
         Serial.println();
 
+        ShowRunningThreads ();
         
         CorePartition_Yield ();
     }
@@ -467,6 +492,17 @@ static void sleepTick (uint64_t nSleepTime)
     delayMicroseconds  (nSleepTime * 1000);
 }
 
+void StackOverflowHandler ()
+{
+    while  (!Serial);
+    
+    Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
+    Serial.println (CorePartition_GetID ());
+    Serial.println (F("--------------------------------------"));
+    ShowRunningThreads ();
+    Serial.flush ();
+}
+
 
 void setup()
 {
@@ -475,6 +511,11 @@ void setup()
     //Initialize serial and wait for port to open:
     Serial.begin(230400);
 
+    resetColor ();
+    clearConsole ();
+    setLocation (1,1);
+    hideCursor ();
+    
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
     Serial.println ("");
@@ -490,21 +531,20 @@ void setup()
         while (1);
     }
 
+    
+    
     //Initializing displays 1 and 2
     
-    lc.shutdown(0,false);       //The MAX72XX is in power-saving mode on startup
-    lc.setIntensity(0,8);      // Set the brightness to maximum value
-    lc.clearDisplay(0);         // and clear the display
+    uint8_t nCount;
     
-    lc.shutdown(1,false);       //The MAX72XX is in power-saving mode on startup
-    lc.setIntensity(1,4);      // Set the brightness to maximum value
-    lc.clearDisplay(1);         // and clear the display
+    for (nCount=0; nCount < MAX_LED_MATRIX; nCount++)
+    {
+        lc.shutdown(nCount,false);       //The MAX72XX is in power-saving mode on startup
+        lc.setIntensity(nCount,4);      // Set the brightness to maximum value
+        lc.clearDisplay(nCount);         // and clear the display
+    }
 
-    delay (1000);
-
-    resetColor ();
-    clearConsole ();
-    hideCursor ();
+    delay (2000);
     
     //pinMode (2, OUTPUT);
     //pinMode (3, OUTPUT);
@@ -522,14 +562,15 @@ void setup()
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
+    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, 100, 50);
+    CorePartition_CreateThread (Thread1, 60, 100);
     
-    CorePartition_CreateThread (Thread2, 100, 2);
+    CorePartition_CreateThread (Thread2, 25, 2);
 
-    CorePartition_CreateThread (Thread3, 100, 4);
+    CorePartition_CreateThread (Thread3, 25, 4);
 
-    CorePartition_CreateThread (Thread4, 100, 200);
+    CorePartition_CreateThread (Thread4, 60, 200);
 }
 
 
