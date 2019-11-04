@@ -73,7 +73,7 @@ static ThreadLight* pThreadLight = NULL;
 static ThreadLight* pCurrentThread = NULL;
 
 
-void*               pStartStck = NULL;
+static void*  pStartStck = NULL;
 
 jmp_buf jmpJoinPointer;
 
@@ -333,12 +333,12 @@ bool CorePartition_Yield ()
     return true;
 }
 
+
 void CorePartition_Sleep (uint32_t nDelayTickTime)
 {
     uint32_t nBkpNice = 0;
     
-    if (nMaxThreads == 0)
-        return;
+    if (pCurrentThread == NULL) return;
     
     nBkpNice = pCurrentThread->nNice;
     
@@ -392,12 +392,12 @@ int CorePartition_GetStatusByID (size_t nID)
 
 size_t CorePartition_GetStackSize()
 {
-    return pCurrentThread->nStackSize;
+    return pCurrentThread == NULL ? 0 : pCurrentThread->nStackSize;
 }
 
 size_t CorePartition_GetMaxStackSize()
 {
-    return pCurrentThread->nStackMaxSize;
+    return pCurrentThread == NULL ? 0 : pCurrentThread->nStackMaxSize;
 }
 
 size_t CorePartition_GetThreadContextSize(void)
@@ -407,23 +407,17 @@ size_t CorePartition_GetThreadContextSize(void)
 
 bool CorePartition_IsCoreRunning(void)
 {
-    if (nMaxThreads > 0)
-        return false;
-    
-    return pCurrentThread->nStatus == THREADL_RUNNING;
+    return pCurrentThread == NULL ? false : pCurrentThread->nStatus == THREADL_RUNNING;
 }
 
 uint32_t CorePartition_GetNice()
 {
-    if (nMaxThreads > 0)
-        return 0;
-
-    return pCurrentThread->nNice;
+    return pCurrentThread == NULL ? 0 : pCurrentThread->nNice;
 }
 
 void CorePartition_SetNice (uint32_t nNice)
 {
-    if (nMaxThreads > 0)
+    if (pCurrentThread == NULL)
         return;
 
     pCurrentThread->nNice = nNice == 0 ? 1 : nNice;

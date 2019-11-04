@@ -259,7 +259,7 @@ public:
     }
     
     
-    void show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
+    bool show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
     {
         uint8_t nCount;
        
@@ -271,7 +271,8 @@ public:
           {
               nIndex = nIndex + 1 > (int) nMessageLen ? (int) nNumberDigits * (-1) : nIndex + 1;
               nOffset = 0;
-       
+              
+              if ((int) nNumberDigits * (-1) == nIndex) return false;
           }
           else
           {
@@ -287,8 +288,9 @@ public:
             nIndex =  (int) nIndex + 1;
         }
           
-         nIndex = (int) nIndex - (nCount - (nSpeed / 8));
-     
+        nIndex = (int) nIndex - (nCount - (nSpeed / 8));
+        
+        return true;
     }
 };
 
@@ -308,6 +310,8 @@ public:
 };
 
 
+float fMin = 1000, fMax = 0;
+
 
 void Thread1 ()
 {
@@ -320,26 +324,40 @@ void Thread1 ()
     uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
     //setCoreNice (100);
 
-    MatrixTextScroller matrixTextScroller (4, 2);
+    MatrixTextScroller matrixTextScroller (4, 1);
     
-    const char szMessage[] = "CorePartition! :) works!";
+    char szMessage[25] = "";
+    uint8_t nStep = 0;
     
     while (1)
     {
-          Serial.print (F("\e[2;20H\e[K## Thread1: "));
-          Serial.print (nValue++);
-          Serial.print (F(", Sleep Time: "));
-          Serial.print (millis() - start);  start = millis();
-          Serial.print (F("ms, Nice: "));
-          Serial.print (CorePartition_GetNice());
-          Serial.println ("\n");
+        Serial.print (F("\e[2;20H\e[K## Thread1: "));
+        Serial.print (nValue++);
+        Serial.print (F(", Sleep Time: "));
+        Serial.print (millis() - start);  start = millis();
+        Serial.print (F("ms, Nice: "));
+        Serial.print (CorePartition_GetNice());
+        Serial.println ("\n");
 
-          Serial.flush();
-         
-          start = millis();
+        Serial.flush();
 
-          matrixTextScroller.show (0, 0, szMessage, sizeof (szMessage)-1);
-          
+        start = millis();
+        
+        
+        if (nStep == 0)
+        {
+            strcpy (szMessage, "CorePartition! :) works!");
+            
+            if (matrixTextScroller.show (0, 0, szMessage, sizeof (szMessage)-1) == false) nStep = 1;
+        }
+        else
+        {
+            int nSize = snprintf (szMessage, sizeof (szMessage)-1, "Min:%dc Max:%dc", (int) fMin, (int) fMax);
+            
+            if (matrixTextScroller.show (0, 0, szMessage, nSize) == false) nStep = 0;
+        }
+        
+        
         //digitalWrite (2, LOW);
         //Delay (2000);
         CorePartition_Yield ();
@@ -347,8 +365,6 @@ void Thread1 ()
     }
 }
 
-
-float fMin = 1000, fMax = 0; 
 
 
 void Thread2 ()
@@ -384,7 +400,7 @@ void Thread2 ()
             fMax = MAX (fMax, pixels[i-1]);      
           }
 
-          CorePartition_Yield ();
+           CorePartition_Sleep (10);
           
           setLocation (1,1);
 

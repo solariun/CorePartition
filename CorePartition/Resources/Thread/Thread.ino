@@ -185,7 +185,7 @@ protected:
         
         while (--nOffset >= 0)
         {
-           nLine [7-nOffset] = nRow & 1 != 0 ? '*' : ' ';
+           nLine [7-nOffset] = nRow & 1 != 0 ? '#' : ' ';
            nRow >>= 1;
         }
 
@@ -198,24 +198,26 @@ public:
     TextScroller (int nNumberDigits, uint8_t nSpeed) :
         nNumberDigits (nNumberDigits),
         nOffset (0),
-        nIndex(nNumberDigits * (-1)),
         nSpeed (nSpeed)
-    {}
+    {
+       nIndex = nSpeed == 0 ? 0 : nNumberDigits * (-1);
+    }
     
     
-    void show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
+    bool show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
     {
         uint8_t nCount;
        
-        if (nSpeed % 8 == 0) nSpeed++;
+        if (nSpeed > 0 && nSpeed % 8 == 0) nSpeed++;
         
-        do
+        if (nSpeed > 0) do
         {
           if (nOffset >= 7)
           {
               nIndex = nIndex + 1 > (int) nMessageLen ? (int) nNumberDigits * (-1) : nIndex + 1;
               nOffset = 0;
-       
+              
+              if ((int) nNumberDigits * (-1) == nIndex) return false;
           }
           else
           {
@@ -231,8 +233,9 @@ public:
             nIndex =  (int) nIndex + 1;
         }
           
-         nIndex = (int) nIndex - (nCount - (nSpeed / 8));
-     
+        nIndex = (int) nIndex - (nCount - (nSpeed / 8));
+        
+        return true;
     }
 };
 
