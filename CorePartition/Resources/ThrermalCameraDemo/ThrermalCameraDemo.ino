@@ -390,7 +390,9 @@ void Thread2 ()
           Serial.print (millis() - start);  start = millis();
           Serial.print (F("ms, Nice: "));
           Serial.print (CorePartition_GetNice());
-          Serial.println (F("]\n"));
+          Serial.print (F(", Status: "));
+          Serial.print (CorePartition_GetStatus());
+          Serial.println (F("\n"));
       
           fMin = 1000, fMax = 0; 
           

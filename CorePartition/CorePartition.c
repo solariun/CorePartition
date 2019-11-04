@@ -390,6 +390,12 @@ int CorePartition_GetStatusByID (size_t nID)
     return pThreadLight [nID].nStatus;
 }
 
+uint8_t CorePartition_GetStatus ()
+{
+    return pCurrentThread == NULL ? 0 : pCurrentThread->nStatus;
+}
+
+
 size_t CorePartition_GetStackSize()
 {
     return pCurrentThread == NULL ? 0 : pCurrentThread->nStackSize;

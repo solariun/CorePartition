@@ -71,8 +71,8 @@ extern "C"{
 
     size_t CorePartition_GetThreadContextSize (void);
     
-    bool CorePartition_IsAllThreadsStarted(void);
-        
+    uint8_t CorePartition_GetStatus ();
+
     uint32_t CorePartition_GetNice(void);
     
     void CorePartition_SetNice (uint32_t nNice);
