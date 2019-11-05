@@ -51,7 +51,7 @@ extern "C"{
     
     bool CorePartition_Start (size_t nThreadPartitions);
     
-    bool CorePartition_CreateThread (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice);
+    bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
     
     bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
     bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
@@ -77,14 +77,10 @@ extern "C"{
     
     void CorePartition_SetNice (uint32_t nNice);
     
-    uint64_t CorePartition_GetExecutionTicks(void);
-
     size_t CorePartition_GetStackSizeByID (size_t nID);
     size_t CorePartition_GetMaxStackSizeByID (size_t nID);
     uint32_t CorePartition_GetNiceByID (size_t nID);
     int CorePartition_GetStatusByID (size_t nID);
-
-    uint64_t CorePartition_GetExecutionTicksByID(size_t nID);
 
     size_t CorePartition_GetNumberOfThreads(void);
 

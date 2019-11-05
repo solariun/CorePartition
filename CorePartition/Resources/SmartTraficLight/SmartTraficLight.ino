@@ -132,8 +132,8 @@ class ReadCommand
 private:
     
     char* pszCommand;
-    uint8_t nCommandSize;
-    uint8_t nCmdLen;
+    uint8_t nCommandSize; //The total size
+    uint8_t nStrLen; //Entry command size
     
     static bool boolRedraw;
     
@@ -146,7 +146,7 @@ public:
         ReadCommand::boolRedraw = true;
     }
     
-    ReadCommand (uint8_t nMaxCommand) : nCommandSize (nMaxCommand), nCmdLen(0)
+    ReadCommand (uint8_t nMaxCommand) : nCommandSize (nMaxCommand), nStrLen (0)
     {
         while ((pszCommand = new char [(nMaxCommand * sizeof (char)) + 1]) == NULL) delay (10);
         
@@ -161,7 +161,8 @@ public:
     uint8_t getCommand ()
     {
         char chChar;
-        uint8_t nStrLen = 0;
+        
+        nStrLen = 0;
         
         if (pszCommand == NULL || nCommandSize < 1)
             return 0;
@@ -234,6 +235,49 @@ public:
         return 0;
     }
     
+    
+    const char* getOption (uint16_t nOptionNum, uint8_t* pnTextLen)
+    {
+        if (pnTextLen == NULL) return NULL;
+        
+        uint8_t nCount=0;
+        
+        for (nCount=0; nCount < nStrLen && nOptionNum > 0; nCount++)
+        {
+            if (pszCommand [nCount] == ' ') nOptionNum--;
+        }
+        
+        if (nOptionNum > 0) return NULL;
+        
+        for (*pnTextLen=0; (nCount + *pnTextLen) < nStrLen  && pszCommand [(nCount + *pnTextLen)] != ' '; (*pnTextLen)++);
+        
+        return (&pszCommand [nCount]);
+    }
+
+    
+    bool compareOption (uint16_t nOptionNum, const char* pszText, uint8_t nTextLen)
+    {
+        uint8_t nOptionLen = 0;
+        const char* pszOption;
+        
+        if ((pszOption = getOption (nOptionNum, &nOptionLen)) != NULL)
+        {
+//            Serial.print ("--> [");
+//            Serial.write (pszOption, nOptionLen);
+//            Serial.print (",");
+//            Serial.print (nOptionLen);
+//            Serial.print ("], ");
+//            Serial.print (nTextLen);
+//            Serial.println ();
+            
+            if (nOptionLen == nTextLen && strncmp (pszOption, pszText, nTextLen) == 0)
+                return true;
+        }
+        
+        return false;
+    }
+
+    
     const char* getStr()
     {
         return pszCommand;
@@ -244,7 +288,7 @@ bool ReadCommand::boolRedraw = true;
 
 
 
-void TraficLight ()
+void TraficLight (void* pValue)
 {
     pinMode (TraficLightData.nRedLightPin, OUTPUT);
     pinMode (TraficLightData.nYellowLightPin, OUTPUT);
@@ -259,25 +303,41 @@ void TraficLight ()
 }
 
 
-void WalkerSign ()
+void WalkerSign (void* pValue)
 {
-    bool nBlink = true;
+    
+    uint8_t nValue = 0;
+    uint8_t nBlink = 1;
+    
     
     pinMode (TraficLightData.nWalkerWaitPin, OUTPUT);
     pinMode (TraficLightData.nWalkerGoPin, OUTPUT);
     
     while (CorePartition_Yield ())
     {
+        Serial.print (nTime);
+        Serial.print (F(","));
+        Serial.print (TraficLightData.nRedTime - TraficLightData.nNotifyAtTime);
+        Serial.print (F(","));
+
         if (TraficLightData.boolRedLight == true)
         {
             if (TraficLightData.nRedTime < TraficLightData.nNotifyAtTime
                      || nTime >= (TraficLightData.nRedTime - TraficLightData.nNotifyAtTime))
             {
-                nBlink ^= 1;
+                Serial.print (F("Blink: before: "));
+                Serial.println (nBlink);
+
+                nBlink = nBlink ^ 1;
+                
+                Serial.print (F(", after:"));
+                Serial.println (nBlink);
             }
             else
             {
                 nBlink = HIGH;
+                Serial.print (F("ON:"));
+                Serial.println (nBlink);
             }
             
             digitalWrite (TraficLightData.nWalkerWaitPin, LOW);
@@ -289,16 +349,26 @@ void WalkerSign ()
                 (TraficLightData.nYellowTime < TraficLightData.nNotifyAtTime
                 || nTime >= (TraficLightData.nYellowTime - TraficLightData.nNotifyAtTime)))
             {
-                nBlink ^= 1;
+                Serial.print (F("Blink: before: "));
+                Serial.println (nBlink);
+
+                nBlink = nBlink ^ 1;
+                
+                Serial.print (F(", after:"));
+                Serial.println (nBlink);
             }
             else
             {
                 nBlink = HIGH;
+                Serial.print (F("ON:"));
+                Serial.println (nBlink);
             }
             
             digitalWrite (TraficLightData.nWalkerWaitPin, nBlink ? HIGH : LOW);
             digitalWrite (TraficLightData.nWalkerGoPin, LOW);
         }
+        
+        Serial.println (nValue++);
     }
 }
 
@@ -310,7 +380,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -328,47 +398,40 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print ((uint32_t) CorePartition_GetExecutionTicksByID (nCount)) ;
-        Serial.println (F("ms"));
+        Serial.println ();
     }
 }
 
 
 
-/*
-    Case pszText is NULL, it will return start pointer of the option
- 
-    nOption is the number of entended option.
- */
-/*
-const char* compareOption (uint16_t nOption, const char* pszCmds, uint8_t nCmdsLen, const char* pszText, uint8_t* pnTextLen)
+void showStatus ()
 {
-    if (pszCmds == NULL || nCmdsLen == 0 || pnTextLen == NULL) return NULL;
+    Serial.println ();
+    Serial.println (F("Status the Traffic Light"));
+    Serial.println (F("----------------------------------"));
     
-    if (pszText != NULL && *pnTextLen == 0) return NULL;
+    Serial.print (F("   "));
+    Serial.print (TraficLightData.boolRedLight ? F("[\033[97;101m RED \033[0m]") : F("\033[0m RED "));
+    Serial.print (TraficLightData.boolYellowLight ? F("[\033[30;103m YLW \033[0m]") : F("\033[0m YLW "));
+    Serial.print (TraficLightData.boolGreenLight ? F("[\033[30;102m GRN \033[0m]") : F("\033[0m GREEN "));
+    Serial.print (F("  -  "));
+    Serial.print (TraficLightData.boolGreenLight ? F("[\033[97;101m WALKER \033[0m]") : F("[\033[30;102m WALKER \033[0m]"));
+
+    Serial.println ();
     
-    uint8_t nCount=0;
+    Serial.println ();
+    Serial.println (F("Times: (ms) ----------------------"));
+    Serial.print (F("Red Light:    ")); Serial.println (TraficLightData.nRedTime);
+    Serial.print (F("Yellow Light: ")); Serial.println (TraficLightData.nYellowTime);
+    Serial.print (F("Green Light : ")); Serial.println (TraficLightData.nGreenTime);
+    Serial.println ();
+    Serial.print (F("Walker Sign : ")); Serial.print (TraficLightData.nNotifyAtTime);
+    Serial.println ("Before changing");
     
-    for (nCount=0; nCount < nCmdsLen && nOption > 0; nCount++)
-    {
-        if (pszCmds [nCount] == ' ') nOption--;
-    }
-    
-    if (nOption > 0) return NULL;
-    
-    if (pszText == NULL)
-    {
-        for (*pnTextLen=0; *pnTextLen < nCmdsLen && pszCmds [nCount + *pnTextLen] != ' '; *pnTextLen++);
-    }
-    
-    return (pszCmds + nCount);
+    Serial.println ();
 }
 
-*/
-
-
-void Terminal ()
+void Terminal (void* pValue)
 {
     bool boolActive = false;
     int nCommandLen = 0;
@@ -393,6 +456,8 @@ void Terminal ()
             
             ShowRunningThreads ();
             
+            Serial.println ();
+            
             Serial.flush ();
 
             while (CorePartition_Yield() || Serial)
@@ -401,12 +466,20 @@ void Terminal ()
                 
                 Serial.println ();
                 Serial.flush ();
+
+                
+                uint8_t nCmdSize = 7;
                 
                 if (nCommandLen == '\0')
-                    continue;
-                else if (strcmp ("show threads" , readCommand.getStr ()) == 0)
                 {
-                    ShowRunningThreads ();
+                    continue;
+                }
+                else if (readCommand.compareOption (0, "show", 4) == true)
+                {
+                    if (readCommand.compareOption (1, "threads", 7) == true)
+                        ShowRunningThreads ();
+                    else if (readCommand.compareOption (1, "status", 6) == true)
+                        showStatus ();
                 }
                 
                 Serial.flush ();
@@ -432,7 +505,7 @@ void __attribute__ ((noinline)) setTraficLights (bool boolRed, bool boolYellow, 
     nTime=0;
 }
 
-void  TraficLightKernel ()
+void  TraficLightKernel (void* pValue)
 {
     uint32_t nFactor = CorePartition_GetNice();
     uint32_t nTimeCounter = 0;
@@ -513,13 +586,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (TraficLight, 20 * sizeof (size_t), 100);
+    CorePartition_CreateThread (TraficLight, NULL, 20 * sizeof (size_t), 100);
     
-    CorePartition_CreateThread (WalkerSign, 30 * sizeof (size_t), 500);
+    CorePartition_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500);
 
-    CorePartition_CreateThread (TraficLightKernel, 30 * sizeof (size_t), 250);
+    CorePartition_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250);
     
-    CorePartition_CreateThread (Terminal, 35 * sizeof (size_t), 50);
+    CorePartition_CreateThread (Terminal, NULL, 35 * sizeof (size_t), 50);
 }
 
 

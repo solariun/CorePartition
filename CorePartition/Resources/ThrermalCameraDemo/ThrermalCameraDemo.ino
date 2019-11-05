@@ -139,7 +139,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -157,15 +157,10 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print ((uint32_t) CorePartition_GetExecutionTicksByID (nCount)) ;
-        Serial.println (F("ms"));
-        
-        //CorePartition_Yield ();
+        Serial.println ();
     }
-    
-    Serial.println ();
 }
+
 
 
 const uint64_t byteImages[] PROGMEM =
@@ -316,7 +311,7 @@ public:
 float fMin = 1000, fMax = 0;
 
 
-void Thread1 ()
+void Thread1 (void* pValue)
 {
     unsigned long start = millis();
     size_t nValue = 0;
@@ -370,7 +365,7 @@ void Thread1 ()
 
 
 
-void Thread2 ()
+void Thread2 (void* pValue)
 {
     unsigned long start = millis();
     size_t nValue = 0;
@@ -434,7 +429,7 @@ void Thread2 ()
 }
 
 
-void Thread3 ()
+void Thread3 (void* pValue)
 {
     unsigned long start = millis();
     size_t nValue = 0;
@@ -467,7 +462,7 @@ void Thread3 ()
 
 
 
-void Thread4 ()
+void Thread4 (void* pValue)
 {    
     char szMessage [20]=""; 
     uint8_t nSize;
@@ -585,13 +580,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, 60, 50);
+    CorePartition_CreateThread (Thread1, NULL, 60, 50);
     
-    CorePartition_CreateThread (Thread2, 30, 160);
+    CorePartition_CreateThread (Thread2, NULL, 30, 160);
 
-    CorePartition_CreateThread (Thread3, 30, 4);
+    CorePartition_CreateThread (Thread3, NULL, 30, 4);
 
-    CorePartition_CreateThread (Thread4, 60, 200);
+    CorePartition_CreateThread (Thread4, NULL, 60, 200);
 }
 
 

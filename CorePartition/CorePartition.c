@@ -50,14 +50,21 @@ typedef struct
     
     size_t    nStackMaxSize;
     size_t    nStackSize;
+ 
+    union
+    {
+        jmp_buf   jmpRegisterBuffer;
     
-    jmp_buf   jmpRegisterBuffer;
+        struct
+        {
+            void(*pFunction)(void* pStart);
+            void* pValue;
+        } func;
+    } mem;
     
-    void(*pFunction)(void);
     
     uint32_t            nNice;
     uint64_t            nLastMomentun;
-    uint64_t            nExecutionTime;
 
     void*               pLastStack;
     uint8_t*            pnStackPage;
@@ -69,8 +76,8 @@ static volatile size_t nMaxThreads = 0;
 static volatile size_t nThreadCount = 0;
 static volatile size_t nCurrentThread;
 
-static ThreadLight* pThreadLight = NULL;
-static ThreadLight* pCurrentThread = NULL;
+static volatile ThreadLight* pThreadLight = NULL;
+static volatile ThreadLight* pCurrentThread = NULL;
 
 
 
@@ -88,8 +95,7 @@ jmp_buf jmpJoinPointer;
  printf (\t     nErrorType:  [%-17u]\n\n, pCurrentThread->nErrorType);
  printf (\t  nStackMaxSize:  [%-17lu]\n, pCurrentThread->nStackMaxSize);
  printf (\t     nStackSize:  [%-17lu]\n, pCurrentThread->nStackSize);
- printf (\t     pStartStck:  [0x%-16lX]\n, (size_t) pCurrentThread->pStartStck);
- printf (\t     pLastStack:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pLastStack);
+ printf (\t     pStartStck:  [0x%-16lX]\n, (size_t) pCurrentThread->pStartStck); printf (\t     pLastStack:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pLastStack);
  printf (\t    pnStackPage:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pnStackPage);
  
  printf (\t    strAssign:  [%-16s]\n\n,  pCurrentThread->strAssign);
@@ -159,16 +165,18 @@ bool CorePartition_Start (size_t nThreadPartitions)
     
     pThreadLight = (ThreadLight*) malloc (sizeof (ThreadLight) * nThreadPartitions);
     
-    memset(pThreadLight, 0, sizeof (ThreadLight) * nThreadPartitions);
+    memset((void*) pThreadLight, 0, sizeof (ThreadLight) * nThreadPartitions);
     
     return true;
 }
 
 
 
-bool CorePartition_CreateThread (void(*pFunction)(void), size_t nStackMaxSize, uint32_t nNice)
+bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
     if (nThreadCount >= nMaxThreads || pFunction == NULL) return false;
+    
+    pThreadLight[nThreadCount].mem.func.pValue = pValue;
     
     pThreadLight[nThreadCount].nStatus = THREADL_START;
 
@@ -178,7 +186,7 @@ bool CorePartition_CreateThread (void(*pFunction)(void), size_t nStackMaxSize, u
     
     pThreadLight[nThreadCount].nStackSize = 0;
 
-    pThreadLight[nThreadCount].pFunction = pFunction;
+    pThreadLight[nThreadCount].mem.func.pFunction = pFunction;
     
     pThreadLight[nThreadCount].nNice = 1;
 
@@ -236,8 +244,6 @@ static size_t Scheduler ()
     
     if (nCounter == 0) nCounter = getCTime ();
     
-    pCurrentThread->nExecutionTime = (uint64_t) (getCTime () - pCurrentThread->nLastMomentun);
-    
     while (1)
     {
         if (++nCurrentThread <= nMaxThreads)
@@ -281,7 +287,7 @@ void CorePartition_Join ()
 
                     pCurrentThread->nStatus = THREADL_RUNNING;
                     
-                    pCurrentThread->pFunction ();
+                    pCurrentThread->mem.func.pFunction (pCurrentThread->mem.func.pValue);
                     
                     pCurrentThread->nStatus = THREADL_STOPPED;
 
@@ -290,7 +296,7 @@ void CorePartition_Join ()
                 case THREADL_RUNNING:
                 case THREADL_SLEEP:
                     
-                    longjmp(pCurrentThread->jmpRegisterBuffer, 1);
+                    longjmp(pCurrentThread->mem.jmpRegisterBuffer, 1);
                 
                     break;
                 
@@ -304,36 +310,38 @@ void CorePartition_Join ()
 
 bool CorePartition_Yield ()
 {
-    volatile uint8_t nValue = 0xBB;
-    
-    if (pCurrentThread == NULL) return false;
-
-    pCurrentThread->pLastStack = (void*) &nValue;
-    
-    pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
-
-    if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
+    if (pCurrentThread != NULL)
     {
-        free (pCurrentThread->pnStackPage);
-        pCurrentThread->nStatus = THREADL_STOPPED;
+        volatile uint8_t nValue = 0xBB;
+        pCurrentThread->pLastStack = (void*) &nValue;
         
-        if (stackOverflowHandler != NULL) stackOverflowHandler ();
+        pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
+
+        if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
+        {
+            free (pCurrentThread->pnStackPage);
+            pCurrentThread->nStatus = THREADL_STOPPED;
+            
+            if (stackOverflowHandler != NULL) stackOverflowHandler ();
+            
+            longjmp(jmpJoinPointer, 1);
+        }
         
-        longjmp(jmpJoinPointer, 1);
+        BackupStack();
+                
+        if (setjmp(pCurrentThread->mem.jmpRegisterBuffer) == 0)
+        {
+            longjmp(jmpJoinPointer, 1);
+        }
+        
+        pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
+        
+        RestoreStack();
+        
+        return true;
     }
     
-    BackupStack();
-    
-    if (setjmp(pCurrentThread->jmpRegisterBuffer) == 0)
-    {
-        longjmp(jmpJoinPointer, 1);
-    }
-    
-    pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
-    
-    RestoreStack();
-    
-    return true;
+    return false;
 }
 
 
@@ -391,18 +399,6 @@ int CorePartition_GetStatusByID (size_t nID)
     if (nID >= nMaxThreads) return 0;
     
     return pThreadLight [nID].nStatus;
-}
-
-uint64_t CorePartition_GetExecutionTicksByID(size_t nID)
-{
-    if (nID >= nMaxThreads) return 0;
-    
-    return pThreadLight [nID].nExecutionTime;
-}
-
-uint64_t CorePartition_GetExecutionTicks ()
-{
-    return pCurrentThread == NULL ? 0 : pCurrentThread->nExecutionTime;
 }
 
 uint8_t CorePartition_GetStatus ()

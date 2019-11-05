@@ -52,7 +52,7 @@ void Delay (uint64_t nSleep)
 
 
 
-void Thread1 ()
+void Thread1 (void* pValue)
 {
     uint8_t nPin = CorePartition_GetID() + 1;
     
@@ -114,7 +114,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -132,14 +132,12 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetExecutionTicksByID (nCount)) ;
-        Serial.println (F("ms"));
+        Serial.println ();
     }
 }
 
 
-void WhachDog ()
+void WhachDog (void* pValue)
 {
     Serial.begin(230400);
     
@@ -167,13 +165,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, 20, 50);
+    CorePartition_CreateThread (Thread1, NULL, 20, 50);
     
-    CorePartition_CreateThread (Thread1, 20, 1000);
+    CorePartition_CreateThread (Thread1, NULL, 20, 1000);
 
-    CorePartition_CreateThread (Thread1, 20, 812);
+    CorePartition_CreateThread (Thread1, NULL, 20, 812);
 
-    CorePartition_CreateThread (Thread1, 20, 200);
+    CorePartition_CreateThread (Thread1, NULL, 20, 200);
 
 #ifdef _DEBUG
     CorePartition_CreateThread (WhachDog, 20, 200);

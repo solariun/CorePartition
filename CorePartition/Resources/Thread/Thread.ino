@@ -247,7 +247,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -265,18 +265,18 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print ((uint32_t) CorePartition_GetExecutionTicksByID (nCount)) ;
-        Serial.println (F("ms"));
+        Serial.println ();
     }
 }
 
 
 
-void Thread1 ()
+
+void Thread1 (void* pValue)
 {
     size_t nValue = 100;
-
+    int nSize;
+    
     static char szMessage [40] = "Thread #1";
 
     TextScroller textScroller (15, 8);
@@ -291,9 +291,9 @@ void Thread1 ()
 
         setColor (1, 0);
         
-        snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
+        nSize = snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec. Cont", millis(), millis() / 1000);
 
-        textScroller.show (5, 10, szMessage, strlen (szMessage));
+        textScroller.show (5, 10, szMessage, nSize);
 
         resetColor ();
 
@@ -306,7 +306,7 @@ void Thread1 ()
 
 
 
-void Thread2 ()
+void Thread2 (void* pValue)
 {
     size_t nValue = 100;
 
@@ -335,7 +335,7 @@ void Thread2 ()
 }
 
 
-void Thread3 ()
+void Thread3 (void* pValue)
 {
     size_t nValue = 100;
 
@@ -363,6 +363,7 @@ void Thread3 ()
         setLocation (35,1);
         
         ShowRunningThreads ();
+        
         Serial.flush ();
         
         CorePartition_Yield ();
@@ -398,7 +399,7 @@ void StackOverflowHandler ()
 void setup()
 {
     //Initialize serial and wait for port to open:
-    Serial.begin(230400);
+    Serial.begin(115200);
 
     delay (1000);
     
@@ -444,11 +445,11 @@ void setup()
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
     
-    CorePartition_CreateThread (Thread1, 80, 0);
+    CorePartition_CreateThread (Thread1, NULL, 30 * sizeof (size_t), 0);
 
-    CorePartition_CreateThread (Thread2, 80, 0);
+    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 0);
 
-    CorePartition_CreateThread (Thread3, 80, 0);
+    CorePartition_CreateThread (Thread3, NULL, 30 * sizeof (size_t), 0);
 
 }
 

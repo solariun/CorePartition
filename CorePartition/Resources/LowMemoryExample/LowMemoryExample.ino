@@ -103,7 +103,7 @@ void Delay (uint64_t nSleep)
 }
 
 
-void Thread ()
+void Thread (void* pValue)
 {
     unsigned long start = millis();
     size_t nValue = 0;
@@ -136,6 +136,35 @@ void Thread ()
 }
 
 
+void __attribute__ ((noinline)) ShowRunningThreads ()
+{
+    size_t nCount = 0;
+    
+    Serial.println ();
+    Serial.println (F("Listing all running threads"));
+    Serial.println (F("--------------------------------------"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
+    
+    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    {
+        Serial.print (F("\e[K"));
+        Serial.print (nCount);
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.println ();
+    }
+}
+
 
 static uint64_t getTimeTick()
 {
@@ -147,6 +176,16 @@ static void sleepTick (uint64_t nSleepTime)
     delayMicroseconds  (nSleepTime * 1000);
 }
 
+void StackOverflowHandler ()
+{
+    while  (!Serial);
+    
+    Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
+    Serial.println (CorePartition_GetID ());
+    Serial.println (F("--------------------------------------"));
+    ShowRunningThreads ();
+    Serial.flush ();
+}
 
 void setup()
 {
@@ -175,12 +214,13 @@ void setup()
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
-
-    CorePartition_CreateThread (Thread, 70, 612);
+    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread, 70, 1000);
+    CorePartition_CreateThread (Thread, NULL, 70, 612);
+    
+    CorePartition_CreateThread (Thread, NULL, 70, 1000);
 
-    CorePartition_CreateThread (Thread, 70, 100);
+    CorePartition_CreateThread (Thread, NULL, 70, 100);
 
 }
 
