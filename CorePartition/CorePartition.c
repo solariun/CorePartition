@@ -314,7 +314,7 @@ bool CorePartition_Yield ()
     {
         volatile uint8_t nValue = 0xBB;
         pCurrentThread->pLastStack = (void*) &nValue;
-        
+             
         pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
 
         if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
