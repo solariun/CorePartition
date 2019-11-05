@@ -54,6 +54,7 @@ extern "C"{
     bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
     
     bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
+
     bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
     
     bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void));
