@@ -63,6 +63,14 @@ void Sleep (uint64_t nSleep)
 }
 
 
+unsigned int addOne (unsigned int nValue)
+{
+    nValue = nValue + 1;
+    
+    CorePartition_Yield (); //Sleep (10);
+    
+    return nValue;
+}
 
 void Thread1 (void* pValue)
 {
@@ -70,13 +78,9 @@ void Thread1 (void* pValue)
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue++, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize());
+        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize());
         
-        usleep (10000);
-        
-        CorePartition_Yield (); //Sleep (10);
-        
-        
+        nValue = addOne (nValue);
     }
 }
 
@@ -90,9 +94,13 @@ void Thread2 (void* pValue)
     
     while (1)
     {
-        printf ("## %lu:  Value: [%u]\n", CorePartition_GetID(), nValue++);
+        printf ("## %lu:  Value: [%u]\n", CorePartition_GetID(), nValue);
         
-        CorePartition_Yield();
+        nValue = addOne (nValue);
+        
+        printf ("## %lu:  Value: [%u] - Returning\n", CorePartition_GetID(), nValue);
+        
+        CorePartition_Sleep (400);
     }
 }
 
@@ -106,9 +114,9 @@ void Thread3 (void* pValue)
     
     while (1)
     {
-        printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu]\n", CorePartition_GetID(), nValue++,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2));
+        printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu]\n", CorePartition_GetID(), nValue,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2));
         
-        CorePartition_Sleep (2000);//Sleep (10);
+        nValue = addOne (nValue);
     }
 }
 
@@ -142,7 +150,7 @@ int main(int argc, const char * argv[])
     
     CorePartition_CreateThread (Thread1, NULL, 256, 3000);
     CorePartition_CreateThread (Thread2, NULL, 256, 1000);
-    CorePartition_CreateThread (Thread3, NULL, 256, 0);
+    CorePartition_CreateThread (Thread3, NULL, 256, 500);
     
     CorePartition_Join();
     

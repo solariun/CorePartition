@@ -47,7 +47,7 @@ extern "C"{
 #include <stdint.h>
 
     
-    static const char CorePartition_version[] = "V2.1 Compiled:" __TIMESTAMP__;
+    static const char CorePartition_version[] = "V2.3 Compiled:" __TIMESTAMP__;
     
     bool CorePartition_Start (size_t nThreadPartitions);
     
