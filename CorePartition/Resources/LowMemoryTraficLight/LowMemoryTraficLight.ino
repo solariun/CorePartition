@@ -42,21 +42,21 @@
 
 struct 
 {
-    const uint8_t nRedLightPin = 1;
-    const uint8_t nYellowLightPin = 2;
-    const uint8_t nGreenLightPin = 3;
+    const uint8_t nRedLightPin = 0;
+    const uint8_t nYellowLightPin = 1;
+    const uint8_t nGreenLightPin = 2;
     
-    const uint8_t nWalkerWaitPin = 4;
-    const uint8_t nWalkerGoPin = 5;
+    const uint8_t nWalkerWaitPin = 3;
+    const uint8_t nWalkerGoPin = 4;
     
     bool boolRedLight = false;
     bool boolYellowLight = false;
     bool boolGreenLight = true;
     bool boolWalkerWait = true;
     
-    uint16_t nRedTime = 20;
-    uint16_t nYellowTime = 10;
-    uint16_t nGreenTime = 20;
+    uint16_t nRedTime = 10;
+    uint16_t nYellowTime = 6;
+    uint16_t nGreenTime = 10;
 
     uint16_t nNotifyAtTime=5;
     
@@ -236,11 +236,11 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (TraficLight, NULL, 15 * sizeof (size_t), 500);
+    CorePartition_CreateThread (TraficLight, NULL, 10 * sizeof (size_t), 500);
     
-    CorePartition_CreateThread (WalkerSign, NULL, 15 * sizeof (size_t), 500);
+    CorePartition_CreateThread (WalkerSign, NULL, 10 * sizeof (size_t), 500);
 
-    CorePartition_CreateThread (TraficLightKernel, NULL, 15 * sizeof (size_t), 250);
+    CorePartition_CreateThread (TraficLightKernel, NULL, 10 * sizeof (size_t), 250);
 }
 
 
