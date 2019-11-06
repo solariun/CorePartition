@@ -100,7 +100,7 @@ void StackOverflowHandler ()
             delay (150);
         }
         
-        delay (400); //500ms off
+        delay (400); //550ms off
     }
 }
 
