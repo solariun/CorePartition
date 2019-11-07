@@ -443,7 +443,7 @@ void showStatus ()
     Serial.print (TraficLightData.boolYellowLight ? F("[\033[30;103m YLW \033[0m]") : F("\033[0m YLW "));
     Serial.print (TraficLightData.boolGreenLight ? F("[\033[30;102m GRN \033[0m]") : F("\033[0m GREEN "));
     Serial.print (F("  -  "));
-    Serial.print (TraficLightData.boolGreenLight ? F("[\033[97;101m WALKER \033[0m]") : F("[\033[30;102m WALKER \033[0m]"));
+    Serial.print (!TraficLightData.boolRedLight ? F("[\033[97;101m WALKER \033[0m]") : F("[\033[30;102m WALKER \033[0m]"));
 
     Serial.println ();
     
