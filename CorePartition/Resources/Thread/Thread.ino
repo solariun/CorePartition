@@ -247,7 +247,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -265,7 +265,9 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.println ();
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetLastExecTimeByID (nCount));
+        Serial.println ("ms");
     }
 }
 
@@ -283,20 +285,22 @@ void Thread1 (void* pValue)
     
     //setCoreNice (100);
 
-    Serial.println();
-    Serial.println ("Starting up Thread #1 loop");
     
     while (1)
     {
 
         setColor (1, 0);
         
-        nSize = snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec. Cont", millis(), millis() / 1000);
+        nSize = snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
 
         textScroller.show (5, 10, szMessage, nSize);
 
         resetColor ();
 
+        setLocation (35,1);
+        
+        ShowRunningThreads ();
+        
         
         CorePartition_Yield ();
         Serial.flush ();
@@ -310,67 +314,23 @@ void Thread2 (void* pValue)
 {
     size_t nValue = 100;
 
-    static char szMessage [] = "#2 - CorePartition I  s Multi Thread, Is Universal and Is for Small processors as well";
+    static char szMessage [] = "#2 - CorePartition Is Multi Thread, Universal and Is for Windows, Mac and Linux, AVR, ESP, ARM, ARDUINO.";
         
-    TextScroller textScroller (8, 12);
+    TextScroller textScroller (15, 12);
     
     //setCoreNice (100);
-
-    Serial.println();
-    Serial.println ("Starting up Thread #2 loop");
     
-    while (1)
+    while (CorePartition_Yield ())
     {
-
         setColor (4, 0);
         
         textScroller.show (15, 10, szMessage, sizeof (szMessage) - 1);
-
+        
         resetColor ();
-
-        Serial.flush ();
-
-        CorePartition_Yield ();
-    }
-}
-
-
-void Thread3 (void* pValue)
-{
-    size_t nValue = 100;
-
-    static char szMessage [] = "#3 - Works on Windows, Mac and Linux, AVR, ESP, ARM, ARDUINO.";
-    
-   
-    TextScroller textScroller (10, 4);
-
-    //setCoreNice (100);
-
-    Serial.println();
-    Serial.println ("Starting up Thread #3 loop");
-    
-    while (1)
-    {
-
-        reverseColor ();
-        
-        textScroller.show (25, 10, szMessage, sizeof (szMessage) - 1);
-
-        resetColor ();
-
-        Serial.println ();
-        
-        setLocation (35,1);
-        
-        ShowRunningThreads ();
         
         Serial.flush ();
-        
-        CorePartition_Yield ();
-        
     }
 }
-
 
 
 
@@ -393,6 +353,8 @@ void StackOverflowHandler ()
     Serial.println (F("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
+    
+    while (true);
 }
 
 
@@ -438,18 +400,17 @@ void setup()
     //Thread1 ();
 
 
-    CorePartition_Start(3);
+    CorePartition_Start(2);
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
     
-    CorePartition_CreateThread (Thread1, NULL, 30 * sizeof (size_t), 0);
+    CorePartition_CreateThread (Thread1, NULL, 20 * sizeof (size_t), 0);
 
-    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 0);
+    CorePartition_CreateThread (Thread2, NULL, 25 * sizeof (size_t), 0);
 
-    CorePartition_CreateThread (Thread3, NULL, 30 * sizeof (size_t), 0);
 
 }
 

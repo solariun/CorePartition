@@ -139,7 +139,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem"));
+    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -157,7 +157,9 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.println ();
+        Serial.print (F("\t"));
+        Serial.print (CorePartition_GetLastExecTimeByID (nCount));
+        Serial.println ("ms");
     }
 }
 

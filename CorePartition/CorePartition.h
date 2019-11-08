@@ -82,6 +82,9 @@ extern "C"{
     size_t CorePartition_GetMaxStackSizeByID (size_t nID);
     uint32_t CorePartition_GetNiceByID (size_t nID);
     int CorePartition_GetStatusByID (size_t nID);
+    uint32_t CorePartition_GetLastExecTimeByID (size_t nID);
+    
+    uint32_t CorePartition_GetLastExecTime ();
 
     size_t CorePartition_GetNumberOfThreads(void);
 

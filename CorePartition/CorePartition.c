@@ -69,6 +69,7 @@ typedef struct
     void*               pLastStack;
     uint8_t*            pnStackPage;
     
+    uint32_t            nExecTime;
 } ThreadLight;
 
 
@@ -245,12 +246,15 @@ static size_t Scheduler ()
     
     if (nCounter == 0) nCounter = getCTime ();
     
+    pThreadLight [nCurrentThread].nExecTime = (uint32_t) ((uint64_t)(getCTime () - pThreadLight [nCurrentThread].nLastMomentun));
+    
     while (1)
     {
         if (++nCurrentThread <= nMaxThreads)
         {
             if (nCounter > (pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice))
             {
+                
                 pThreadLight [nCurrentThread].nLastMomentun = nCounter;
                 return nCurrentThread;
             }
@@ -401,6 +405,20 @@ int CorePartition_GetStatusByID (size_t nID)
     
     return pThreadLight [nID].nStatus;
 }
+
+
+uint32_t CorePartition_GetLastExecTimeByID (size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nExecTime;
+}
+
+uint32_t CorePartition_GetLastExecTime ()
+{
+    return pCurrentThread == NULL ? 0 : pCurrentThread->nExecTime;
+}
+
 
 uint8_t CorePartition_GetStatus ()
 {
