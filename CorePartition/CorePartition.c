@@ -80,31 +80,13 @@ static volatile size_t nCurrentThread;
 static volatile ThreadLight* pThreadLight = NULL;
 static volatile ThreadLight* pCurrentThread = NULL;
 
-
-
 static void*  pStartStck = NULL;
 
 jmp_buf jmpJoinPointer;
 
-/*
- static void printStruct ()
- {
- pCurrentThread = &pThreadLight [nCurrentThread];
- 
- printf (ThreadLight ID: (%lu) Struct\n, nCurrentThread);
- printf (\t        nStatus:  [%-17u]\n, pCurrentThread->nStatus);
- printf (\t     nErrorType:  [%-17u]\n\n, pCurrentThread->nErrorType);
- printf (\t  nStackMaxSize:  [%-17lu]\n, pCurrentThread->nStackMaxSize);
- printf (\t     nStackSize:  [%-17lu]\n, pCurrentThread->nStackSize);
- printf (\t     pStartStck:  [0x%-16lX]\n, (size_t) pCurrentThread->pStartStck); printf (\t     pLastStack:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pLastStack);
- printf (\t    pnStackPage:  [0x%-16lX]\n\n, (size_t) pCurrentThread->pnStackPage);
- 
- printf (\t    strAssign:  [%-16s]\n\n,  pCurrentThread->strAssign);
- }
- */
-
 
 void (*stackOverflowHandler)(void) = NULL;
+
 
 bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
 {
@@ -117,7 +99,7 @@ bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
 }
 
 
-static uint64_t getDefaultCTime()
+uint64_t getDefaultCTime()
 {
    static uint64_t nCounter=0;
 
@@ -137,7 +119,7 @@ bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(
     return true;
 }
 
-static void sleepDefaultCTime (uint64_t nSleepTime)
+void sleepDefaultCTime (uint64_t nSleepTime)
 {
     nSleepTime = getCTime() + nSleepTime;
     
@@ -193,6 +175,8 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
 
     pThreadLight [nThreadCount].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThreadCount].nStackMaxSize);
     
+    if (pThreadLight [nThreadCount].pnStackPage == NULL) return false;
+ 
     pThreadLight [nThreadCount].nLastMomentun = getCTime();
 
     pThreadLight [nThreadCount].nNice = nNice;
@@ -202,21 +186,19 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     return true;
 }
 
-
-static inline void BackupStack()
+inline static void BackupStack(void)
 {
     memcpy(pCurrentThread->pnStackPage, pCurrentThread->pLastStack, pCurrentThread->nStackSize);
 }
 
 
-static inline void RestoreStack()
+inline static void RestoreStack(void)
 {
     memcpy(pCurrentThread->pLastStack, pCurrentThread->pnStackPage, pCurrentThread->nStackSize);
 }
 
-
-
-static inline uint64_t getSleepTime (uint64_t nCurTime)
+uint64_t getSleepTime (uint64_t nCurTime);
+inline uint64_t getSleepTime (uint64_t nCurTime)
 {
     uint64_t nMin;
     size_t nCThread=0;
@@ -240,7 +222,8 @@ static inline uint64_t getSleepTime (uint64_t nCurTime)
 }
 
 
-static size_t Scheduler ()
+size_t Scheduler (void);
+inline size_t Scheduler (void)
 {
     static uint64_t nCounter = 0;
     
@@ -407,14 +390,14 @@ int CorePartition_GetStatusByID (size_t nID)
 }
 
 
-uint32_t CorePartition_GetLastExecTimeByID (size_t nID)
+uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
 {
     if (nID >= nMaxThreads) return 0;
     
     return pThreadLight [nID].nExecTime;
 }
 
-uint32_t CorePartition_GetLastExecTime ()
+uint32_t CorePartition_GetLastDutyCycle ()
 {
     return pCurrentThread == NULL ? 0 : pCurrentThread->nExecTime;
 }

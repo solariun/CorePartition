@@ -405,7 +405,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetLastExecTimeByID (nCount));
+        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
     }
 }

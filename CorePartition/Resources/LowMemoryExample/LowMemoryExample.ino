@@ -126,7 +126,9 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetStackSize ());
         Serial.print ("/");
         Serial.print (CorePartition_GetMaxStackSize ());
-        Serial.println ("\n");
+        Serial.print (", DutyCycle Time: ");
+        Serial.print (CorePartition_GetLastDutyCycle ());
+        Serial.println ("ms\n");
 
         Serial.flush ();
           
@@ -162,7 +164,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetLastExecTimeByID (nCount));
+        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
     }
 }
@@ -218,12 +220,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread, NULL, 70, 612);
+    CorePartition_CreateThread (Thread, NULL, 70, 500);
     
     CorePartition_CreateThread (Thread, NULL, 70, 1000);
 
     CorePartition_CreateThread (Thread, NULL, 70, 100);
 
+     
 }
 
 
