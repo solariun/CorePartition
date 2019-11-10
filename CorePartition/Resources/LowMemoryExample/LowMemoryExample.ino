@@ -117,7 +117,7 @@ void Thread (void* pValue)
         Serial.print (": ");
         Serial.print (nValue++);
         Serial.print (", Sleep Time: ");
-        Serial.print (millis() - start);  //start = millis();
+        Serial.print ((unsigned long) CorePartition_GetLastMomentum () - start);  start = CorePartition_GetLastMomentum ();
         Serial.print (", Nice: ");
         Serial.print (CorePartition_GetNice());
         Serial.print (", CTX: ");
@@ -131,8 +131,7 @@ void Thread (void* pValue)
         Serial.println ("ms\n");
 
         Serial.flush ();
-          
-        start = millis();
+    
         CorePartition_Yield ();
     }
 }
@@ -177,7 +176,8 @@ static uint64_t getTimeTick()
 
 static void sleepTick (uint64_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime * 1000);
+    delay (nSleepTime);
+    //delayMicroseconds  (nSleepTime * 1000);
 }
 
 void StackOverflowHandler ()

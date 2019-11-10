@@ -77,18 +77,25 @@ extern "C"{
     uint32_t CorePartition_GetNice(void);
     
     void CorePartition_SetNice (uint32_t nNice);
+
+    uint64_t CorePartition_GetLastMomentum (void);
     
+    uint32_t CorePartition_GetLastDutyCycle (void);
+    
+    size_t CorePartition_GetNumberOfThreads(void);
+
     size_t CorePartition_GetStackSizeByID (size_t nID);
+    
     size_t CorePartition_GetMaxStackSizeByID (size_t nID);
+    
     uint32_t CorePartition_GetNiceByID (size_t nID);
+    
     int CorePartition_GetStatusByID (size_t nID);
     
+    uint64_t CorePartition_GetLastMomentumByID (size_t nID);
     
     uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
     
-    uint32_t CorePartition_GetLastDutyCycle (void);
-
-    size_t CorePartition_GetNumberOfThreads(void);
 
 #ifdef __cplusplus
 } // extern "C"
