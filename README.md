@@ -4,7 +4,9 @@ Version 2.2
 
 ![License information](https://raw.githubusercontent.com/solariun/CorePartition/master/License.png)
 
-Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to replace pthread for a more controled execution envirionment. 
+Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
+
+*The Momentum Scheduler* is optimised to only allow thread to come back to work only upon its "nice" time or later that, with means it will work on real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialised nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exemplo for keeping it simple).
 
 HIGHLY suitable for Arduino (All official models included) as well, a .ino project is also provided with an example.
 
@@ -49,51 +51,52 @@ tested at Linux PI Zero, 1, 3
 This is how to use it 
 
 ```
-void Thread1()
+#include "CorePartition.h"
+
+void Thread1(void* pValue)
 {
-    int nValue = 100;
-    
-    while (1)
-    {
-        printf ("Thread1: Value [%d]\n", nValue++);
-        
-        yield();
-    }
+int nValue = 100;
+
+while (1)
+{
+printf ("Thread1: Value [%d]\n", nValue++);
+
+CorePartition_Yield();
+}
 }
 
-void Thread2()
+void Thread2(void* pValue)
 {
-    int nValue = 1000;
+int nValue = 1000;
 
-    while (1)
-    {
-        printf ("Thread2: Value [%d]\n", nValue++);
-        
-        yield();
-    }
+while (1)
+{
+printf ("Thread2: Value [%d]\n", nValue++);
+
+CorePartition_Yield();
+}
 }
 
 
 int main ()
 {
 
-    ThreadLight_Start(2);
-    
-    //Every 1000 cycles with a Stack page of 210 bytes
-    CreatePartition(Thread1, 210, 1000);
-    
-    //All the time with a Stack page of 150 bytes
-    CreatePartition(Thread2, 150, 0);
+CorePartition_Start (2);
 
-    join();
+//Every 1000 cycles with a Stack page of 210 bytes
+CorePartition_CreateThread (Thread1, NULL,  210, 1000);
+
+//All the time with a Stack page of 150 bytes
+CorePartition_CreateThread (Thread2, NULL, 150, 0);
+
+join();
 }
 ```
 
 inside your partitioned program (function) use the directive yield() to let the nano microkernel process next thread.
 
-Please note it is not a regular thread, even though it behaves like one, it is a cooperative thread, once it will  let the programmer choose when to yeld control control to other threads. 
+Please note it is not a regular thread, even though it behaves like one, it is a cooperative thread, once it will  let the programmer choose when to yield control control to other threads. 
 
-Since it uses the directive yield(), it will create an advantage using oficial arduino boards. The oficial code uses the yield() directive inside every I/O blockings and sleep procedures. Arduino implements a  null  yeld  using a week function definition, which means, it will be override by this CorePartitioning nano microlib technology, allowing arduino to run, almost, without the need of using the yield() directive that will continue to be available. Some ports of arduino framework may or not call the yield() inside their I/O and Sleep functions, but in case they do, it will make your project even more portable and feeling like preemptive cores.
 
 This thread is HIGHLY SUITABLE for small arduinos like NANO (Works like magic) and ATTINY85
 
@@ -104,3 +107,10 @@ ATmega238p with Thermal cam (I2C) and 2 DotMatrix 8x8 ISP chained. 3 threads 1: 
 ATTiny with 4 threads at 1Mhz
 
 ![regift](https://user-images.githubusercontent.com/1805792/67900756-1dae4000-fb5d-11e9-9cc4-b648c7680208.gif)
+
+ATmega238p with Thermal cam (I2C) and 2 DotMatrix 8x8 ISP chained. 3 threads 1: reading cam, 2: showing cam, 3-Text Scroller
+![IMG_5502](https://user-images.githubusercontent.com/1805792/68585528-64b00580-047a-11ea-8d73-e45c9f3f441f.GIF)
+
+ATmega238p 
+![regift](https://user-images.githubusercontent.com/1805792/68585742-fb7cc200-047a-11ea-8ba5-3b9619c1962e.gif)
+
