@@ -151,9 +151,24 @@ void WhachDog (void* pValue)
 
 void setup()
 {
-    bool status; 
+
+    pinMode (0, OUTPUT);
     
-    //Initialize serial and wait for port to open:
+    digitalWrite (0, HIGH);
+    delay (250);
+    digitalWrite (0, HIGH);
+    delay (250);
+
+    digitalWrite (0, HIGH);
+    delay (250);
+    digitalWrite (0, HIGH);
+    delay (250);
+
+    digitalWrite (0, HIGH);
+    delay (250);
+    digitalWrite (0, HIGH);
+    delay (250);
+    
 
 #ifdef _DEBUG
     CorePartition_Start (5);
@@ -165,13 +180,13 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, NULL, 20, 50);
+    CorePartition_CreateThread (Thread1, NULL, 25, 50);
     
-    CorePartition_CreateThread (Thread1, NULL, 20, 1000);
+    CorePartition_CreateThread (Thread1, NULL, 25, 1000);
 
-    CorePartition_CreateThread (Thread1, NULL, 20, 812);
+    CorePartition_CreateThread (Thread1, NULL, 25, 812);
 
-    CorePartition_CreateThread (Thread1, NULL, 20, 200);
+    CorePartition_CreateThread (Thread1, NULL, 25, 200);
 
 #ifdef _DEBUG
     CorePartition_CreateThread (WhachDog, 20, 200);

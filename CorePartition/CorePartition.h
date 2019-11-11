@@ -46,6 +46,12 @@ extern "C"{
 #include <string.h>
 #include <stdint.h>
 
+#define THREADL_NONE        0
+#define THREADL_START       1
+#define THREADL_RUNNING     2
+#define THREADL_SLEEP       3
+#define THREADL_STOPPED     4
+
     
     static const char CorePartition_version[] = "V2.3 Compiled:" __TIMESTAMP__;
     

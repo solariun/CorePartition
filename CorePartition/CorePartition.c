@@ -32,12 +32,6 @@
 
 #include <stdlib.h>
 
-#define THREADL_NONE        0
-#define THREADL_START       1
-#define THREADL_RUNNING     2
-#define THREADL_SLEEP       3
-#define THREADL_STOPPED     4
-
 
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
 
@@ -157,31 +151,45 @@ bool CorePartition_Start (size_t nThreadPartitions)
 
 bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
+    size_t nThread;
+    
     if (nThreadCount >= nMaxThreads || pFunction == NULL) return false;
-    
-    pThreadLight[nThreadCount].mem.func.pValue = pValue;
-    
-    pThreadLight[nThreadCount].nStatus = THREADL_START;
-
-    pThreadLight[nThreadCount].nErrorType = THREADL_NONE;
-
-    pThreadLight [nThreadCount].nStackMaxSize = nStackMaxSize;
-    
-    pThreadLight[nThreadCount].nStackSize = 0;
-
-    pThreadLight[nThreadCount].mem.func.pFunction = pFunction;
-    
-    pThreadLight[nThreadCount].nNice = 1;
-
-    pThreadLight [nThreadCount].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThreadCount].nStackMaxSize);
-    
-    if (pThreadLight [nThreadCount].pnStackPage == NULL) return false;
  
-    pThreadLight [nThreadCount].nLastMomentun = getCTime();
-
-    pThreadLight [nThreadCount].nExecTime = 0;
+    //Determine free threads
     
-    pThreadLight [nThreadCount].nNice = nNice;
+    for (nThread=0; nThread < nMaxThreads; nThread++)
+    {
+        if (pThreadLight [nThread].nStatus == THREADL_NONE || pThreadLight [nThread].nStatus == THREADL_STOPPED)
+            break;
+    }
+    
+    //If it leaves here it means a serious bug
+    if (nThread == nMaxThreads) return false;
+    
+    
+    pThreadLight[nThread].mem.func.pValue = pValue;
+    
+    pThreadLight[nThread].nStatus = THREADL_START;
+
+    pThreadLight[nThread].nErrorType = THREADL_NONE;
+
+    pThreadLight [nThread].nStackMaxSize = nStackMaxSize;
+    
+    pThreadLight[nThread].nStackSize = 0;
+
+    pThreadLight[nThread].mem.func.pFunction = pFunction;
+    
+    pThreadLight[nThread].nNice = 1;
+
+    pThreadLight [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThread].nStackMaxSize);
+    
+    if (pThreadLight [nThread].pnStackPage == NULL) return false;
+ 
+    pThreadLight [nThread].nLastMomentun = getCTime();
+
+    pThreadLight [nThread].nExecTime = 0;
+    
+    pThreadLight [nThread].nNice = nNice;
     
     nThreadCount++;
     
@@ -219,10 +227,7 @@ inline static void SleepBeforeTask (uint64_t nCurTime)
             nMin = __CALC (nCThread);
     }
         
-    if (nMin > 1)
-        sleepCTime (nMin-1);
-    else
-        sleepCTime (1);
+    sleepCTime (nMin + 1);
 }
 
 
@@ -242,7 +247,7 @@ inline static size_t Scheduler (void)
         {
             if (nCounter >= ((uint64_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
             {
-                pThreadLight [nCurrentThread].nLastMomentun = nCounter;
+                pThreadLight [nCurrentThread].nLastMomentun = getCTime ();
                 
                 return nCurrentThread;
             }
@@ -250,11 +255,20 @@ inline static size_t Scheduler (void)
         else
         {
             nCurrentThread = -1;
-            SleepBeforeTask (nCounter);
+            SleepBeforeTask (getCTime ());
         }
     }
 }
 
+
+static void CorePartition_StopThread ()
+{
+    pCurrentThread->nStatus = THREADL_STOPPED;
+    pCurrentThread->nStackMaxSize = 0;
+    free (pCurrentThread->pnStackPage);
+    
+    nThreadCount--;
+}
 
 void CorePartition_Join ()
 {
@@ -277,8 +291,8 @@ void CorePartition_Join ()
                     
                     pCurrentThread->mem.func.pFunction (pCurrentThread->mem.func.pValue);
                     
-                    pCurrentThread->nStatus = THREADL_STOPPED;
-
+                    CorePartition_StopThread ();
+                    
                     break;
                     
                 case THREADL_RUNNING:
@@ -307,8 +321,8 @@ bool CorePartition_Yield ()
 
         if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
         {
-            free (pCurrentThread->pnStackPage);
-            pCurrentThread->nStatus = THREADL_STOPPED;
+            
+            CorePartition_StopThread ();
             
             if (stackOverflowHandler != NULL) stackOverflowHandler ();
             

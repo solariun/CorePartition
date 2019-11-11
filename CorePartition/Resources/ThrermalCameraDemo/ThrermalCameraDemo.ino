@@ -335,8 +335,6 @@ void Thread1 (void* pValue)
         Serial.print (nValue++);
         Serial.print (F(", Sleep Time: "));
         Serial.print (millis() - start);  start = millis();
-        Serial.print (F("ms, Nice: "));
-        Serial.print (CorePartition_GetNice());
         Serial.println ("\n");
 
         Serial.flush();
@@ -388,11 +386,7 @@ void Thread2 (void* pValue)
           Serial.print (nValue++);
           Serial.print (F(", Sleep Time: "));
           Serial.print (millis() - start);  start = millis();
-          Serial.print (F("ms, Nice: "));
-          Serial.print (CorePartition_GetNice());
-          Serial.print (F(", Status: "));
-          Serial.print (CorePartition_GetStatus());
-          Serial.println (F("\n"));
+          Serial.println (F("ms\n"));
       
           fMin = 1000, fMax = 0; 
           
@@ -443,22 +437,16 @@ void Thread3 (void* pValue)
         Serial.print (F("\e[6;20H\e[K>> Thread3: "));
         Serial.print (nValue++);
         Serial.print (F(", Sleep Time: "));
-        Serial.print (millis() - start);  //start = millis();
-        Serial.print (F("ms, Nice: "));
-        Serial.print (CorePartition_GetNice());
-        Serial.println (F("\n"));
+        Serial.print ((uint32_t) CorePartition_GetLastMomentum () - start); start = CorePartition_GetLastMomentum ();
+        Serial.println (F("ms\n"));
 
         Serial.flush ();
 
         //read all the pixels
         amg.readPixels(pixels);
           
-          start = millis();
-                    
-        //digitalWrite (4, LOW);
-        //Delay (500);
+
         CorePartition_Yield ();
-        //digitalWrite (4, HIGH);
     }
 }
 
@@ -490,13 +478,45 @@ void Thread4 (void* pValue)
     
         Serial.println();
         Serial.println();
-
-        ShowRunningThreads ();
         
         CorePartition_Yield ();
+
+        setLocation (20, 1);
+        
+        ShowRunningThreads ();
+        
+        if (CorePartition_GetStatusByID (4) == THREADL_STOPPED)
+            CorePartition_CreateThread (Thread5, NULL, 25, 1000);
+            
+        CorePartition_Sleep (100);
     }
 }
 
+
+void Thread5 (void* pValue)
+{
+    int nValue = 0;
+    unsigned long nLast = millis ();
+
+    Serial.print (F("\e[8;20H\e[K>> Eventual Thread5: Starting up"));
+
+    while (nValue < 5)
+    {
+        CorePartition_Yield ();
+        
+        Serial.print (F("\e[8;20H\e[K>> Eventual Thread5: "));
+        Serial.print (nValue++);
+        Serial.print (F(", Sleep Time: "));
+        Serial.print ((uint32_t) CorePartition_GetLastMomentum () - nLast); nLast = CorePartition_GetLastMomentum ();
+        Serial.println (F("ms\n"));
+
+        Serial.flush ();
+    }
+    
+    Serial.print (F("\e[8;20H\e[K>> Eventual Thread5: Thread done!"));
+        
+    CorePartition_Yield ();
+}
 
 
 
@@ -576,19 +596,21 @@ void setup()
     //pinMode(nPinInput, INPUT_PULLUP);
     //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
 
-    CorePartition_Start (4);
+    CorePartition_Start (5);
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, NULL, 60, 50);
+    CorePartition_CreateThread (Thread1, NULL, 60, 100);
     
-    CorePartition_CreateThread (Thread2, NULL, 30, 160);
+    CorePartition_CreateThread (Thread3, NULL, 20, 100);
 
-    CorePartition_CreateThread (Thread3, NULL, 30, 4);
+    CorePartition_CreateThread (Thread2, NULL, 25, 100);
 
-    CorePartition_CreateThread (Thread4, NULL, 60, 200);
+    CorePartition_CreateThread (Thread4, NULL, 60, 250);
+    
+    CorePartition_CreateThread (Thread5, NULL, 25, 1000);
 }
 
 
