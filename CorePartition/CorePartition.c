@@ -58,7 +58,7 @@ typedef struct
     
     
     uint32_t            nNice;
-    uint64_t            nLastMomentun;
+    uint32_t            nLastMomentun;
 
     void*               pLastStack;
     uint8_t*            pnStackPage;
@@ -93,17 +93,17 @@ bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
 }
 
 
-uint64_t getDefaultCTime()
+uint32_t getDefaultCTime()
 {
-   static uint64_t nCounter=0;
+   static uint32_t nCounter=0;
 
    return (++nCounter);
 }
 
-uint64_t (*getCTime)(void) = getDefaultCTime;
+uint32_t (*getCTime)(void) = getDefaultCTime;
 
 
-bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void))
+bool CorePartition_SetCurrentTimeInterface (uint32_t (*getCurrentTimeInterface)(void))
 {
     if (getCTime != getDefaultCTime || getCurrentTimeInterface == NULL)
         return false;
@@ -113,7 +113,7 @@ bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(
     return true;
 }
 
-void sleepDefaultCTime (uint64_t nSleepTime)
+void sleepDefaultCTime (uint32_t nSleepTime)
 {
     nSleepTime = getCTime() + nSleepTime;
     
@@ -121,9 +121,9 @@ void sleepDefaultCTime (uint64_t nSleepTime)
 }
 
 
-void (*sleepCTime)(uint64_t nSleepTime) = sleepDefaultCTime;
+void (*sleepCTime)(uint32_t nSleepTime) = sleepDefaultCTime;
 
-bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime))
+bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint32_t nSleepTime))
 {
     if (sleepCTime != sleepDefaultCTime || getSleepTimeInterface == NULL)
         return false;
@@ -207,13 +207,13 @@ inline static void RestoreStack(void)
     memcpy(pCurrentThread->pLastStack, pCurrentThread->pnStackPage, pCurrentThread->nStackSize);
 }
 
-inline static void SleepBeforeTask (uint64_t nCurTime)
+inline static void SleepBeforeTask (uint32_t nCurTime)
 {
-    uint64_t nMin;
+    uint32_t nMin;
     size_t nCThread=0;
     
 #define __NEXTIME(TH) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice - 1)
-#define __CALC(TH) (uint64_t) (__NEXTIME(TH) - nCurTime)
+#define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
     nMin = __CALC(0);
     
@@ -233,11 +233,11 @@ inline static void SleepBeforeTask (uint64_t nCurTime)
 
 inline static size_t Scheduler (void)
 {
-    static uint64_t nCounter = 0;
+    static uint32_t nCounter = 0;
   
     if (nCounter == 0) nCounter = getCTime ();
     
-    pThreadLight [nCurrentThread].nExecTime = (uint32_t) ((uint64_t)(getCTime () - pThreadLight [nCurrentThread].nLastMomentun));
+    pThreadLight [nCurrentThread].nExecTime = (uint32_t) ((uint32_t)(getCTime () - pThreadLight [nCurrentThread].nLastMomentun));
     
     while (1)
     {
@@ -245,7 +245,7 @@ inline static size_t Scheduler (void)
         
         if (++nCurrentThread <= nMaxThreads)
         {
-            if (nCounter >= ((uint64_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
+            if (nCounter >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
             {
                 pThreadLight [nCurrentThread].nLastMomentun = nCounter;
                 
@@ -258,6 +258,8 @@ inline static size_t Scheduler (void)
             SleepBeforeTask (getCTime ());
         }
     }
+    
+    return 0;
 }
 
 
@@ -405,14 +407,14 @@ uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
     return pThreadLight [nID].nExecTime;
 }
 
-uint64_t CorePartition_GetLastMomentumByID (size_t nID)
+uint32_t CorePartition_GetLastMomentumByID (size_t nID)
 {
     if (nID >= nMaxThreads) return 0;
     
     return pThreadLight [nID].nLastMomentun;
 }
 
-uint64_t CorePartition_GetLastMomentum (void)
+uint32_t CorePartition_GetLastMomentum (void)
 {
     return CorePartition_GetLastMomentumByID(nCurrentThread);
 }

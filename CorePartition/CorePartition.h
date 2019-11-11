@@ -59,9 +59,9 @@ extern "C"{
     
     bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
     
-    bool CorePartition_SetCurrentTimeInterface (uint64_t (*getCurrentTimeInterface)(void));
+    bool CorePartition_SetCurrentTimeInterface (uint32_t (*getCurrentTimeInterface)(void));
 
-    bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint64_t nSleepTime));
+    bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint32_t nSleepTime));
     
     bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void));
 
@@ -84,7 +84,7 @@ extern "C"{
     
     void CorePartition_SetNice (uint32_t nNice);
 
-    uint64_t CorePartition_GetLastMomentum (void);
+    uint32_t CorePartition_GetLastMomentum (void);
     
     uint32_t CorePartition_GetLastDutyCycle (void);
     
@@ -98,7 +98,7 @@ extern "C"{
     
     int CorePartition_GetStatusByID (size_t nID);
     
-    uint64_t CorePartition_GetLastMomentumByID (size_t nID);
+    uint32_t CorePartition_GetLastMomentumByID (size_t nID);
     
     uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
     

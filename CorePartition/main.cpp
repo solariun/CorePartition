@@ -52,9 +52,9 @@ void sleepUseconds(uint32_t nTime)
 }
 
 
-void Sleep (uint64_t nSleep)
+void Sleep (uint32_t nSleep)
 {
-    uint64_t nMomentum =  getMiliseconds();
+    uint32_t nMomentum =  getMiliseconds();
     
     do {
         //sleepUseconds (100000);
@@ -122,18 +122,18 @@ void Thread3 (void* pValue)
 
 
 
-static void sleepMSTicks (uint64_t nSleepTime)
+static void sleepMSTicks (uint32_t nSleepTime)
 {
     printf ("\n%s: sleeping [%llu]\n", __FUNCTION__, nSleepTime);
     usleep ((useconds_t) nSleepTime * 1000);
 }
 
-static uint64_t getMsTicks(void)
+static uint32_t getMsTicks(void)
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     
-    return tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+    return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
 }
 
 static void StackOverflowHandler ()

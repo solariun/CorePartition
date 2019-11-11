@@ -682,12 +682,12 @@ void  TraficLightKernel (void* pValue)
 
 
 
-static uint64_t getTimeTick()
+static uint32_t getTimeTick()
 {
-   return (uint64_t) millis();
+   return (uint32_t) millis();
 }
 
-static void sleepTick (uint64_t nSleepTime)
+static void sleepTick (uint32_t nSleepTime)
 {
     delayMicroseconds  ((nSleepTime + 1) * 1000);
 }
