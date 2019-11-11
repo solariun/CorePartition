@@ -227,7 +227,7 @@ inline static void SleepBeforeTask (uint64_t nCurTime)
             nMin = __CALC (nCThread) + 1;
     }
         
-    sleepCTime (nMin);
+    if (nMin > 0) sleepCTime (nMin);
 }
 
 
