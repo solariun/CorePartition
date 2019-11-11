@@ -105,7 +105,7 @@ void Delay (uint64_t nSleep)
 
 void Thread (void* pValue)
 {
-    unsigned long start = millis();
+    unsigned long nLast = millis();
     size_t nValue = 0;
     
     while (1)
@@ -117,8 +117,8 @@ void Thread (void* pValue)
         Serial.print (": ");
         Serial.print (nValue++);
         Serial.print (", Sleep Time: ");
-        Serial.print ((unsigned long) CorePartition_GetLastMomentum () - start);  start = CorePartition_GetLastMomentum ();
-        Serial.print (", Nice: ");
+        Serial.print ((unsigned long) CorePartition_GetLastMomentum () - nLast);  nLast = CorePartition_GetLastMomentum ();
+        Serial.print ("ms, Nice: ");
         Serial.print (CorePartition_GetNice());
         Serial.print (", CTX: ");
         Serial.print (CorePartition_GetThreadContextSize ());
@@ -133,7 +133,47 @@ void Thread (void* pValue)
         Serial.flush ();
     
         CorePartition_Yield ();
+        
+        if (CorePartition_GetStatusByID (3) == THREADL_STOPPED || CorePartition_GetStatusByID (3) == THREADL_NONE)
+            CorePartition_CreateThread (eventualThread, NULL, 15 * sizeof (size_t), 2000);
     }
+}
+
+void eventualThread (void* pValue)
+{
+    int nValue = 0;
+    unsigned long nLast = millis ();
+
+    Serial.print ("\e[");
+    Serial.print ((CorePartition_GetID()*2) + 6);
+    Serial.print (";10H\e[K>> Eventual Thread");
+    Serial.print (CorePartition_GetID()+1);
+    Serial.print (": Requested, Starting Up...");
+
+    while (nValue <= 5)
+    {
+        CorePartition_Yield ();
+        
+        Serial.print ("\e[");
+        Serial.print ((CorePartition_GetID()*2) + 6);
+        Serial.print (";10H\e[K>> Eventual Thread");
+        Serial.print (CorePartition_GetID()+1);
+        Serial.print (": ");
+        Serial.print (++nValue);
+        Serial.print (F(", Sleep Time: "));
+        Serial.print ((uint32_t) CorePartition_GetLastMomentum () - nLast); nLast = CorePartition_GetLastMomentum ();
+        Serial.println (F("ms\n"));
+
+        Serial.flush ();
+    }
+    
+    Serial.print ("\e[");
+    Serial.print ((CorePartition_GetID()*2) + 6);
+    Serial.print (";10H\e[K>> Eventual Thread");
+    Serial.print (CorePartition_GetID()+1);
+    Serial.print (": Thread done!");
+        
+    CorePartition_Yield ();
 }
 
 
@@ -214,19 +254,18 @@ void setup()
     Serial.println ("Starting up Thread...."); Serial.flush();Serial.flush();
 
     
-    CorePartition_Start (3);
+    CorePartition_Start (4);
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread, NULL, 70, 500);
+    CorePartition_CreateThread (Thread, NULL, 15 * sizeof (size_t), 500);
     
-    CorePartition_CreateThread (Thread, NULL, 70, 1000);
+    CorePartition_CreateThread (Thread, NULL, 15 * sizeof (size_t), 1000);
 
-    CorePartition_CreateThread (Thread, NULL, 70, 100);
+    CorePartition_CreateThread (Thread, NULL, 15 * sizeof (size_t), 100);
 
-     
 }
 
 

@@ -212,7 +212,7 @@ inline static void SleepBeforeTask (uint64_t nCurTime)
     uint64_t nMin;
     size_t nCThread=0;
     
-#define __NEXTIME(TH) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice)
+#define __NEXTIME(TH) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice - 1)
 #define __CALC(TH) (uint64_t) (__NEXTIME(TH) - nCurTime)
     
     nMin = __CALC(0);
@@ -224,10 +224,10 @@ inline static void SleepBeforeTask (uint64_t nCurTime)
         else if (__NEXTIME (nCThread) <= nCurTime)
             nMin = 0;
         else if (nMin > __CALC (nCThread))
-            nMin = __CALC (nCThread);
+            nMin = __CALC (nCThread) + 1;
     }
         
-    sleepCTime (nMin + 1);
+    sleepCTime (nMin);
 }
 
 
@@ -247,7 +247,7 @@ inline static size_t Scheduler (void)
         {
             if (nCounter >= ((uint64_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
             {
-                pThreadLight [nCurrentThread].nLastMomentun = getCTime ();
+                pThreadLight [nCurrentThread].nLastMomentun = nCounter;
                 
                 return nCurrentThread;
             }

@@ -335,7 +335,7 @@ void Thread1 (void* pValue)
         Serial.print (nValue++);
         Serial.print (F(", Sleep Time: "));
         Serial.print (millis() - start);  start = millis();
-        Serial.println ("\n");
+        Serial.println ("ms\n");
 
         Serial.flush();
 
