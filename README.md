@@ -6,6 +6,13 @@ Version 2.3.1
 
 Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
 
+
+# Preemption Ready 
+NOW! CorePartition is Preemption ready a example of full preemption is already provided, including a full Thermal camera with Led Display example also with Preemption,
+
+
+# Momentum Scheduller
+
 *The Momentum Scheduler* is optimised to only allow thread to come back to work only upon its "nice" time or later that, with means it will work on real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialised nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exemplo for keeping it simple).
 
 HIGHLY suitable for Arduino (All official models included) as well, a .ino project is also provided with an example.
@@ -97,6 +104,7 @@ inside your partitioned program (function) use the directive yield() to let the 
 
 Please note it is not a regular thread, even though it behaves like one, it is a cooperative thread, once it will  let the programmer choose when to yield control control to other threads. 
 
+# Arduino Boards
 
 This thread is HIGHLY SUITABLE for small arduinos like NANO (Works like magic) and ATTINY85
 
