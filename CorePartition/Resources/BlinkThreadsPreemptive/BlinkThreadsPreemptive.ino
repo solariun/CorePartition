@@ -40,17 +40,53 @@
 #include "Arduino.h"
 
 
+
+volatile bool bLocked = false;
+
+void lock()
+{
+    bLocked = true;
+}
+
+void unlock()
+{
+    bLocked = false;
+
+    if (CorePartition_GetStatus () == THREADL_RUNNING) CorePartition_Sleep (0);
+}
+
 ISR(TIMER1_COMPA_vect)
 {
     cli ();
     
-    if (CorePartition_GetStatus () == THREADL_RUNNING)
+    if (bLocked == false && CorePartition_GetStatus () == THREADL_RUNNING)
     {
         CorePartition_Yield ();
     }
+ 
+        
+    sei ();
+}
+
+void setPreemptionOn ()
+{
+    cli ();
+
+      TCCR1A = 0;// set entire TCCR1A register to 0
+      TCCR1B = 0;// same for TCCR1B
+      TCNT1  = 0;//initialize counter value to 0
+      // set compare match register for 1hz increments
+      OCR1A = 156;// = (16*10^6) / (1*1024) - 1 (must be <65536)
+      // turn on CTC mode
+      TCCR1B |= (1 << WGM12);
+      // Set CS10 and CS12 bits for 1024 prescaler
+      TCCR1B |= (1 << CS12) | (1 << CS10);
+      // enable timer compare interrupt
+      TIMSK1 |= (1 << OCIE1A);
 
     sei ();
 }
+
 
 
 void Thread1 (void* pValue)
@@ -62,7 +98,7 @@ void Thread1 (void* pValue)
     
     while (1)
     {
-        Serial.println (CorePartition_GetStackSize ());
+        //Serial.println (CorePartition_GetStackSize ());
         
         delay (10);
         
@@ -95,30 +131,17 @@ void StackOverflowHandler ()
 }
 
 
+
 void setup()
 {
 
-cli ();
-
-  TCCR1A = 0;// set entire TCCR1A register to 0
-  TCCR1B = 0;// same for TCCR1B
-  TCNT1  = 0;//initialize counter value to 0
-  // set compare match register for 1hz increments
-  OCR1A = 156;// = (16*10^6) / (1*1024) - 1 (must be <65536)
-  // turn on CTC mode
-  TCCR1B |= (1 << WGM12);
-  // Set CS10 and CS12 bits for 1024 prescaler
-  TCCR1B |= (1 << CS12) | (1 << CS10);
-  // enable timer compare interrupt
-  TIMSK1 |= (1 << OCIE1A);
-
-sei ();
+setPreemptionOn ();
 
 #define LED_PIN 13
 
 //Initialize serial and wait for port to open:
-    Serial.begin(115200);
-    while (!Serial);
+    //Serial.begin(115200);
+    //while (!Serial);
     
     CorePartition_Start (4);
 
