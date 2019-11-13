@@ -180,7 +180,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     size_t nCount = 0;
     
     Serial.println ();
-    Serial.println (F("Listing all running threads"));
+    Serial.println (F("Listing all running Preemptive threads"));
     Serial.println (F("--------------------------------------"));
     Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
