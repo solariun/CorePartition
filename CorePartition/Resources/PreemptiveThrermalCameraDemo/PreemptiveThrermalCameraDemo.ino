@@ -363,7 +363,7 @@ void Thread1 (void* pValue)
 {
     MatrixTextScroller matrixTextScroller (4, 2);
     
-    char szMessage[30] = "";
+    char szMessage[50] = "";
     uint8_t nStep = 0;
     int nSize = 0;
     
@@ -371,9 +371,9 @@ void Thread1 (void* pValue)
     {
         if (nStep == 0)
         {
-            strcpy (szMessage, "CorePartition! :) works!");
+            strcpy (szMessage, "CorePartition meets Preemption! :) works!");
             
-            if (matrixTextScroller.show (0, 0, szMessage, sizeof (szMessage)-1) == false) nStep = 1;
+            if (matrixTextScroller.show (0, 0, szMessage, strlen (szMessage)) == false) nStep = 1;
         }
         else
         {
