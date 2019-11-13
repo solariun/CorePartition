@@ -55,11 +55,54 @@ float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 
 //U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);  // I2C / TWI 
 
+volatile bool bLocked = false;
+
+void lock()
+{
+    bLocked = true;
+}
+
+void unlock()
+{
+    bLocked = false;
+
+    cli ();
+    if (CorePartition_GetStatus () == THREADL_RUNNING) CorePartition_Sleep (0);
+    sei ();
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+    if (bLocked == false && CorePartition_GetStatus () == THREADL_RUNNING)
+    {
+        CorePartition_Yield ();
+    }
+}
+
+void setPreemptionOn ()
+{
+    cli ();
+
+      TCCR1A = 0;// set entire TCCR1A register to 0
+      TCCR1B = 0;// same for TCCR1B
+      TCNT1  = 0;//initialize counter value to 0
+      // set compare match register for 1hz increments
+      OCR1A = 156;// = (16*10^6) / (1*1024) - 1 (must be <65536)
+      // turn on CTC mode
+      TCCR1B |= (1 << WGM12);
+      // Set CS10 and CS12 bits for 1024 prescaler
+      TCCR1B |= (1 << CS12) | (1 << CS10);
+      // enable timer compare interrupt
+      TIMSK1 |= (1 << OCIE1A);
+
+    sei ();
+}
+
+
 
 int DIN = 12 ; //MISO
 int CS =  11; //MOSI
 int CLK = 10; //SS
-
 
 // Utilities
 
@@ -221,13 +264,13 @@ private:
     void printScrollBytes(uint16_t  nLocY, uint16_t nLocX, uint16_t nDigit, const uint64_t charLeft, const uint64_t charRight, uint8_t nOffset)
     {
         int i = 0;
-          
+        
+        lock();
         for(i=0;i<8;i++)
         {
             printRow (nLocY, nLocX, nDigit, i, (((uint8_t*) &charLeft) [i] << (8-nOffset) | ((uint8_t*) &charRight) [i] >> nOffset));
         }
-        
-        //CorePartition_Sleep (1);
+        unlock ();
     }
 
     
@@ -272,6 +315,7 @@ public:
           if (nOffset >= 7)
           {
               nIndex = nIndex + 1 > (int) nMessageLen ? (int) nNumberDigits * (-1) : nIndex + 1;
+              
               nOffset = 0;
               
               if ((int) nNumberDigits * (-1) == nIndex) return false;
@@ -317,33 +361,14 @@ float fMin = 1000, fMax = 0;
 
 void Thread1 (void* pValue)
 {
-    unsigned long start = millis();
-    size_t nValue = 0;
-    
-    uint8_t a = 0;
-    uint8_t b = 0;
-    uint8_t nOffset = 0;
-    uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
-    //setCoreNice (100);
-
     MatrixTextScroller matrixTextScroller (4, 2);
     
-    char szMessage[25] = "";
+    char szMessage[30] = "";
     uint8_t nStep = 0;
+    int nSize = 0;
     
     while (1)
     {
-        Serial.print (F("\e[2;20H\e[K## Thread1: "));
-        Serial.print (nValue++);
-        Serial.print (F(", Sleep Time: "));
-        Serial.print (millis() - start);  start = millis();
-        Serial.println ("ms\n");
-
-        Serial.flush();
-
-        start = millis();
-        
-        
         if (nStep == 0)
         {
             strcpy (szMessage, "CorePartition! :) works!");
@@ -352,13 +377,12 @@ void Thread1 (void* pValue)
         }
         else
         {
-            int nSize = snprintf (szMessage, sizeof (szMessage)-1, "Min:%dc Max:%dc", (int) fMin, (int) fMax);
+            nSize = snprintf (szMessage, sizeof (szMessage)-1, "Min:%dc Max:%dc", (int) fMin, (int) fMax);
             
-            if (matrixTextScroller.show (0, 0, szMessage, nSize) == false) nStep = 0;
+            if (matrixTextScroller.show (0, 0, szMessage, nSize) == false)
+                nStep = 0;
         }
-        
-        
-        CorePartition_Yield ();
+
     }
 }
 
@@ -371,22 +395,11 @@ void Thread2 (void* pValue)
     bool boolCls = false;
 
     //setCoreNice (500);
-
+    
+    Serial.print ("\e[2J");
+    
     while (1)
     {
-      
-          if (boolCls == false)
-          {
-             boolCls = true;
-             Serial.print ("\e[2J");
-          }
-          
-          Serial.print (F("\e[4;20H\e[K++ Thread2: "));
-          Serial.print (nValue++);
-          Serial.print (F(", Sleep Time: "));
-          Serial.print (millis() - start);  start = millis();
-          Serial.println (F("ms\n"));
-      
           fMin = 1000, fMax = 0; 
           
           for(int i=AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
@@ -395,10 +408,7 @@ void Thread2 (void* pValue)
             fMax = MAX (fMax, pixels[i-1]);      
           }
 
-           CorePartition_Sleep (10);
-          
           setLocation (1,1);
-
           resetColor ();
           
           for(int i=AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
@@ -410,11 +420,11 @@ void Thread2 (void* pValue)
             
             if( (i-1)%8 == 0 ) Serial.println();
           }
+    
+          setLocation (10, 1);
+          ShowRunningThreads ();
           
           Serial.flush();
-              
-        CorePartition_Yield ();
-        
     }
 }
 
@@ -422,87 +432,16 @@ void Thread2 (void* pValue)
 void Thread3 (void* pValue)
 {
     unsigned long start = millis();
-    size_t nValue = 0;
-
-    //setCoreNice (50);
     
     while (1)
     {
-        Serial.print (F("\e[6;20H\e[K>> Thread3: "));
-        Serial.print (nValue++);
-        Serial.print (F(", Sleep Time: "));
-        Serial.print ((uint32_t) CorePartition_GetLastMomentum () - start); start = CorePartition_GetLastMomentum ();
-        Serial.println (F("ms\n"));
-
-        Serial.flush ();
-
-        //read all the pixels
+        delay (5);
+        lock ();
         amg.readPixels(pixels);
-          
-
-        CorePartition_Yield ();
+        unlock ();
     }
 }
 
-
-
-void Thread4 (void* pValue)
-{    
-    char szMessage [20]=""; 
-    uint8_t nSize;
-
-    while (CorePartition_Yield ())
-    {
-        resetColor ();
-        
-        setLocation (10, 1);
-        
-        ShowRunningThreads ();
-        
-        CorePartition_Yield ();
-        
-        if (CorePartition_GetStatusByID (4) == THREADL_STOPPED)
-            CorePartition_CreateThread (Thread5, NULL, 25, 1000);
-    }
-}
-
-
-void Thread5 (void* pValue)
-{
-    int nValue = 0;
-    unsigned long nLast = millis ();
-
-    Serial.print (F("\e[8;20H\e[K>> Eventual Thread5: Starting up"));
-
-    while (nValue < 5)
-    {
-        CorePartition_Yield ();
-        
-        Serial.print (F("\e[8;20H\e[K>> Eventual Thread5: "));
-        Serial.print (nValue++);
-        Serial.print (F(", Sleep Time: "));
-        Serial.print ((uint32_t) CorePartition_GetLastMomentum () - nLast); nLast = CorePartition_GetLastMomentum ();
-        Serial.println (F("ms\n"));
-
-        Serial.flush ();
-    }
-    
-    Serial.print (F("\e[8;20H\e[K>> Eventual Thread5: Thread done!"));
-        
-    CorePartition_Yield ();
-}
-
-
-
-static uint32_t getTimeTick()
-{
-   return (uint32_t) millis();
-}
-
-static void sleepTick (uint32_t nSleepTime)
-{
-    delayMicroseconds  (nSleepTime * 1000);
-}
 
 void StackOverflowHandler ()
 {
@@ -514,6 +453,8 @@ void StackOverflowHandler ()
     ShowRunningThreads ();
     Serial.flush ();
 }
+
+
 
 
 void setup()
@@ -556,40 +497,24 @@ void setup()
         lc.clearDisplay(nCount);         // and clear the display
     }
 
-    delay (2000);
+    CorePartition_Start (3);
     
-    //pinMode (2, OUTPUT);
-    //pinMode (3, OUTPUT);
-    //pinMode (4, OUTPUT);
-
-
-    /* To test interrupts jump port 2 and 5 */ 
-    //pinMode(nPinOutput, OUTPUT);
-    
-
-    //pinMode(nPinInput, INPUT_PULLUP);
-    //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
-
-    CorePartition_Start (5);
-    
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, NULL, 110, 0);
+    CorePartition_CreateThread (Thread1, NULL, 150, 0);
     
-    CorePartition_CreateThread (Thread3, NULL, 20, 0);
+    CorePartition_CreateThread (Thread3, NULL, 150, 0);
 
-    CorePartition_CreateThread (Thread2, NULL, 25, 0);
-
-    CorePartition_CreateThread (Thread4, NULL, 110, 0);
-    
-    CorePartition_CreateThread (Thread5, NULL, 25, 0);
+    CorePartition_CreateThread (Thread2, NULL, 150, 0);
 }
 
 
 
 void loop()
 {
+    delay (1000);
+    
+    setPreemptionOn ();
+    
     CorePartition_Join();
 }

@@ -53,7 +53,7 @@ extern "C"{
 #define THREADL_STOPPED     4
 
     
-    static const char CorePartition_version[] = "V2.3 Compiled:" __TIMESTAMP__;
+    static const char CorePartition_version[] = "V2.3.1 Compiled at " __TIMESTAMP__;
     
     bool CorePartition_Start (size_t nThreadPartitions);
     
