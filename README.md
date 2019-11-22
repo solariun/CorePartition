@@ -51,6 +51,8 @@ MEGA2506
 
 MEGA1260
 
+Sipped Longan Nano with RISC-V processor
+
 testes with I2C chain connections
 tested with ISP chain connections 
 
