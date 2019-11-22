@@ -51,7 +51,7 @@ MEGA2506
 
 MEGA1260
 
-Sipped Longan Nano with RISC-V processor
+Sipped Longan Nano (GD32VF103 32-bit rv32imac RISC-V “Bumblebee Core” @ 108 MHz)
 
 testes with I2C chain connections
 tested with ISP chain connections 
