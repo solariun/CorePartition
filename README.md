@@ -8,6 +8,8 @@ Partitioning a CORE into several Threads with a fast scheduler capable to be spe
 
 # Now RISC-V compliance!
 
+Wors for AVR, ARM, RISC-V, xTense, Spressif, Intel, Linux, BSD, HP-UX, Solaris, OSX (Darwin), Windows. 
+
 
 # Preemption Ready 
 NOW! CorePartition is Preemption ready a example of full preemption is already provided, including a full Thermal camera with Led Display example also with Preemption. NOTE that since it relays on Timer, it will not be part of the lib, you will have to implement the timer yourself, but a full example of how to do it is provided.
