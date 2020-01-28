@@ -69,7 +69,7 @@ typedef struct
 
 static volatile size_t nMaxThreads = 0;
 static volatile size_t nThreadCount = 0;
-static volatile size_t nCurrentThread;
+static volatile size_t nCurrentThread = 0;
 
 static ThreadLight* pThreadLight = NULL;
 static ThreadLight* pCurrentThread = NULL;
@@ -166,7 +166,10 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     //If it leaves here it means a serious bug
     if (nThread == nMaxThreads) return false;
     
+    pThreadLight [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThread].nStackMaxSize);
     
+    if (pThreadLight [nThread].pnStackPage == NULL) return false;
+ 
     pThreadLight[nThread].mem.func.pValue = pValue;
     
     pThreadLight[nThread].nStatus = THREADL_START;
@@ -181,10 +184,6 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     
     pThreadLight[nThread].nNice = 1;
 
-    pThreadLight [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThread].nStackMaxSize);
-    
-    if (pThreadLight [nThread].pnStackPage == NULL) return false;
- 
     pThreadLight [nThread].nLastMomentun = getCTime();
 
     pThreadLight [nThread].nExecTime = 0;
@@ -209,7 +208,7 @@ inline static void RestoreStack(void)
 
 inline static void SleepBeforeTask (uint32_t nCurTime)
 {
-    uint32_t nMin;
+    uint32_t nMin=0;
     size_t nCThread=0;
     
 #define __NEXTIME(TH) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice - 1)
@@ -217,7 +216,7 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
     
     nMin = __CALC(0);
     
-    for (nCThread = 0; nCThread < nMaxThreads; nCThread++)
+    for (nCThread = 0; nCThread <= nThreadCount; nCThread++)
     {
         if (pThreadLight [nCThread].nStatus == THREADL_STOPPED)
             continue;
@@ -243,7 +242,7 @@ inline static size_t Scheduler (void)
     {
         nCounter = getCTime();
         
-        if (++nCurrentThread <= nMaxThreads)
+        if ( ++nCurrentThread <= nThreadCount )
         {
             if (nCounter >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
             {
