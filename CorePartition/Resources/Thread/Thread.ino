@@ -240,7 +240,7 @@ public:
 };
 
 
-void __attribute__ ((noinline)) ShowRunningThreads ()
+void ShowRunningThreads ()
 {
     size_t nCount = 0;
     
@@ -266,8 +266,23 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
+            Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
+    }
+}
+
+
+void ThreadTOP (void* pValue)
+{
+    while (CorePartition_Yield ())
+    {
+        resetColor ();
+        
+        setLocation (45, 10);
+        
+        ShowRunningThreads ();
+        
+        Serial.flush ();
     }
 }
 
@@ -276,33 +291,22 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
 
 void Thread1 (void* pValue)
 {
-    size_t nValue = 100;
     int nSize;
-    
-    static char szMessage [40] = "Thread #1";
+    size_t nValue = 1;
+
+    static char szMessage [60] = "";
 
     TextScroller textScroller (15, 8);
-    
-    //setCoreNice (100);
 
     
-    while (1)
+    while (CorePartition_Yield ())
     {
-
         setColor (1, 0);
         
-        nSize = snprintf (szMessage, sizeof (szMessage) -1, "#1 : %ld ms %ld sec.", millis(), millis() / 1000);
+        nSize = snprintf (szMessage, sizeof (szMessage) -1, "Thread #1 : %ld .", nValue++);
 
-        textScroller.show (5, 10, szMessage, nSize);
+        textScroller.show (5, 7, szMessage, nSize);
 
-        resetColor ();
-
-        setLocation (35,1);
-        
-        ShowRunningThreads ();
-        
-        
-        CorePartition_Yield ();
         Serial.flush ();
     }
 }
@@ -312,19 +316,36 @@ void Thread1 (void* pValue)
 
 void Thread2 (void* pValue)
 {
-    size_t nValue = 100;
-
-    static char szMessage [] = "#2 - CorePartition Is Multi Thread, Universal and Is for Windows, Mac and Linux, AVR, ESP, ARM, ARDUINO.";
+    static char szMessage [] = "Thread #2: CorePartition is Universal, working with Windows, Mac, Linux, ARV, ARM, ESP, Tensy, RISC-V....";
         
-    TextScroller textScroller (15, 12);
-    
-    //setCoreNice (100);
+    TextScroller textScroller (15, 8);
     
     while (CorePartition_Yield ())
     {
-        setColor (4, 0);
+        Serial.flush ();
         
-        textScroller.show (15, 10, szMessage, sizeof (szMessage) - 1);
+        setColor (4, 15);
+        
+        textScroller.show (15, 7, szMessage, sizeof (szMessage) - 1);
+        
+        Serial.flush ();
+    }
+}
+
+
+
+void Thread3 (void* pValue)
+{
+    static char szMessage [] = "#3 - This is really a Thread for small processors as well....";
+        
+    TextScroller textScroller (15, 8);
+
+    
+    while (CorePartition_Yield ())
+    {
+        setColor (3, 0);
+        
+        textScroller.show (25, 10, szMessage, sizeof (szMessage) - 1);
         
         resetColor ();
         
@@ -332,7 +353,25 @@ void Thread2 (void* pValue)
     }
 }
 
+void Thread4 (void* pValue)
+{
+    size_t nValue = 100;
 
+    static char szMessage [] = "#4 - Works every where from Windwows, Linux, Mac, to AVR, ARM, RISC-V and ESP";
+        
+    TextScroller textScroller (15, 8);
+    
+    while (CorePartition_Yield ())
+    {
+        setColor (2, 0);
+        
+        textScroller.show (35, 10, szMessage, sizeof (szMessage) - 1);
+        
+        resetColor ();
+        
+        Serial.flush ();
+    }
+}
 
 static uint32_t getTimeTick()
 {
@@ -341,6 +380,9 @@ static uint32_t getTimeTick()
 
 static void sleepTick (uint32_t nSleepTime)
 {
+    resetColor ();
+    Serial.print (nSleepTime);
+    
     if (nSleepTime)  delayMicroseconds  (nSleepTime * 1000);
 }
 
@@ -400,17 +442,24 @@ void setup()
     //Thread1 ();
 
 
-    CorePartition_Start(2);
+    CorePartition_Start(5);
     
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
     
+    
+    
     CorePartition_CreateThread (Thread1, NULL, 20 * sizeof (size_t), 0);
 
-    CorePartition_CreateThread (Thread2, NULL, 25 * sizeof (size_t), 0);
+    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 0);
+    
+    CorePartition_CreateThread (Thread3, NULL, 25 * sizeof (size_t), 1000);
+    
+    CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 500);
 
+    CorePartition_CreateThread (ThreadTOP, NULL, 7 * sizeof (size_t), 0);
 
 }
 
