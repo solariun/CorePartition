@@ -451,7 +451,7 @@ void setup()
     
     
     
-    CorePartition_CreateThread (Thread1, NULL, 20 * sizeof (size_t), 0);
+    CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 0);
 
     CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 0);
     
@@ -459,7 +459,7 @@ void setup()
     
     CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 500);
 
-    CorePartition_CreateThread (ThreadTOP, NULL, 7 * sizeof (size_t), 0);
+    CorePartition_CreateThread (ThreadTOP, NULL, 13 * sizeof (size_t), 0);
 
 }
 
