@@ -72,7 +72,7 @@ static volatile size_t nThreadCount = 0;
 static volatile size_t nCurrentThread;
 
 static ThreadLight* pThreadLight = NULL;
-static ThreadLight* pCurrentThread = NULL;
+//static ThreadLight* pThreadLight [nCurrentThread] = NULL;
 
 static void*  pStartStck = NULL;
 
@@ -167,23 +167,25 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     if (nThread == nMaxThreads) return false;
     
     
+    pThreadLight [nThread].nStackMaxSize = nStackMaxSize;
+    if ((pThreadLight [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThread].nStackMaxSize)) == NULL)
+    {
+        memset ((void*) &pThreadLight [nThread], 0, sizeof (ThreadLight));
+        return false;
+    }
+    
+    
     pThreadLight[nThread].mem.func.pValue = pValue;
     
     pThreadLight[nThread].nStatus = THREADL_START;
 
     pThreadLight[nThread].nErrorType = THREADL_NONE;
-
-    pThreadLight [nThread].nStackMaxSize = nStackMaxSize;
     
     pThreadLight[nThread].nStackSize = 0;
 
     pThreadLight[nThread].mem.func.pFunction = pFunction;
     
     pThreadLight[nThread].nNice = 1;
-
-    pThreadLight [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThread].nStackMaxSize);
-    
-    if (pThreadLight [nThread].pnStackPage == NULL) return false;
  
     pThreadLight [nThread].nLastMomentun = getCTime();
 
@@ -198,14 +200,15 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
 
 inline static void BackupStack(void)
 {
-    memcpy(pCurrentThread->pnStackPage, pCurrentThread->pLastStack, pCurrentThread->nStackSize);
+    memcpy(pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
 }
 
 
 inline static void RestoreStack(void)
 {
-    memcpy(pCurrentThread->pLastStack, pCurrentThread->pnStackPage, pCurrentThread->nStackSize);
+    memcpy(pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
 }
+
 
 inline static void SleepBeforeTask (uint32_t nCurTime)
 {
@@ -222,9 +225,16 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
         if (pThreadLight [nCThread].nStatus == THREADL_STOPPED)
             continue;
         else if (__NEXTIME (nCThread) <= nCurTime)
+        {
             nMin = 0;
+            nCurrentThread = nCThread;
+            return;
+        }
         else if (nMin > __CALC (nCThread))
+        {
             nMin = __CALC (nCThread) + 1;
+            nCurrentThread = nCThread;
+        }
     }
         
     if (nMin > 0) sleepCTime (nMin);
@@ -233,30 +243,47 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
 
 inline static size_t Scheduler (void)
 {
-    static uint32_t nCounter = 0;
+    static uint32_t nTickCount = 0;
+    static size_t nCounter = 0;
   
-    if (nCounter == 0) nCounter = getCTime ();
+    if (nTickCount == 0) nTickCount = getCTime ();
     
-    pThreadLight [nCurrentThread].nExecTime = (uint32_t) ((uint32_t)(getCTime () - pThreadLight [nCurrentThread].nLastMomentun));
+    pThreadLight [nCurrentThread].nExecTime = getCTime () - pThreadLight [nCurrentThread].nLastMomentun;
     
     while (1)
     {
-        nCounter = getCTime();
+        nTickCount = getCTime();
         
-        if (++nCurrentThread <= nMaxThreads)
-        {
-            if (nCounter >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
-            {
-                pThreadLight [nCurrentThread].nLastMomentun = nCounter;
-                
-                return nCurrentThread;
-            }
-        }
-        else
+        if (nCounter == 0)
         {
             nCurrentThread = -1;
             SleepBeforeTask (getCTime ());
+            
+            nCounter = 1;
         }
+        else
+        {
+            nCurrentThread = nCurrentThread + 1 >= nMaxThreads ? 0 : nCurrentThread+1;
+            
+            if (pThreadLight [nCurrentThread].nStatus == THREADL_START)
+            {
+                return nCurrentThread;
+            }
+            else if (pThreadLight [nCurrentThread].nStatus == THREADL_RUNNING || pThreadLight [nCurrentThread].nStatus == THREADL_SLEEP)
+            {
+                if (nTickCount >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
+                {
+                    //pThreadLight [nCurrentThread].nExecTime = nTickCount - pThreadLight [nCurrentThread].nLastMomentun;
+                    
+                    pThreadLight [nCurrentThread].nLastMomentun = nTickCount;
+                    
+                    nCounter = 0;
+
+                    return nCurrentThread;
+                }
+            }
+        }
+
     }
     
     return 0;
@@ -265,9 +292,9 @@ inline static size_t Scheduler (void)
 
 static void CorePartition_StopThread ()
 {
-    pCurrentThread->nStatus = THREADL_STOPPED;
-    pCurrentThread->nStackMaxSize = 0;
-    free (pCurrentThread->pnStackPage);
+    pThreadLight [nCurrentThread].nStatus = THREADL_STOPPED;
+    pThreadLight [nCurrentThread].nStackMaxSize = 0;
+    free (pThreadLight [nCurrentThread].pnStackPage);
     
     nThreadCount--;
 }
@@ -281,17 +308,15 @@ void CorePartition_Join ()
  
     do
     {
-        pCurrentThread = &pThreadLight [nCurrentThread];
-        
-        if (pCurrentThread->nStatus != THREADL_NONE)
+        if (pThreadLight [nCurrentThread].nStatus != THREADL_NONE)
         {
-            if (setjmp(jmpJoinPointer) == 0) switch (pCurrentThread->nStatus)
+            if (setjmp(jmpJoinPointer) == 0) switch (pThreadLight [nCurrentThread].nStatus)
             {
                 case THREADL_START:
 
-                    pCurrentThread->nStatus = THREADL_RUNNING;
+                    pThreadLight [nCurrentThread].nStatus = THREADL_RUNNING;
                     
-                    pCurrentThread->mem.func.pFunction (pCurrentThread->mem.func.pValue);
+                    pThreadLight [nCurrentThread].mem.func.pFunction (pThreadLight [nCurrentThread].mem.func.pValue);
                     
                     CorePartition_StopThread ();
                     
@@ -300,7 +325,7 @@ void CorePartition_Join ()
                 case THREADL_RUNNING:
                 case THREADL_SLEEP:
                     
-                    longjmp(pCurrentThread->mem.jmpRegisterBuffer, 1);
+                    longjmp(pThreadLight [nCurrentThread].mem.jmpRegisterBuffer, 1);
                 
                     break;
                 
@@ -309,19 +334,21 @@ void CorePartition_Join ()
             }
         }
     } while ((nCurrentThread = Scheduler())+1);
+    
+    nCurrentThread;
 }
 
 
 bool CorePartition_Yield ()
 {
-    if (pCurrentThread != NULL)
+    if (nMaxThreads > 0 && nCurrentThread <= nMaxThreads)
     {
         volatile uint8_t nValue = 0xBB;
-        pCurrentThread->pLastStack = (void*) &nValue;
+        pThreadLight [nCurrentThread].pLastStack = (void*) &nValue;
 
-        pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
+        pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
 
-        if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
+        if (pThreadLight [nCurrentThread].nStackSize > pThreadLight [nCurrentThread].nStackMaxSize)
         {
             
             CorePartition_StopThread ();
@@ -333,12 +360,12 @@ bool CorePartition_Yield ()
         
         BackupStack();
                 
-        if (setjmp(pCurrentThread->mem.jmpRegisterBuffer) == 0)
+        if (setjmp(pThreadLight [nCurrentThread].mem.jmpRegisterBuffer) == 0)
         {
             longjmp(jmpJoinPointer, 1);
         }
         
-        pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
+        pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
         
         RestoreStack();
         
@@ -353,17 +380,17 @@ inline void CorePartition_Sleep (uint32_t nDelayTickTime)
 {
     uint32_t nBkpNice = 0;
     
-    if (pCurrentThread == NULL) return;
+    if (pThreadLight [nCurrentThread].nStatus != THREADL_RUNNING) return;
     
-    nBkpNice = pCurrentThread->nNice;
+    nBkpNice = pThreadLight [nCurrentThread].nNice;
     
-    pCurrentThread->nStatus = THREADL_SLEEP;
-    pCurrentThread->nNice = nDelayTickTime;
+    pThreadLight [nCurrentThread].nStatus = THREADL_SLEEP;
+    pThreadLight [nCurrentThread].nNice = nDelayTickTime;
     
     CorePartition_Yield();
     
-    pCurrentThread->nStatus = THREADL_RUNNING;
-    pCurrentThread->nNice = nBkpNice;
+    pThreadLight [nCurrentThread].nStatus = THREADL_RUNNING;
+    pThreadLight [nCurrentThread].nNice = nBkpNice;
 }
 
 
@@ -451,7 +478,7 @@ size_t CorePartition_GetThreadContextSize(void)
 
 bool CorePartition_IsCoreRunning(void)
 {
-    return pCurrentThread == NULL ? false : pCurrentThread->nStatus == THREADL_RUNNING;
+    return pThreadLight [nCurrentThread].nStatus == THREADL_RUNNING;
 }
 
 uint32_t CorePartition_GetNice(void)
@@ -461,9 +488,6 @@ uint32_t CorePartition_GetNice(void)
 
 void CorePartition_SetNice (uint32_t nNice)
 {
-    if (pCurrentThread == NULL)
-        return;
-
-    pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
+    pThreadLight [nCurrentThread].nNice = nNice == 0 ? 1 : nNice;
 }
 
