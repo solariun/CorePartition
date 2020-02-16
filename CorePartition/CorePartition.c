@@ -227,13 +227,13 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
         else if (__NEXTIME (nCThread) <= nCurTime)
         {
             nMin = 0;
-            nCurrentThread = nCThread;
+            //nCurrentThread = nCThread;
             return;
         }
         else if (nMin > __CALC (nCThread))
         {
             nMin = __CALC (nCThread) + 1;
-            nCurrentThread = nCThread;
+            //nCurrentThread = nCThread;
         }
     }
         
@@ -243,49 +243,32 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
 
 inline static size_t Scheduler (void)
 {
-    static uint32_t nTickCount = 0;
-    static size_t nCounter = 0;
-  
-    if (nTickCount == 0) nTickCount = getCTime ();
+    static uint32_t nCounter = 0;
+    
+    nCounter = getCTime();
     
     pThreadLight [nCurrentThread].nExecTime = getCTime () - pThreadLight [nCurrentThread].nLastMomentun;
     
     while (1)
     {
-        nTickCount = getCTime();
-        
-        if (nCounter == 0)
+        if (++nCurrentThread <= nMaxThreads)
         {
-            nCurrentThread = -1;
-            SleepBeforeTask (getCTime ());
-            
-            nCounter = 1;
+            if (nCounter >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
+            {
+                pThreadLight [nCurrentThread].nLastMomentun = nCounter;
+                
+                return nCurrentThread;
+            }
         }
         else
         {
-            nCurrentThread = nCurrentThread + 1 >= nMaxThreads ? 0 : nCurrentThread+1;
-            
-            if (pThreadLight [nCurrentThread].nStatus == THREADL_START)
-            {
-                return nCurrentThread;
-            }
-            else if (pThreadLight [nCurrentThread].nStatus == THREADL_RUNNING || pThreadLight [nCurrentThread].nStatus == THREADL_SLEEP)
-            {
-                if (nTickCount >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
-                {
-                    //pThreadLight [nCurrentThread].nExecTime = nTickCount - pThreadLight [nCurrentThread].nLastMomentun;
-                    
-                    pThreadLight [nCurrentThread].nLastMomentun = nTickCount;
-                    
-                    nCounter = 0;
-
-                    return nCurrentThread;
-                }
-            }
+            nCurrentThread = -1;
+            SleepBeforeTask (nCounter);
         }
-
+        
+        nCounter = getCTime();
     }
-    
+
     return 0;
 }
 
