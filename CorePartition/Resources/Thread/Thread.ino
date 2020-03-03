@@ -450,13 +450,13 @@ void setup()
     
     
     
-    CorePartition_CreateThread (ThreadTOP, NULL, 13 * sizeof (size_t), 0);
+    CorePartition_CreateSecureThread (ThreadTOP, NULL, 13 * sizeof (size_t), 0);
     
     CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 300);
 
     CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 400);
     
-    CorePartition_CreateThread (Thread3, NULL, 25 * sizeof (size_t), 1000);
+    CorePartition_CreateSecureThread (Thread3, NULL, 25 * sizeof (size_t), 1000);
     
     CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 2000);
 

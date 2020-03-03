@@ -58,6 +58,8 @@ extern "C"{
     bool CorePartition_Start (size_t nThreadPartitions);
     
     bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
+
+    bool CorePartition_CreateSecureThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
     
     bool CorePartition_SetCurrentTimeInterface (uint32_t (*getCurrentTimeInterface)(void));
 
@@ -102,6 +104,7 @@ extern "C"{
     
     uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
     
+    uint64_t CorePartition_getFactor (void);
 
 #ifdef __cplusplus
 } // extern "C"

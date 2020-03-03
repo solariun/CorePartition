@@ -34,7 +34,7 @@
 
 
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
-
+#define THREAD_FACTOR_MAXBYTES 8
 
 typedef struct
 {
@@ -64,6 +64,10 @@ typedef struct
     uint8_t*            pnStackPage;
     
     uint32_t            nExecTime;
+    
+    uint8_t             nSecure;
+    
+    char                szFactor[THREAD_FACTOR_MAXBYTES];
 } ThreadLight;
 
 
@@ -144,12 +148,14 @@ bool CorePartition_Start (size_t nThreadPartitions)
     
     memset((void*) pThreadLight, 0, sizeof (ThreadLight) * nThreadPartitions);
     
+    srand (getCTime ());
+    
     return true;
 }
 
 
 
-bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nSecure)
 {
     size_t nThread;
     
@@ -195,19 +201,43 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     
     pThreadLight [nThread].nNice = nNice;
     
+    pThreadLight [nThread].nSecure = nSecure;
+    {
+        uint8_t nCount;
+
+        for (nCount=0; nCount < THREAD_FACTOR_MAXBYTES; nCount++)
+            pThreadLight [nThread].szFactor [nCount] = (rand () % 255) + 1;
+    }
+    
     nThreadCount++;
     
     return true;
 }
 
+
+bool CorePartition_CreateSecureThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+{
+    return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 1);
+}
+
+bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+{
+    return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 0);
+}
+
+
 inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize)
 {
     const void* nTop = (const void*) pSource + nSize;
-    const char szKey [] = { 2, 34,78,10,100, 154};
-    uint8_t nOffset=0;
+        
+    if (pThreadLight [nCurrentThread].nSecure)
+    {
+        uint8_t nOffset=0;
     
-    for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ szKey [(nOffset=++nOffset >= sizeof(szKey) ? 0 : nOffset)];
-    //memcpy(pDestine, pSource, nSize);
+        for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ ((uint8_t*) &pThreadLight [nCurrentThread].szFactor) [(nOffset=++nOffset >= THREAD_FACTOR_MAXBYTES ? 0 : nOffset)];
+    }
+    else
+        memcpy(pDestine, pSource, nSize);
 }
 
 inline static void BackupStack(void)
@@ -484,5 +514,10 @@ uint32_t CorePartition_GetNice(void)
 void CorePartition_SetNice (uint32_t nNice)
 {
     pThreadLight [nCurrentThread].nNice = nNice == 0 ? 1 : nNice;
+}
+
+uint64_t CorePartition_getFactor (void)
+{
+    return  *((uint64_t*) pThreadLight [nCurrentThread].szFactor);
 }
 

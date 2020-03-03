@@ -78,7 +78,7 @@ void Thread1 (void* pValue)
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]\n", CorePartition_GetID(), nValue, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize());
+        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]  Key:[%llX]\n", CorePartition_GetID(), nValue, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize(), CorePartition_getFactor());
         
         nValue = addOne (nValue);
     }
@@ -94,7 +94,7 @@ void Thread2 (void* pValue)
     
     while (1)
     {
-        printf ("## %lu:  Value: [%u]\n", CorePartition_GetID(), nValue);
+        printf ("## %lu:  Value: [%u]  Key:[%llX]\n", CorePartition_GetID(), nValue, CorePartition_getFactor());
         
         nValue = addOne (nValue);
         
@@ -114,7 +114,7 @@ void Thread3 (void* pValue)
     
     while (1)
     {
-        printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu]\n", CorePartition_GetID(), nValue,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2));
+        printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu] Key:[%llX]\n", CorePartition_GetID(), nValue,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2), CorePartition_getFactor());
         
         nValue = addOne (nValue);
     }
@@ -151,7 +151,7 @@ int main(int argc, const char * argv[])
     
     CorePartition_CreateThread (Thread1, NULL, 256, 3000);
     CorePartition_CreateThread (Thread2, NULL, 256, 1000);
-    CorePartition_CreateThread (Thread3, NULL, 256, 500);
+    CorePartition_CreateSecureThread (Thread3, NULL, 256, 500);
     
     CorePartition_Join();
     
