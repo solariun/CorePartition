@@ -67,7 +67,8 @@ typedef struct
     
     uint8_t             nSecure;
     
-    char                szFactor[THREAD_FACTOR_MAXBYTES];
+    uint32_t            nLastBackup;
+    //uint32_t            nProcTime;
 } ThreadLight;
 
 
@@ -202,13 +203,8 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     pThreadLight [nThread].nNice = nNice;
     
     pThreadLight [nThread].nSecure = nSecure;
-    {
-        uint8_t nCount;
 
-        for (nCount=0; nCount < THREAD_FACTOR_MAXBYTES; nCount++)
-            pThreadLight [nThread].szFactor [nCount] = (rand () % 255) + 1;
-    }
-    
+    pThreadLight [nThread].nLastBackup = getCTime ();
     nThreadCount++;
     
     return true;
@@ -229,12 +225,12 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
 inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize)
 {
     const void* nTop = (const void*) pSource + nSize;
-        
-    if (pThreadLight [nCurrentThread].nSecure)
-    {
-        uint8_t nOffset=0;
     
-        for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ ((uint8_t*) &pThreadLight [nCurrentThread].szFactor) [(nOffset=++nOffset >= THREAD_FACTOR_MAXBYTES ? 0 : nOffset)];
+    if (pThreadLight [nCurrentThread].nSecure != 0)
+    {
+        srand(pThreadLight [nCurrentThread].nLastBackup);
+        
+        for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ ((uint8_t) (rand() % 255) );
     }
     else
         memcpy(pDestine, pSource, nSize);
@@ -242,7 +238,11 @@ inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize
 
 inline static void BackupStack(void)
 {
+    pThreadLight [nCurrentThread].nLastBackup = getCTime ();
+    
     fastmemcpy (pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
+    
+    //pThreadLight [nCurrentThread].nProcTime = getCTime () - pThreadLight [nCurrentThread].nLastBackup;
 }
 
 
@@ -452,6 +452,28 @@ int CorePartition_GetStatusByID (size_t nID)
     return pThreadLight [nID].nStatus;
 }
 
+/*
+uint32_t CorePartition_getFactorByID (size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return  pThreadLight [nID].nProcTime;
+}
+
+uint32_t CorePartition_getFactor (void)
+{
+    return  pThreadLight [nCurrentThread].nProcTime;
+}
+*/
+
+char CorePartition_IsSecureByID (size_t nID)
+{
+    if (nID >= nMaxThreads) return 0;
+    
+    return pThreadLight [nID].nSecure != 0 ? 'S' : 'N';
+}
+
+
 uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
 {
     if (nID >= nMaxThreads) return 0;
@@ -516,8 +538,5 @@ void CorePartition_SetNice (uint32_t nNice)
     pThreadLight [nCurrentThread].nNice = nNice == 0 ? 1 : nNice;
 }
 
-uint64_t CorePartition_getFactor (void)
-{
-    return  *((uint64_t*) pThreadLight [nCurrentThread].szFactor);
-}
+
 

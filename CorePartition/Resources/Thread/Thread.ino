@@ -255,6 +255,7 @@ void ShowRunningThreads ()
         Serial.print (nCount);
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (CorePartition_IsSecureByID (nCount));
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetNiceByID (nCount));
         Serial.print (F("\t"));
@@ -266,7 +267,7 @@ void ShowRunningThreads ()
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
         Serial.print (F("\t"));
-            Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
+        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
     }
 }

@@ -104,7 +104,12 @@ extern "C"{
     
     uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
     
-    uint64_t CorePartition_getFactor (void);
+    /*
+    uint32_t CorePartition_getFactorByID (size_t nID);
+    uint32_t CorePartition_getFactor (void);
+    */
+
+    char CorePartition_IsSecureByID (size_t nID);
 
 #ifdef __cplusplus
 } // extern "C"
