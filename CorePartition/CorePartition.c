@@ -167,7 +167,9 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     if (nThread == nMaxThreads) return false;
     
     
-    pThreadLight [nThread].nStackMaxSize = nStackMaxSize;
+    //adjust the size to be mutiple of the size_t lenght
+    pThreadLight [nThread].nStackMaxSize = nStackMaxSize + (nStackMaxSize % sizeof (size_t));
+    
     if ((pThreadLight [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pThreadLight [nThread].nStackMaxSize)) == NULL)
     {
         memset ((void*) &pThreadLight [nThread], 0, sizeof (ThreadLight));
@@ -198,15 +200,25 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
     return true;
 }
 
+inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize)
+{
+    const void* nTop = (const void*) pSource + nSize;
+    const char szKey [] = { 2, 34,78,10,100, 154};
+    uint8_t nOffset=0;
+    
+    for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ szKey [(nOffset=++nOffset >= sizeof(szKey) ? 0 : nOffset)];
+    //memcpy(pDestine, pSource, nSize);
+}
+
 inline static void BackupStack(void)
 {
-    memcpy(pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
+    fastmemcpy (pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
 }
 
 
 inline static void RestoreStack(void)
 {
-    memcpy(pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
+    fastmemcpy (pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
 }
 
 
