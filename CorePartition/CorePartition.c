@@ -156,7 +156,7 @@ bool CorePartition_Start (size_t nThreadPartitions)
 
 
 
-bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nSecure)
+bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nTaskIsolation)
 {
     size_t nThread;
     
@@ -202,7 +202,7 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     
     pThreadLight [nThread].nNice = nNice;
     
-    pThreadLight [nThread].nSecure = nSecure;
+    pThreadLight [nThread].nSecure = nTaskIsolation;
 
     pThreadLight [nThread].nLastBackup = getCTime ();
     nThreadCount++;
