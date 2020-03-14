@@ -38,7 +38,7 @@
 
 
 
-long getMiliseconds()
+uint32_t getMiliseconds()
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -54,7 +54,7 @@ void sleepUseconds(uint32_t nTime)
 
 void Sleep (uint32_t nSleep)
 {
-    uint32_t nMomentum =  getMiliseconds();
+    long nMomentum =  getMiliseconds();
     
     do {
         //sleepUseconds (100000);

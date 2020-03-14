@@ -238,8 +238,6 @@ inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize
 
 inline static void BackupStack(void)
 {
-    pThreadLight [nCurrentThread].nLastBackup = getCTime ();
-    
     fastmemcpy (pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
     
     //pThreadLight [nCurrentThread].nProcTime = getCTime () - pThreadLight [nCurrentThread].nLastBackup;
@@ -368,32 +366,35 @@ bool CorePartition_Yield ()
 {
     if (nMaxThreads > 0 && nCurrentThread <= nMaxThreads)
     {
-        volatile uint8_t nValue = 0xBB;
-        pThreadLight [nCurrentThread].pLastStack = (void*) &nValue;
-
-        pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
-
-        if (pThreadLight [nCurrentThread].nStackSize > pThreadLight [nCurrentThread].nStackMaxSize)
-        {
-            
-            CorePartition_StopThread ();
-            
-            if (stackOverflowHandler != NULL) stackOverflowHandler ();
-            
-            longjmp(jmpJoinPointer, 1);
-        }
+        pThreadLight [nCurrentThread].nLastBackup = getCTime ();
         
-        BackupStack();
+        {
+            volatile uint8_t nValue = 0xBB;
+            pThreadLight [nCurrentThread].pLastStack = (void*) &nValue;
+
+            pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
+
+            if (pThreadLight [nCurrentThread].nStackSize > pThreadLight [nCurrentThread].nStackMaxSize)
+            {
                 
-        if (setjmp(pThreadLight [nCurrentThread].mem.jmpRegisterBuffer) == 0)
-        {
-            longjmp(jmpJoinPointer, 1);
+                CorePartition_StopThread ();
+                
+                if (stackOverflowHandler != NULL) stackOverflowHandler ();
+                
+                longjmp(jmpJoinPointer, 1);
+            }
+
+            BackupStack();
+                    
+            if (setjmp(pThreadLight [nCurrentThread].mem.jmpRegisterBuffer) == 0)
+            {
+                longjmp(jmpJoinPointer, 1);
+            }
+            
+            pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
+            
+            RestoreStack();
         }
-        
-        pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
-        
-        RestoreStack();
-        
         return true;
     }
     

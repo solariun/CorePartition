@@ -21,11 +21,24 @@
 # !!! Help: http://bit.ly/2hYLBDC
 # default = 0 = none
 #
+# ARDUINO : SAM = [H] HID [S] SPI [W] Wire 
+# ARDUINO : common = [A] Adafruit_Circuit_Playground [B] Bridge 
+#   [E] Esplora Ethernet [F] Firmata [G] GSM [K] Keyboard 
+#   [L] LiquidCrystal [M] Mouse [R] RobotIRremote 
+#   Robot_Control Robot_Motor [S] SD Servo SpacebrewYun 
+#   Stepper [T] TFT Temboo [W] WiFi 
+#
 APP_LIBS_LIST = 0
 
 # List user's libraries here
 # !!! Help: http://bit.ly/2AEscDx
 # default = 0 = none
+#
+# USER = [A] Adafruit-GFX-Library-master 
+#   Adafruit_AMG88xx_Library Adafruit_Circuit_Playground 
+#   Adafruit_GFX_Library Adafruit_SSD1306 
+#   Adafruit_SSD1306-master [L] LedControl-master [S] SD 
+#   [U] U8glib_Arduino-1.19.1 [s] ss_oled-3.0.0 
 #
 USER_LIBS_LIST = 0
 
@@ -165,3 +178,4 @@ BUILDS_PATH       := $(BUILT_PRODUCTS_DIR)
 BUILDS_PATH_SPACE := $(BUILDS_PATH)
 
 include $(MAKEFILE_PATH)/Step1.mk
+

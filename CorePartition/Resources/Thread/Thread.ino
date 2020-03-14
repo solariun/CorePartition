@@ -35,7 +35,42 @@
 
 
 
+// Core library for code-sense - IDE-based
+// !!! Help: http://bit.ly/2AdU7cu
+#if defined(WIRING) // Wiring specific
+#include "Wiring.h"
+#elif defined(MAPLE_IDE) // Maple specific
+#include "WProgram.h"
+#elif defined(ROBOTIS) // Robotis specific
+#include "libpandora_types.h"
+#include "pandora.h"
+#elif defined(MPIDE) // chipKIT specific
+#include "WProgram.h"
+#elif defined(DIGISPARK) // Digispark specific
 #include "Arduino.h"
+#elif defined(ENERGIA) // LaunchPad specific
+#include "Energia.h"
+#elif defined(LITTLEROBOTFRIENDS) // LittleRobotFriends specific
+#include "LRF.h"
+#elif defined(MICRODUINO) // Microduino specific
+#include "Arduino.h"
+#elif defined(TEENSYDUINO) // Teensy specific
+#include "Arduino.h"
+#elif defined(REDBEARLAB) // RedBearLab specific
+#include "Arduino.h"
+#elif defined(RFDUINO) // RFduino specific
+#include "Arduino.h"
+#elif defined(SPARK) || defined(PARTICLE) // Particle / Spark specific
+#include "application.h"
+#elif defined(ESP8266) // ESP8266 specific
+#include "Arduino.h"
+#elif defined(ARDUINO) // Arduino 1.0 and 1.5 specific
+#include "Arduino.h"
+#else // error
+#error Platform not defined
+#endif // end IDE
+
+
 #include "CorePartition.h"
 
 
@@ -55,7 +90,6 @@ void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
 
     Serial.write (szTemp, nLen);
-    
 }
 
 
@@ -181,16 +215,17 @@ protected:
         static char nLine [9] = "        ";
         int8_t nOffset = 8;
 
-        //Serial.print (nRow, BIN);
-        
+        //auto nTmp = nRow;
+
         while (--nOffset >= 0)
         {
-           nLine [7-nOffset] = nRow & 1 != 0 ? '#' : ' ';
+           nLine [7-nOffset] = ((nRow & 1) != 0) ? '#' : ' ';
            nRow >>= 1;
         }
 
-        setLocation (nLocY + nRowIndex, nLocX + (nDigit * 8));
+        setLocation (nLocY + nRowIndex, nLocX + (nDigit * 9));
         Serial.print (nLine);
+        //Serial.print (nTmp, BIN);
     }
 
 public:
@@ -228,6 +263,16 @@ public:
               
         for (nCount=0; nCount < nNumberDigits; nCount++)
         {
+        
+            /*
+            Serial.print (CorePartition_GetLastDutyCycle ());
+            Serial.print (",");
+            Serial.print (pszMessage [nIndex + 1]);
+            Serial.print (",");
+            Serial.print (pszMessage [nIndex]);
+            Serial.print (":");
+            */
+            
             printScrollBytes (nLocY, nLocX, nCount, getLetter(nIndex + 1, pszMessage, nMessageLen), getLetter(nIndex, pszMessage, nMessageLen), (uint8_t) nOffset);
           
             nIndex =  (int) nIndex + 1;
@@ -275,14 +320,19 @@ void ShowRunningThreads ()
 
 void ThreadTOP (void* pValue)
 {
+    uint8_t nCounter = 0;
+    
     while (CorePartition_Yield ())
     {
         resetColor ();
         
         setLocation (45, 10);
         
+        Serial.println (nCounter++);
+        
         ShowRunningThreads ();
         
+        Serial.flush ();
         Serial.flush ();
     }
 }
@@ -293,10 +343,12 @@ void ThreadTOP (void* pValue)
 void Thread1 (void* pValue)
 {
     int nSize;
-    size_t nValue = 1;
+    uint32_t nValue = 1;
 
-    static char szMessage [60] = "";
-
+    static char szMessage [25] = "Thread #1: 15.";
+    
+    nSize = strlen (szMessage);
+    
     TextScroller textScroller (15, 8);
 
     
@@ -304,8 +356,8 @@ void Thread1 (void* pValue)
     {
         setColor (1, 0);
         
-        nSize = snprintf (szMessage, sizeof (szMessage) -1, "Thread #1 : %ld .", nValue++);
-
+        nSize = snprintf (szMessage, sizeof (szMessage) -1, "Thread #1: (%d) .", nValue++);
+        
         textScroller.show (5, 7, szMessage, nSize);
 
         Serial.flush ();
@@ -323,9 +375,7 @@ void Thread2 (void* pValue)
     
     while (CorePartition_Yield ())
     {
-        Serial.flush ();
-        
-        setColor (4, 15);
+        setColor (4, 0);
         
         textScroller.show (15, 7, szMessage, sizeof (szMessage) - 1);
         
@@ -348,15 +398,13 @@ void Thread3 (void* pValue)
         
         textScroller.show (25, 10, szMessage, sizeof (szMessage) - 1);
         
-        resetColor ();
-        
         Serial.flush ();
     }
 }
 
 void Thread4 (void* pValue)
 {
-    size_t nValue = 100;
+    uint32_t nValue = 100;
 
     static char szMessage [] = "#4 - Works every where from Windwows, Linux, Mac, to AVR, ARM, RISC-V and ESP";
         
@@ -367,8 +415,6 @@ void Thread4 (void* pValue)
         setColor (2, 0);
         
         textScroller.show (35, 10, szMessage, sizeof (szMessage) - 1);
-        
-        resetColor ();
         
         Serial.flush ();
     }

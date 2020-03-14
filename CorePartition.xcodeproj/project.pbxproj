@@ -11,16 +11,6 @@
 		67CC273E2321622200868605 /* CorePartition.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC273D2321622200868605 /* CorePartition.c */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		0E5E59E52417C42A0095ACAC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0E5E59D22417C4280095ACAC /* Thread_embedXCode.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 0E5E59632417C4280095ACAC;
-			remoteInfo = Index;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		6719C16522DBDFF3006F87F5 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -35,7 +25,6 @@
 
 /* Begin PBXFileReference section */
 		0E3E1817234BE95900C031DA /* makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
-		0E5E59D22417C4280095ACAC /* Thread_embedXCode.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Thread_embedXCode.xcodeproj; path = Thread_embedXCode/Thread_embedXCode.xcodeproj; sourceTree = "<group>"; };
 		0E7BADE3234A7F52002ABA3F /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
 		6719C16722DBDFF3006F87F5 /* CorePartition */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CorePartition; sourceTree = BUILT_PRODUCTS_DIR; };
 		6719C16A22DBDFF3006F87F5 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -57,18 +46,9 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0E5E59D32417C4280095ACAC /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				0E5E59E62417C42A0095ACAC /* Index */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		6719C15E22DBDFF3006F87F5 = {
 			isa = PBXGroup;
 			children = (
-				0E5E59D22417C4280095ACAC /* Thread_embedXCode.xcodeproj */,
 				67627CF12362A1A60037E3F0 /* License.png */,
 				67627CF023629F0C0037E3F0 /* LICENSE */,
 				6719C17422DBE2DD006F87F5 /* README.md */,
@@ -142,28 +122,12 @@
 			mainGroup = 6719C15E22DBDFF3006F87F5;
 			productRefGroup = 6719C16822DBDFF3006F87F5 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 0E5E59D32417C4280095ACAC /* Products */;
-					ProjectRef = 0E5E59D22417C4280095ACAC /* Thread_embedXCode.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				6719C16622DBDFF3006F87F5 /* CorePartition */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		0E5E59E62417C42A0095ACAC /* Index */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = Index;
-			remoteRef = 0E5E59E52417C42A0095ACAC /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6719C16322DBDFF3006F87F5 /* Sources */ = {
