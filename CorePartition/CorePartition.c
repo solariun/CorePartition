@@ -58,7 +58,8 @@ typedef struct
     
     
     uint32_t            nNice;
-    uint32_t            nLastMomentun;
+    volatile uint32_t   nLastMomentun;
+    volatile uint32_t   nLastBackup;
 
     void*               pLastStack;
     uint8_t*            pnStackPage;
@@ -66,8 +67,6 @@ typedef struct
     uint32_t            nExecTime;
     
     uint8_t             nSecure;
-    
-    uint32_t            nLastBackup;
     //uint32_t            nProcTime;
 } ThreadLight;
 
@@ -107,6 +106,11 @@ uint32_t getDefaultCTime()
 
 uint32_t (*getCTime)(void) = getDefaultCTime;
 
+
+static uint32_t getTime()
+{
+    return getCTime ();
+}
 
 bool CorePartition_SetCurrentTimeInterface (uint32_t (*getCurrentTimeInterface)(void))
 {
@@ -285,9 +289,10 @@ inline static size_t Scheduler (void)
 {
     static uint32_t nCounter = 0;
     
-    nCounter = getCTime();
+    nCounter = getTime();
+    srand (nCounter);
     
-    pThreadLight [nCurrentThread].nExecTime = getCTime () - pThreadLight [nCurrentThread].nLastMomentun;
+    pThreadLight [nCurrentThread].nExecTime = nCounter - pThreadLight [nCurrentThread].nLastMomentun;
     
     while (1)
     {
@@ -306,7 +311,7 @@ inline static size_t Scheduler (void)
             SleepBeforeTask (nCounter);
         }
         
-        nCounter = getCTime();
+        nCounter = getTime();
     }
 
     return 0;
@@ -366,7 +371,8 @@ bool CorePartition_Yield ()
 {
     if (nMaxThreads > 0 && nCurrentThread <= nMaxThreads)
     {
-        pThreadLight [nCurrentThread].nLastBackup = getCTime ();
+        if (pThreadLight [nCurrentThread].nSecure != 0)
+            pThreadLight [nCurrentThread].nLastBackup = getTime();
         
         {
             volatile uint8_t nValue = 0xBB;
