@@ -427,9 +427,6 @@ static uint32_t getTimeTick()
 
 static void sleepTick (uint32_t nSleepTime)
 {
-    resetColor ();
-    Serial.print (nSleepTime);
-    
     if (nSleepTime)  delayMicroseconds  (nSleepTime * 1000);
 }
 
@@ -497,7 +494,7 @@ void setup()
     
     
     
-    CorePartition_CreateSecureThread (ThreadTOP, NULL, 13 * sizeof (size_t), 0);
+    CorePartition_CreateSecureThread (ThreadTOP, NULL, 13 * sizeof (size_t), 500);
     
     CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 300);
 
