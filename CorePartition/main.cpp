@@ -124,8 +124,11 @@ void Thread3 (void* pValue)
 
 static void sleepMSTicks (uint32_t nSleepTime)
 {
-    printf ("\n%s: sleeping [%llu]\n", __FUNCTION__, nSleepTime);
+    printf ("\n%s: sleeping [%lu]\n", __FUNCTION__, nSleepTime);
+    
     usleep ((useconds_t) nSleepTime * 1000);
+    
+    printf ("Returning....");
 }
 
 static uint32_t getMsTicks(void)

@@ -242,7 +242,7 @@ inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize
 
 inline static void BackupStack(void)
 {
-    fastmemcpy (pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
+    memcpy (pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
     
     //pThreadLight [nCurrentThread].nProcTime = getCTime () - pThreadLight [nCurrentThread].nLastBackup;
 }
@@ -250,7 +250,7 @@ inline static void BackupStack(void)
 
 inline static void RestoreStack(void)
 {
-    fastmemcpy (pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
+    memcpy (pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
 }
 
 
@@ -262,7 +262,7 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
 #define __NEXTIME(TH) (pThreadLight [TH].nLastMomentun +  pThreadLight [TH].nNice - 1)
 #define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
-    nMin = __CALC(0);
+    nMin = 0xFFFFFFFF;
     
     for (nCThread = 0; nCThread < nMaxThreads; nCThread++)
     {
@@ -271,15 +271,16 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
         else if (__NEXTIME (nCThread) <= nCurTime)
         {
             nMin = 0;
+            nCurrentThread = nCThread;
             break;
         }
         else if (nMin > __CALC (nCThread))
         {
+            nCurrentThread = nCThread;
             nMin = __CALC (nCThread) + 1;
         }
     }
 
-    nCurrentThread = nCThread;
 
     if (nMin > 0) sleepCTime (nMin);
 }
@@ -289,6 +290,8 @@ inline static size_t Scheduler (void)
 {
     static uint32_t nCounter = 0;
     static uint32_t nTime = 0;
+    
+    if (nTime == 0) nTime = getTime();
     
     pThreadLight [nCurrentThread].nExecTime = getTime() - pThreadLight [nCurrentThread].nLastMomentun;
     
@@ -303,7 +306,7 @@ inline static size_t Scheduler (void)
                 return nCurrentThread;
             }
             
-            nCurrentThread = nCurrentThread + 1 == nMaxThreads ? 0 : nCurrentThread+1;
+            nCurrentThread = (nCurrentThread + 1) >= nMaxThreads ? 0 : nCurrentThread+1;
             nCounter++;
         }
         else
