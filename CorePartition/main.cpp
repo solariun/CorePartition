@@ -36,8 +36,6 @@
 #include <sys/time.h>
 
 
-
-
 uint32_t getMiliseconds()
 {
     struct timeval tp;
