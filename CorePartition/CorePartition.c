@@ -199,8 +199,6 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     pThreadLight[nThread].mem.func.pFunction = pFunction;
     
     pThreadLight[nThread].nNice = 1;
- 
-    pThreadLight [nThread].nLastMomentun = getCTime();
 
     pThreadLight [nThread].nExecTime = 0;
     
@@ -209,6 +207,9 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     pThreadLight [nThread].nIsolation = nTaskIsolation;
 
     pThreadLight [nThread].nLastBackup = getCTime ();
+    
+    pThreadLight [nThread].nLastMomentun = getCTime();
+    
     nThreadCount++;
     
     return true;
@@ -226,31 +227,40 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
 }
 
 
-inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize)
+
+static void CryptBlob (uint8_t* pBlob, size_t nSize)
 {
-    const void* nTop = (const void*) pSource + nSize;
-    
-    if (pThreadLight [nCurrentThread].nIsolation != 0)
+    if (pThreadLight [nCurrentThread].nIsolation)
     {
+        uint32_t nKey [4];
+        
         srand(pThreadLight [nCurrentThread].nLastBackup);
         
-        for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ ((uint8_t) (rand() % 255) );
+        nKey[0] = (uint32_t) rand();
+        nKey[1] = (uint32_t) rand();
+        nKey[2] = (uint32_t) rand();
+        nKey[3] = (uint32_t) rand();
+
+        while (nSize-- > 0)
+        {
+            *pBlob = *pBlob ^ ((uint8_t*)nKey) [(nSize % sizeof (nKey))];
+            pBlob++;
+        }
     }
-    else
-        memcpy(pDestine, pSource, nSize);
 }
 
-inline static void BackupStack(void)
+
+static void BackupStack(void)
 {
     memcpy (pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
-    
-    //pThreadLight [nCurrentThread].nProcTime = getCTime () - pThreadLight [nCurrentThread].nLastBackup;
+    CryptBlob(pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
 }
 
 
-inline static void RestoreStack(void)
+static void RestoreStack(void)
 {
     memcpy (pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].pnStackPage, pThreadLight [nCurrentThread].nStackSize);
+    CryptBlob(pThreadLight [nCurrentThread].pLastStack, pThreadLight [nCurrentThread].nStackSize);
 }
 
 
@@ -271,13 +281,13 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
         else if (__NEXTIME (nCThread) <= nCurTime)
         {
             nMin = 0;
-            nCurrentThread = nCThread;
-            break;
+            //nCurrentThread = nCThread;
+            return;
         }
         else if (nMin > __CALC (nCThread))
         {
-            nCurrentThread = nCThread;
-            nMin = __CALC (nCThread) + 1;
+            //nCurrentThread = nCThread;
+            nMin = __CALC (nCThread);
         }
     }
 
@@ -288,16 +298,19 @@ inline static void SleepBeforeTask (uint32_t nCurTime)
 
 inline static size_t Scheduler (void)
 {
-    static uint32_t nCounter = 0;
     static uint32_t nTime = 0;
     
     if (nTime == 0) nTime = getTime();
     
     pThreadLight [nCurrentThread].nExecTime = getTime() - pThreadLight [nCurrentThread].nLastMomentun;
     
+    nCurrentThread++;
+    
     while (1)
     {
-        if (nCounter < nMaxThreads)
+        //printf ("nMaxThread: [%zu] - nCurrentThread: [%zu]: LastMomentun + nice: [%u], time: [%u] -> greater: [%s]\n", nMaxThreads, nCurrentThread, pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice, nTime, nTime >= pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice ? "TRUE" : "FASE");
+        
+        if (nCurrentThread < nMaxThreads)
         {
             if (nTime >= ((uint32_t)(pThreadLight [nCurrentThread].nLastMomentun +  pThreadLight [nCurrentThread].nNice)))
             {
@@ -306,12 +319,11 @@ inline static size_t Scheduler (void)
                 return nCurrentThread;
             }
             
-            nCurrentThread = (nCurrentThread + 1) >= nMaxThreads ? 0 : nCurrentThread+1;
-            nCounter++;
+            nCurrentThread++;
         }
         else
         {
-            nCounter = 0;
+            nCurrentThread = 0;
             SleepBeforeTask (nTime);
             nTime = getTime();
             srand(nTime);

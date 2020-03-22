@@ -314,13 +314,15 @@ void ShowRunningThreads ()
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
+        
+        Serial.flush ();
     }
 }
 
 
 void ThreadTOP (void* pValue)
 {
-    uint8_t nCounter = 0;
+    int nCounter = 0;
     
     while (CorePartition_Yield ())
     {
@@ -440,8 +442,13 @@ void StackOverflowHandler ()
     ShowRunningThreads ();
     Serial.flush ();
     
-    while (true);
-}
+    while (true)
+    {
+        Serial.print (".");
+        delay (1);
+    }
+};
+
 
 
 void setup()
@@ -494,15 +501,15 @@ void setup()
     
     
     
-    CorePartition_CreateSecureThread (ThreadTOP, NULL, 13 * sizeof (size_t), 500);
-    
-    CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 300);
+     CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 0);
 
-    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 400);
+    CorePartition_CreateSecureThread (ThreadTOP, NULL, 13 * sizeof (size_t), 0);
     
-    CorePartition_CreateSecureThread (Thread3, NULL, 25 * sizeof (size_t), 1000);
+    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 0);
     
-    CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 2000);
+    CorePartition_CreateSecureThread (Thread3, NULL, 25 * sizeof (size_t), 0);
+    
+    CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 0);
 
 
 }

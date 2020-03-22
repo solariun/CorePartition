@@ -394,6 +394,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (nCount);
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (CorePartition_IsSecureByID (nCount));
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetNiceByID (nCount));
         Serial.print (F("\t"));
@@ -726,7 +727,7 @@ void setup()
     
     CorePartition_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500);
 
-    CorePartition_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250);
+    CorePartition_CreateSecureThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250);
     
     CorePartition_CreateThread (Terminal, NULL, 42 * sizeof (size_t), 50);
 }

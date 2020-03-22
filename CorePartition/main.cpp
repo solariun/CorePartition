@@ -122,11 +122,7 @@ void Thread3 (void* pValue)
 
 static void sleepMSTicks (uint32_t nSleepTime)
 {
-    printf ("\n%s: sleeping [%lu]\n", __FUNCTION__, nSleepTime);
-    
     usleep ((useconds_t) nSleepTime * 1000);
-    
-    printf ("Returning....");
 }
 
 static uint32_t getMsTicks(void)
@@ -150,9 +146,9 @@ int main(int argc, const char * argv[])
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread1, NULL, 256, 3000);
-    CorePartition_CreateThread (Thread2, NULL, 256, 1000);
-    CorePartition_CreateSecureThread (Thread3, NULL, 256, 500);
+    CorePartition_CreateThread (Thread1, NULL, 256, 1000);
+    CorePartition_CreateThread (Thread2, NULL, 256, 600);
+    CorePartition_CreateSecureThread (Thread3, NULL, 256, 1212);
     
     CorePartition_Join();
     

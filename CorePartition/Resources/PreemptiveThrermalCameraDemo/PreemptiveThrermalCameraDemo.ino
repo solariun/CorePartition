@@ -190,6 +190,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (nCount);
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (CorePartition_IsSecureByID (nCount));
         Serial.print (F("\t"));
         Serial.print (CorePartition_GetNiceByID (nCount));
         Serial.print (F("\t"));
@@ -501,7 +502,7 @@ void setup()
     
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, NULL, 150, 0);
+    CorePartition_CreateSecureThread (Thread1, NULL, 150, 0);
     
     CorePartition_CreateThread (Thread3, NULL, 150, 0);
 
