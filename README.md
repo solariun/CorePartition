@@ -6,7 +6,31 @@ Version 2.4
 
 Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
 
+# Inportant information
+
+Core partition was design for single cores processors and micro controlers, since it will have a unique thread-context. But it i will also works as a lib for a  softwares, enabling it to be able to use Threads without compromizing whole system.
+
+By default it will use Cooperative thread, which mean the developer will need to call Yield() for changing context. But, by using a timer you will be able to make it preemptive, a example of preeptiviness is also provided for a micro controler Atmel 328P. Use Arduino IDE and a NANO for better results.
+
+All the resources examples are done using Arduino, why? First because it will abstract the who hardware inteface, so, doesn't mater the processor or microcontroler, this Thread will deploy the same results, since this is its filosofy (ready fir any hardware interacion, timer, interruption and archtectre)
+
 CoreParition really deploy threads, it is not proto-thread or any re-entrant thing, it is a fully thread implementation with memory page to isolate the thread context and even with a secure context (just introduced)
+
+
+# Minimal Resources 
+
+To compile this lib make sure your toolchain or software compiler works with standard C and provide  
+
+    memaloc
+    free
+    setjmp
+    longjmo
+    srand
+    rand
+    
+for 8bits processor it will aproximately consume 41 bytes for thread controler and 47 bytes for each context + the memory page you choose to save your thread stack.  
+
+
 
 # Preemption Ready 
 NOW! CorePartition is Preemption ready a example of full preemption is already provided, including a full Thermal camera with Led Display example also with Preemption. NOTE that since it relays on Timer, it will not be part of the lib, you will have to implement the timer yourself, but a full example of how to do it is provided.
@@ -78,6 +102,8 @@ This thread has been developped and test on windows, mac, some Unix and Linux bu
 
 
 
+# A Simple example
+
 This is how to use it 
 
 ```
@@ -130,7 +156,12 @@ Please note it is not a regular thread, even though it behaves like one, it is a
 
 # Arduino Boards
 
-This thread is HIGHLY SUITABLE for small arduinos like NANO (Works like magic) and ATTINY85
+This thread is HIGHLY SUITABLE for small arduinos like NANO (Works like magic) and ATTINY85 
+
+But it is suitable for ALL ARDUINOS.... just try it out.... it will work !
+
+
+# Some visual examples 
 
 ATmega238p with Thermal cam (I2C) and 2 DotMatrix 8x8 ISP chained. 3 threads 1: reading cam, 2: showing cam, 3-Text Scroller
 
