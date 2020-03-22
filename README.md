@@ -6,13 +6,13 @@ Version 2.4
 
 Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
 
-# Inportant information
+# Important information
 
-Core partition was design for single cores processors and micro controlers, since it will have a unique thread-context. But it i will also works as a lib for a  softwares, enabling it to be able to use Threads without compromizing whole system.
+Core partition was design for single cores processors and micro controllers, since it will have a unique thread-context. But it i will also works as a lib for a  softwares, enabling it to be able to use Threads without compromising whole system.
 
-By default it will use Cooperative thread, which mean the developer will need to call Yield() for changing context. But, by using a timer you will be able to make it preemptive, a example of preeptiviness is also provided for a micro controler Atmel 328P. Use Arduino IDE and a NANO for better results.
+By default it will use Cooperative thread, which mean the developer will need to call Yield() for changing context. But, by using a timer you will be able to make it preemptive. An example of perceptiveness is also provided for a micro controller Atmel 328P. Use Arduino IDE and a NANO for better results.
 
-All the resources examples are done using Arduino, why? First because it will abstract the who hardware inteface, so, doesn't mater the processor or microcontroler, this Thread will deploy the same results, since this is its filosofy (ready fir any hardware interacion, timer, interruption and archtectre)
+All the resources examples are done using Arduino, why? First because it will abstract the who hardware interface, so, doesn't mater the processor or microcontroler, this Thread will deploy the same results, since this is its philosophy (ready fir any hardware interaction, timer, interruption and architecture)
 
 CoreParition really deploy threads, it is not proto-thread or any re-entrant thing, it is a fully thread implementation with memory page to isolate the thread context and even with a secure context (just introduced)
 
@@ -21,14 +21,14 @@ CoreParition really deploy threads, it is not proto-thread or any re-entrant thi
 
 To compile this lib make sure your toolchain or software compiler works with standard C and provide  
 
-    memaloc
-    free
-    setjmp
-    longjmo
-    srand
-    rand
-    
-for 8bits processor it will aproximately consume 41 bytes for thread controler and 47 bytes for each context + the memory page you choose to save your thread stack.  
+memaloc
+free
+setjmp
+longjmo
+srand
+rand
+
+for 8bits processor it will approximately consume 41 bytes for thread controller and 47 bytes for each context + the memory page you choose to save your thread stack.  
 
 
 
@@ -38,13 +38,13 @@ NOW! CorePartition is Preemption ready a example of full preemption is already p
 
 # Introducing Thread Isolation 
 
-Now, CorePartition will introduce Thread Isolation, it will dynamicaly encrypt stack on back and restore of the memory page, it does not intend to be the best securety, but one more barier against digital threats. Every thhread with Secure Memory Page, will be crypted using a 128 bits key that will be dynamically changed every context switch. The developer will have no power or awereness of the procedure and the whole memory page will encrypted on memory.
-            
-            Note that it will ONLY encrypt the stack, hipe will remain original.
+Now, CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on back and restore of the memory page, it does not intend to be the best securety, but one more barier against digital threats. Every thread with Secure Memory Page, will be encrypted using a 128 bits key that will be dynamically changed every context switch. The developer will have no power or awereness of the procedure and the whole memory page will encrypted on memory.
+
+Note that it will ONLY encrypt the stack, heap will remain original.
 
 This feature will remain on Experimental for certain time.
 
-# Momentum Scheduller
+# Momentum Scheduler
 
 *The Momentum Scheduler* is optimised to only allow thread to come back to work only upon its "nice" time or later that, with means it will work on real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialised nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exemplo for keeping it simple).
 
@@ -98,7 +98,7 @@ If you want to start, what about you dust off a old arduino, like a nano, and op
 
 # windows users
 
-This thread has been developped and test on windows, mac, some Unix and Linux but it has been developed using a macintosh, so I am using some unix features like link and it is not available on windows. So, in order to have all the exemples running on windows, copy CorePartition.c and CorePartition.h to the directory you want, open the the ino file using your Arduino IDE, select your board and port and just flash it.  it is fully compatible with all arduinos.
+This thread has been developed and test on windows, mac, some Unix and Linux but it has been developed using a macintosh, so I am using some unix features like link and it is not available on windows. So, in order to have all the exemples running on windows, copy CorePartition.c and CorePartition.h to the directory you want, open the the ino file using your Arduino IDE, select your board and port and just flash it.  it is fully compatible with all arduinos.
 
 
 
