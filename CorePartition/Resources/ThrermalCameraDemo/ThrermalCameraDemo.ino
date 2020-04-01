@@ -40,8 +40,8 @@
 
 //#include "U8glib.h"
 #include <Wire.h>
-#include <Adafruit_AMG88xx.h>
 #include <LedControl.h>
+#include <Adafruit_AMG88xx.h>
 
 
 #define MAX(x, y) (x > y ? x : y)
@@ -53,7 +53,7 @@ Adafruit_AMG88xx amg;
 
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 
-//U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);  // I2C / TWI 
+//U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);  // I2C / TWI
 
 
 int DIN = 12 ; //MISO

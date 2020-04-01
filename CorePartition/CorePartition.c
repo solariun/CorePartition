@@ -345,7 +345,7 @@ static void CorePartition_StopThread ()
 
 void CorePartition_Join ()
 {
-    volatile uint8_t nValue = 0xAA;
+    uint8_t nValue = 0xAA;
     pStartStck =  (void*) &nValue;
     
     if (nThreadCount == 0) return;
@@ -389,8 +389,8 @@ bool CorePartition_Yield ()
     if (nMaxThreads > 0 && nCurrentThread <= nMaxThreads)
     {
         volatile uint8_t nValue = 0xBB;
-        pThreadLight [nCurrentThread].pLastStack = (void*) &nValue;
-
+        pThreadLight [nCurrentThread].pLastStack = (void*)&nValue;
+        
         pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
 
         if (pThreadLight [nCurrentThread].nStackSize > pThreadLight [nCurrentThread].nStackMaxSize)
@@ -409,9 +409,9 @@ bool CorePartition_Yield ()
         {
             longjmp(jmpJoinPointer, 1);
         }
-        
+
+        pThreadLight [nCurrentThread].pLastStack = (void*)&nValue;
         pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
-        
         RestoreStack();
 
         if (pThreadLight [nCurrentThread].nIsolation != 0)
