@@ -388,7 +388,7 @@ bool CorePartition_Yield ()
 {
     if (nMaxThreads > 0 && nCurrentThread <= nMaxThreads)
     {
-        volatile uint8_t nValue = 0xBB;
+        uint8_t nValue = 0xBB;
         pThreadLight [nCurrentThread].pLastStack = (void*)&nValue;
         
         pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
@@ -410,6 +410,7 @@ bool CorePartition_Yield ()
             longjmp(jmpJoinPointer, 1);
         }
 
+        //This existis to re-align after jump alignment optmizations
         pThreadLight [nCurrentThread].pLastStack = (void*)&nValue;
         pThreadLight [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pThreadLight [nCurrentThread].pLastStack;
         RestoreStack();
