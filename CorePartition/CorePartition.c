@@ -163,12 +163,14 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
 {
     size_t nThread;
     
-    if (nThreadCount >= nMaxThreads || pFunction == NULL) return false;
+    if (pFunction == NULL) return false;
  
     //Determine free threads
     
     for (nThread=0; nThread < nMaxThreads; nThread++)
     {
+        printf ("ID %zu - %u\n", nThread, pCoreThread [nThread].nStatus);
+        
         if (pCoreThread [nThread].nStatus == THREADL_NONE || pCoreThread [nThread].nStatus == THREADL_STOPPED)
             break;
     }
@@ -180,12 +182,13 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     //adjust the size to be mutiple of the size_t lenght
     pCoreThread [nThread].nStackMaxSize = nStackMaxSize + (nStackMaxSize % sizeof (size_t));
     
+    
     if ((pCoreThread [nThread].pnStackPage = (uint8_t*) malloc(sizeof (uint8_t) * pCoreThread [nThread].nStackMaxSize)) == NULL)
     {
-        memset ((void*) &pCoreThread [nThread], 0, sizeof (CoreThread));
         return false;
     }
-        
+     
+    
     pCoreThread[nThread].mem.func.pValue = pValue;
     
     pCoreThread[nThread].nStatus = THREADL_START;
@@ -336,6 +339,8 @@ void CorePartition_Join ()
             {
                 case THREADL_START:
                     
+                    nRunningThread++;
+                    
                     pCoreThread [nCurrentThread].nStatus = THREADL_RUNNING;
                     
                     pCoreThread [nCurrentThread].mem.func.pFunction (pCoreThread [nCurrentThread].mem.func.pValue);
@@ -366,7 +371,7 @@ void CorePartition_Join ()
 
 bool CorePartition_Yield ()
 {
-    if (nThreadCount > 0)
+    if (nRunningThread > 0)
     {
         pCoreThread [nCurrentThread].nExecTime = getCTime() - pCoreThread [nCurrentThread].nLastMomentun;
         
