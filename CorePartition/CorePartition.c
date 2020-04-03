@@ -169,8 +169,6 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     
     for (nThread=0; nThread < nMaxThreads; nThread++)
     {
-        printf ("ID %zu - %u\n", nThread, pCoreThread [nThread].nStatus);
-        
         if (pCoreThread [nThread].nStatus == THREADL_NONE || pCoreThread [nThread].nStatus == THREADL_STOPPED)
             break;
     }
