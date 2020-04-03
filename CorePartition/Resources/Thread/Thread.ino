@@ -422,14 +422,14 @@ void Thread4 (void* pValue)
     }
 }
 
-static uint32_t getTimeTick()
+extern "C" uint32_t getTimeTick()
 {
    return (uint32_t) millis();
 }
 
-static void sleepTick (uint32_t nSleepTime)
+extern "C"  void sleepTick (uint32_t nSleepTime)
 {
-    if (nSleepTime)  delayMicroseconds  (nSleepTime * 1000);
+    if (nSleepTime)  delay  (nSleepTime);
 }
 
 void StackOverflowHandler ()
@@ -442,11 +442,6 @@ void StackOverflowHandler ()
     ShowRunningThreads ();
     Serial.flush ();
     
-    while (true)
-    {
-        Serial.print (".");
-        delay (1);
-    }
 };
 
 
@@ -501,15 +496,15 @@ void setup()
     
     
     
-     CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 0);
+     CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 100);
 
-    CorePartition_CreateSecureThread (ThreadTOP, NULL, 13 * sizeof (size_t), 0);
+    CorePartition_CreateSecureThread (ThreadTOP, NULL, 15 * sizeof (size_t), 0);
     
-    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 0);
+    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 500);
     
-    CorePartition_CreateSecureThread (Thread3, NULL, 25 * sizeof (size_t), 0);
+    CorePartition_CreateSecureThread (Thread3, NULL, 25 * sizeof (size_t), 900);
     
-    CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 0);
+    CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 2000);
 
 
 }

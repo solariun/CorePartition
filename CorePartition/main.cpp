@@ -41,7 +41,7 @@ uint32_t getMiliseconds()
     struct timeval tp;
     gettimeofday(&tp, NULL);
     
-    return tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+    return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
 }
 
 void sleepUseconds(uint32_t nTime)
@@ -146,9 +146,9 @@ int main(int argc, const char * argv[])
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread1, NULL, 256, 1000);
-    CorePartition_CreateThread (Thread2, NULL, 256, 600);
-    CorePartition_CreateSecureThread (Thread3, NULL, 256, 1212);
+    CorePartition_CreateThread (Thread1, NULL, 256, 5000);
+    CorePartition_CreateThread (Thread2, NULL, 256, 1000);
+    CorePartition_CreateSecureThread (Thread3, NULL, 256, 1500);
     
     CorePartition_Join();
     
