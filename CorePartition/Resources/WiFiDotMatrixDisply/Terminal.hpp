@@ -43,7 +43,7 @@ Class Terminal
 
     virtual ~Terminal ();
 
-
+    
 
     protected:
     

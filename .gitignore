@@ -1,3 +1,4 @@
 *.o
-CorePartition.bin
+*.bin
+*.elf
 .DS_Store
