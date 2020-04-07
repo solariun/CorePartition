@@ -21,16 +21,17 @@
 #//
 #// See LICENSE file for the complete information
 
+
 CC=gcc
 src = $(wildcard *.c)
 srcpp = $(wildcard *.cpp)
 obj = $(src:.c=.o) $(srcpp:.cpp=.o)
 
-TARGET = CorePartition
-LDFLAGS = -lm -L /opt/local/lib -I /opt/local/include
+TARGET = CorePartition.bin
+LDFLAGS = -lm 
 
 $(TARGET): $(obj)
-	$(CC) -c $@ $^ (LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 clean:

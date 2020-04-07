@@ -1,0 +1,3 @@
+*.o
+CorePartition.bin
+.DS_Store

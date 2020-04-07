@@ -401,9 +401,10 @@ bool CorePartition_Yield ()
         pCoreThread [nCurrentThread].pLastStack = alloca(0);
         pCoreThread [nCurrentThread].nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread].pLastStack;
 
-        sleepCTime (0); //Do not take it out EVER! it will sincronize processing
         RestoreStack();
 
+        sleepCTime (0); //Do not take it out EVER! it will sincronize processing
+        
         pCoreThread [nCurrentThread].nLastBackup = pCoreThread [nCurrentThread].nLastMomentun;
         
         return true;
