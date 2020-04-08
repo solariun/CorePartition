@@ -32,31 +32,44 @@
 //
 // See LICENSE file for the complete information
 
-#include "Stream.h"
-#include <string>
-#include "CorePartition.h"
 
-class Terminal 
+#include "Terminal.hpp"
+
+Terminal::Terminal (Stream& streamClient) : m_client (streamClient)
 {
-    public:
+}
 
-    Terminal (Stream& streamDev);
+Terminal::~Terminal ()
+{} 
 
-    virtual ~Terminal ();
-
-    virtual bool ExecuteMOTD ();   
-
-    bool WaitForACommand();
-
-    protected:
-
-    bool WaitAvailableForReading ();
+bool Terminal::WaitAvailableForReading ()
+{
+    m_client.flush ();
+    while (m_client.available() == false) CorePartition_Yield ();
+}
 
 
-    private:
+bool Terminal::ExecuteMOTD ()
+{
+    m_client.println ("*****************************************");
+    m_client.println ("* WiFi Dot Matrix OS                    *");
+    m_client.println ("*                                       *");
+    m_client.println ("* Welcome to the future                 *");
+    m_client.println ("*****************************************");
+    //m_client.println (CorePartition_version);
 
-        //Default Stream used to in and out information 
-        Stream&  m_client;
-        std::string   strCommandLine;
+    return true;
+}
 
-};
+bool Terminal::WaitForACommand()
+{
+    int nValue = 10;
+    
+    while (nValue--)
+    {
+        CorePartition_Sleep (1000);
+        m_client.println (nValue);
+    }
+
+    return false;
+}

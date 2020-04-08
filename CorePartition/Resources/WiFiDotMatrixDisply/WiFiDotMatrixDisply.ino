@@ -55,6 +55,8 @@
 #include <LedControl.h>
 #include <string>
 
+#include "Terminal.hpp"
+
 #define MAX(x, y) (x > y ? x : y)
 #define MIN(x, y) (x < y ? x : y)
 
@@ -376,16 +378,12 @@ void ClientHandler (void* pSrvClient)
     
     Serial.println ("Starting Client.....");
         
-    client.println ("Welcomde Wifi Core Led Display");
-    client.println ("--------------------------------------");
+    Terminal terminal (client);
 
-    int nValue = 10;
-    
-    while (nValue--)
-    {
-        CorePartition_Sleep (1000);
-        client.println (nValue);
-    }
+    terminal.ExecuteMOTD ();
+
+    while (terminal.WaitForACommand ())
+        CorePartition_Yield ();
     
     client.println ("Bye Bye");
 }
