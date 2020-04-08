@@ -34,6 +34,7 @@
 
 #include "Stream.h"
 #include <string>
+#include <list>
 #include "CorePartition.h"
 
 class Terminal 
@@ -44,19 +45,26 @@ class Terminal
 
     virtual ~Terminal ();
 
+    virtual bool isConnected ();
+
     virtual bool ExecuteMOTD ();   
 
     bool WaitForACommand();
 
+    void SetPromptString (const std::string& promptString);
+
     protected:
+
+    bool ReadCommand (std::string& readCommand);
 
     bool WaitAvailableForReading ();
 
+    Stream& getStream ();
 
     private:
 
         //Default Stream used to in and out information 
         Stream&  m_client;
-        std::string   strCommandLine;
+        std::string   m_promptString;
 
 };

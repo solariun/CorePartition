@@ -369,6 +369,18 @@ public:
 WiFiServer server(port);
 WiFiClient serverClients[MAX_SRV_CLIENTS];
 
+class WiFiCTerminal : public Terminal
+{
+    public:
+    
+    using Terminal::Terminal;
+
+    bool isConnected ()
+    {
+        return ((WiFiClient&) getStream ()).connected ();
+    }
+};
+
 
 void ClientHandler (void* pSrvClient)
 {
@@ -378,14 +390,17 @@ void ClientHandler (void* pSrvClient)
     
     Serial.println ("Starting Client.....");
         
-    Terminal terminal (client);
+    WiFiCTerminal terminal (client);
 
     terminal.ExecuteMOTD ();
 
-    while (terminal.WaitForACommand ())
+    while (terminal.WaitForACommand () && client.connected ())
         CorePartition_Yield ();
     
     client.println ("Bye Bye");
+
+    Serial.println ("");
+    Serial.printf ("Desconecting %s\n\r", client.remoteIP ().toString ().c_str ());
 }
 
 
@@ -444,11 +459,22 @@ void TelnetListner (void* pValue)
                 Serial.printf("server is busy with %d active connections\n", MAX_SRV_CLIENTS);
             }
         }
-
-        ShowRunningThreads ();
     }
 }
 
+
+void SerialTerminalHandler (void* injection)
+{
+    Terminal serial (Serial);
+
+    while (CorePartition_Yield ())
+    {
+        serial.ExecuteMOTD ();
+
+        while (serial.WaitForACommand ())
+            CorePartition_Yield ();
+    }
+}
 
 
 /// Espcializing CorePartition Tick as Milleseconds
@@ -476,6 +502,7 @@ void StackOverflowHandler ()
     Serial.println (F("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
+    exit(0);
 }
 
 
@@ -510,25 +537,15 @@ void setup()
         lc.setIntensity(nCount,4);      // Set the brightness to maximum value
         lc.clearDisplay(nCount);         // and clear the display
     }
-    
-    //pinMode (2, OUTPUT);
-    //pinMode (3, OUTPUT);
-    //pinMode (4, OUTPUT);
 
-
-    /* To test interrupts jump port 2 and 5 */ 
-    //pinMode(nPinOutput, OUTPUT);
+    CorePartition_Start (8);
     
 
-    //pinMode(nPinInput, INPUT_PULLUP);
-    //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
-
-    CorePartition_Start (7);
-    
     CorePartition_SetCurrentTimeInterface(getTimeTick);
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
+    //CorePartition_CreateSecureThread  (SerialTerminalHandler, NULL, 500, 200);
     CorePartition_CreateThread (LedDisplayShow, NULL, 300, 50);
     CorePartition_CreateThread (TelnetListner, NULL, 300, 500);
 }

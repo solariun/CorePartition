@@ -32,22 +32,51 @@
 //
 // See LICENSE file for the complete information
 
+#include "Arduino.h"
 
 #include "Terminal.hpp"
 
-Terminal::Terminal (Stream& streamClient) : m_client (streamClient)
+Terminal::Terminal (Stream& streamClient) : m_client (streamClient), m_promptString {}
 {
+    m_promptString = "Terminal";
 }
 
 Terminal::~Terminal ()
 {} 
 
-bool Terminal::WaitAvailableForReading ()
+
+void Terminal::SetPromptString (const std::string& promptString)
 {
-    m_client.flush ();
-    while (m_client.available() == false) CorePartition_Yield ();
+    m_promptString = promptString;
 }
 
+bool Terminal::WaitAvailableForReading ()
+{
+    CorePartition_Sleep (0);
+    
+    do
+    {
+        if (isConnected () == false)
+        {
+            return false;
+        }
+
+        CorePartition_Sleep (0);
+    } while (m_client.available() == 0);
+
+    return true;
+}
+
+bool Terminal::isConnected ()
+{
+    return true;
+}
+
+
+Stream& Terminal::getStream ()
+{
+   return m_client;
+}
 
 bool Terminal::ExecuteMOTD ()
 {
@@ -61,15 +90,41 @@ bool Terminal::ExecuteMOTD ()
     return true;
 }
 
+
+bool Terminal::ReadCommand (std::string& readCommand)
+{
+    uint8_t szChar = 0;
+
+    while (WaitAvailableForReading () == true)
+    {
+        m_client.readBytes (&szChar, 1);
+
+        m_client.printf ("Read: (%u)-> [%c]\n\r", szChar, szChar);
+    }
+
+    if (isConnected () == false)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 bool Terminal::WaitForACommand()
 {
-    int nValue = 10;
-    
-    while (nValue--)
+    std::string readCommand = "";
+
+    do 
     {
-        CorePartition_Sleep (1000);
-        m_client.println (nValue);
-    }
+        if (readCommand.length() > 0)
+        {
+            m_client.print ("Command: ");
+            m_client.println (readCommand.c_str());
+        }
+
+        m_client.printf ("%s> ", m_promptString.c_str());
+
+    } while (ReadCommand (readCommand));
 
     return false;
 }
