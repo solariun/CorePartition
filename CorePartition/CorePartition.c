@@ -110,12 +110,12 @@ volatile static uint32_t getTime()
 }
 
 
-bool CorePartition_SetCurrentTimeInterface (uint32_t (*getCurrentTimeInterface)(void))
+bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface)(void))
 {
-    if (getCTime != getDefaultCTime || getCurrentTimeInterface == NULL)
+    if (getCTime != getDefaultCTime || pTimeInterface == NULL)
         return false;
     
-    getCTime = (volatile uint32_t (*)(void)) getCurrentTimeInterface;
+    getCTime = (volatile uint32_t (*)(void)) pTimeInterface;
     
     return true;
 }
@@ -131,16 +131,15 @@ void sleepDefaultCTime (uint32_t nSleepTime)
 
 volatile void (*sleepCTime)(const uint32_t nSleepTime) = (volatile void (*)(const uint32_t)) sleepDefaultCTime;
 
-bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(const uint32_t nSleepTime))
+bool CorePartition_SetSleepTimeInterface (void (*pSleepTime)(const uint32_t nSleepTime))
 {
-    if ((void*) sleepCTime != (void*) sleepDefaultCTime || getSleepTimeInterface == NULL)
+    if ((void*) sleepCTime != (void*) sleepDefaultCTime || pSleepTime == NULL)
         return false;
     
-    sleepCTime = (volatile void (*)(const uint32_t)) getSleepTimeInterface;
+    sleepCTime = (volatile void (*)(const uint32_t)) pSleepTime;
     
     return true;
 }
-
 
 
 bool CorePartition_Start (size_t nThreadPartitions)
@@ -157,7 +156,6 @@ bool CorePartition_Start (size_t nThreadPartitions)
     
     return true;
 }
-
 
 
 bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nTaskIsolation)
@@ -215,12 +213,10 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
 }
 
 
-
 bool CorePartition_CreateSecureThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
     return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 1);
 }
-
 
 
 bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
@@ -311,7 +307,6 @@ static inline size_t Scheduler (void)
 }
 
 
-
 static void CorePartition_StopThread ()
 {
 
@@ -323,7 +318,6 @@ static void CorePartition_StopThread ()
     
     nRunningThread--;
 }
-
 
 
 void CorePartition_Join ()
@@ -369,8 +363,6 @@ void CorePartition_Join ()
 }
 
 
-
-
 bool CorePartition_Yield ()
 {
     if (nRunningThread > 0)
@@ -385,7 +377,6 @@ bool CorePartition_Yield ()
 
         if (pCoreThread [nCurrentThread]->nStackSize > pCoreThread [nCurrentThread]->nStackMaxSize)
         {
-            
             CorePartition_StopThread ();
             
             if (stackOverflowHandler != NULL) stackOverflowHandler ();
@@ -465,7 +456,7 @@ uint32_t CorePartition_GetNiceByID(size_t nID)
 }
 
 
-int CorePartition_GetStatusByID (size_t nID)
+uint8_t CorePartition_GetStatusByID (size_t nID)
 {
     if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
     
@@ -475,7 +466,7 @@ int CorePartition_GetStatusByID (size_t nID)
 
 char CorePartition_IsSecureByID (size_t nID)
 {
-    if (nID >= nMaxThreads) return 0;
+    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
     
     return pCoreThread [nID]->nIsolation != 0 ? 'S' : 'N';
 }
@@ -483,7 +474,7 @@ char CorePartition_IsSecureByID (size_t nID)
 
 uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
 {
-    if (nID >= nMaxThreads) return 0;
+    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
     
     return pCoreThread [nID]->nExecTime;
 }
@@ -491,45 +482,15 @@ uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
 
 uint32_t CorePartition_GetLastMomentumByID (size_t nID)
 {
-    if (nID >= nMaxThreads) return 0;
+    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
     
     return pCoreThread [nID]->nLastMomentun;
-}
-
-
-uint32_t CorePartition_GetLastMomentum (void)
-{
-    return CorePartition_GetLastMomentumByID(nCurrentThread);
 }
 
 
 size_t CorePartition_GetNumberOfThreads(void)
 {
     return nMaxThreads;
-}
-
-
-uint32_t CorePartition_GetLastDutyCycle (void)
-{
-    return CorePartition_GetLastDutyCycleByID(nCurrentThread);
-}
-
-
-uint8_t CorePartition_GetStatus (void)
-{
-    return CorePartition_GetStatusByID(nCurrentThread);
-}
-
-
-size_t CorePartition_GetStackSize(void)
-{
-    return CorePartition_GetStackSizeByID(nCurrentThread);
-}
-
-
-size_t CorePartition_GetMaxStackSize(void)
-{
-    return CorePartition_GetMaxStackSizeByID(nCurrentThread);
 }
 
 
@@ -541,14 +502,9 @@ size_t CorePartition_GetThreadContextSize(void)
 
 bool CorePartition_IsCoreRunning(void)
 {
-    return pCoreThread [nCurrentThread]->nStatus == THREADL_RUNNING;
+    return nRunningThread > 0 ? true : false;
 }
 
-
-uint32_t CorePartition_GetNice(void)
-{
-    return CorePartition_GetNiceByID(nCurrentThread);
-}
 
 void CorePartition_SetNice (uint32_t nNice)
 {

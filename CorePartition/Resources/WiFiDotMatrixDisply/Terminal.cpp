@@ -93,6 +93,95 @@ bool Terminal::ExecuteMOTD ()
 }
 
 
+uint8_t Terminal::ParseOption (const std::string& commandLine, uint8_t nCommandIndex, std::string& returnText, bool countOnly)
+{
+    uint8_t nCommandOffSet = 0;
+    
+    nCommandIndex++;
+
+    enum class state 
+    {
+        NoText,
+        Word,
+        Text,
+    } currentState;
+
+    currentState = state::NoText;
+    returnText.clear ();
+    bool boolScape = false;
+
+    for (char chChar : commandLine)
+    {
+        if (currentState == state::NoText)
+        {
+
+            if (chChar == '"' || chChar == '\'')
+            {
+                //set Text state
+                currentState = state::Text;
+                nCommandOffSet++;
+                continue;
+
+            }
+            else if (chChar != ' ')
+            {
+                //Set Word state
+                currentState = state::Word;
+                nCommandOffSet++;
+            }
+        }            
+
+
+        if (currentState != state::NoText)
+        {
+            if (boolScape == false)
+            {
+                if (currentState == state::Text && chChar == '"' || chChar == '\'')
+                {
+                    currentState = state::NoText;
+                }
+                else if (currentState == state::Word && chChar == ' ')
+                {
+                    currentState = state::NoText;
+                }
+                if (chChar == '\\')
+                {
+                    boolScape = true;
+                }
+            }
+            else
+            {
+                boolScape = false;
+            }
+                
+            if (currentState == state::NoText)
+            {
+                if (countOnly == false && nCommandIndex == nCommandOffSet)
+                {
+                    break;                        
+                }
+
+                returnText.clear ();
+            }
+            else
+            {
+                if (countOnly == false) 
+                {
+                    returnText.push_back (chChar);
+                }
+            }
+        }
+    }
+
+    if (nCommandIndex == nCommandOffSet)
+    {
+        returnText.clear ();
+    }
+
+    return nCommandOffSet;
+}
+
+
 bool Terminal::ReadCommandLine (std::string& readCommand)
 {
     uint8_t chChar = 0;
@@ -136,20 +225,67 @@ bool Terminal::ReadCommandLine (std::string& readCommand)
 }
 
 
+void Terminal::ExecCommand (const std::string readCommand)
+{
+    std::string strCommand;
+
+    if (ParseOption (readCommand, 0, strCommand) == 0)
+    {
+        m_client.println ("Logic Error, command is empty.");
+    }
+
+    for (Terminal::Command* command : m_listAssignedCommands)
+    {
+        if (command->m_commandName == strCommand)
+        {
+            command->Run (*this, m_client, readCommand);
+
+            return;
+        }
+    }
+
+    m_client.println ("Error, command is invalid.");
+}
+
+
 bool Terminal::WaitForACommand()
 {
     std::string readCommand = "";
 
     do 
     {        
+        std::string commandItem = "";
+
         if (readCommand.length() > 0)
         {
-            m_client.print ("Command: ");
-            m_client.println (readCommand.c_str());
+            ParseOption (readCommand, 0, commandItem);
+
+            m_client.print ("Executing: [");
+            m_client.print (readCommand.c_str ());
+            m_client.print ("],[");
+            m_client.print (commandItem.c_str ());
+            m_client.println ("]");
+
+            if (commandItem == "exit")
+            {
+                break;
+            }
+            else
+            {
+                ExecCommand (readCommand);
+            }
+            
         }
 
         m_client.printf ("%s> ", m_promptString.c_str());
+
     } while (ReadCommandLine (readCommand));
 
     return false;
+}
+
+
+void Terminal::AssignCommand (Terminal::Command& terminalCommand)
+{
+    m_listAssignedCommands.push_back (&terminalCommand);
 }

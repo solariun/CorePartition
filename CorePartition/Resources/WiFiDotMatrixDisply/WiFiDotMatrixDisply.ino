@@ -100,8 +100,10 @@ void SetColor (Stream& device, const uint8_t nFgColor, const uint8_t nBgColor)
 
 void LocalEcho (Stream& device, bool state)
 {
+    device.flush();
     device.print ("\033[12");
     device.print (state ? "l" : "h");
+    device.flush ();
 }
 
 void ResetColor (Stream& device)
@@ -147,35 +149,35 @@ void Delay (uint64_t nSleep)
 
 
 
-void ShowRunningThreads ()
+void ShowRunningThreads (Stream& client)
 {
     size_t nCount = 0;
     
-    Serial.println ();
-    Serial.println (F("Listing all running threads"));
-    Serial.println (F("--------------------------------------"));
-    Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    client.println ();
+    client.println (F("Listing all running threads"));
+    client.println (F("--------------------------------------"));
+    client.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
-        Serial.print (F("\e[K"));
-        Serial.print (nCount);
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetStatusByID (nCount));
-        Serial.print (CorePartition_IsSecureByID (nCount));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetNiceByID (nCount));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetStackSizeByID (nCount));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
-        Serial.println ("ms");
+        client.print (F("\e[K"));
+        client.print (nCount);
+        client.print (F("\t"));
+        client.print (CorePartition_GetStatusByID (nCount));
+        client.print (CorePartition_IsSecureByID (nCount));
+        client.print (F("\t"));
+        client.print (CorePartition_GetNiceByID (nCount));
+        client.print (F("\t"));
+        client.print (CorePartition_GetStackSizeByID (nCount));
+        client.print (F("\t"));
+        client.print (CorePartition_GetMaxStackSizeByID (nCount));
+        client.print (F("\t"));
+        client.print (CorePartition_GetThreadContextSize ());
+        client.print (F("\t"));
+        client.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        client.print (F("\t"));
+        client.print (CorePartition_GetLastDutyCycleByID (nCount));
+        client.println ("ms");
     }
 }
 
@@ -388,6 +390,79 @@ class WiFiCTerminal : public Terminal
 };
 
 
+
+class CommandShow : public Terminal::Command
+{
+    public:
+
+    CommandShow () 
+    {
+        m_commandName = "show";
+        m_commandDescription = "use show [threads] to display information";
+    }
+
+    void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
+    {
+        uint8_t nNumCommands;
+        std::string strOption;
+
+        if ((nNumCommands = terminal.ParseOption (commandLine, 1, strOption)) > 0)
+        {
+            if (nNumCommands > 1)
+            {
+                client.printf ("Warning: detected more options (%u) than necessery, aborting. \n", nNumCommands);
+                client.println (m_commandDescription.c_str ());
+
+                return;
+            }
+
+            if (strOption == "show")
+            {
+                ShowRunningThreads (client);
+            }
+            else
+            {
+                client.println ("Eror, invalid option");
+                client.println (m_commandDescription.c_str ());
+            }
+        }
+    }
+};
+
+
+
+class CommandDisplay : public Terminal::Command
+{
+    public:
+
+    CommandDisplay () 
+    {
+        m_commandName = "display";
+        m_commandDescription = "use show 'message to display' to display on Led display";
+    }
+
+    void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
+    {
+        uint8_t nNumCommands;
+
+        if ((nNumCommands = terminal.ParseOption (commandLine, 1, strDisplay)) > 0)
+        {
+            if (nNumCommands > 1)
+            {
+                client.printf ("Warning: detected more options (%u) than necessery, aborting. \n", nNumCommands);
+                client.println (m_commandDescription.c_str ());
+
+                return;
+            }
+
+            client.print ("Showing message: [");
+            client.print (strDisplay.c_str ());
+            client.println ("]");
+        }
+    }
+};
+
+
 void ClientHandler (void* pSrvClient)
 {
     pSrvClient;
@@ -398,7 +473,20 @@ void ClientHandler (void* pSrvClient)
         
     WiFiCTerminal terminal (client);
 
+    //Setting remote terminal to no echo    
+    client.printf ("%c%c%c", 255, 251, 1);
+    client.printf ("%c%c%c", 255, 254, 1);
+    client.printf ("%c%c%c", 255, 251, 3);
+    client.printf ("%c%c%c", 255, 254, 3);
+
     terminal.ExecuteMOTD ();
+
+    CommandDisplay commandDisplay;
+    terminal.AssignCommand (commandDisplay);
+
+    CommandDisplay commandShow;
+    terminal.AssignCommand (commandShow);
+
 
     while (terminal.WaitForACommand () && client.connected ())
         CorePartition_Yield ();
@@ -506,7 +594,7 @@ void StackOverflowHandler ()
     Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
     Serial.println (CorePartition_GetID ());
     Serial.println (F("--------------------------------------"));
-    ShowRunningThreads ();
+    ShowRunningThreads (Serial);
     Serial.flush ();
     exit(0);
 }

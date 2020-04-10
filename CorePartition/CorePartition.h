@@ -55,61 +55,261 @@ extern "C"{
     
     static const char CorePartition_version[] = "V2.4 beta Compiled at " __TIMESTAMP__;
     
+    /**
+     * @brief Start CorePartition thread provisioning
+     * 
+     * @param nThreadPartitions 
+     * @return true  true if successfully created all provisioned threads
+     */
     bool CorePartition_Start (size_t nThreadPartitions);
     
+    /**
+     * @brief  Create a non-Isolated context Thread
+     * 
+     * @param pFunction         Function (void Function (void* dataPonter)) as thread main
+     * @param pValue            data that will be injected on Thread creation 
+     * @param nStackMaxSize     Size of the Stack to be used
+     * @param nNice             When in time it is good to be used
+     * 
+     * @return false            fails on more provisioned threads or no more memory to create it
+     * 
+     * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
+     */
     bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
+
+    /**
+     * @brief  Create a Isolated context Thread
+     * 
+     * @param pFunction         Function (void Function (void* dataPonter)) as thread main
+     * @param pValue            data that will be injected on Thread creation 
+     * @param nStackMaxSize     Size of the Stack to be used
+     * @param nNice             When in time it is good to be used
+     * 
+     * @return false            fails on more provisioned threads or no more memory to create it
+     * 
+     * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
+     * @note                    Isolated thread will control dynamic stack encryption on Context Change
+     *                          have in mind it will be costy on time so use it wisely.
+     */
     bool CorePartition_CreateSecureThread (void(*pFunction)(void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
     
-    bool CorePartition_SetCurrentTimeInterface (uint32_t (*getCurrentTimeInterface)(void));
 
-    bool CorePartition_SetSleepTimeInterface (void (*getSleepTimeInterface)(uint32_t nSleepTime));
+    /**
+     * @brief  Override current +1 cycle on to specialize it
+     * 
+     * @param pTimeInterface    Time interface call back 
+     *  
+     * @return false    should report fail on time problems only
+     * 
+     * @note    On complex processors like ESP8266, ESP32, powerfull ARM or RISC-V
+     *          some internal watchdog needs to be call by yield or similar process
+     *          that is always implemented on sleep, so, it is advisable to 
+     *          ALWAYS override tick process is always a good procedure and will 
+     *          make your processor will work better and on-time.
+     */
+    bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface)(void));
+
+
+    /**
+     * @brief Override current +1 cycle count and sleep 
+     * 
+     * @param pSleepInterface    sleep time callback 
+     *  
+     * @return false    should report fail on time problems only
+     * 
+     * @note    On complex processors like ESP8266, ESP32, powerfull ARM or RISC-V
+     *          some internal watchdog needs to be call by yield or similar process
+     *          that is always implemented on sleep, so, it is advisable to 
+     *          ALWAYS override tick process is always a good procedure and will 
+     *          make your processor will work better and on-time.
+     */
+    bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface)(uint32_t nSleepTime));
     
+
+    /**
+     * @brief  Callback for informing Stack Overflow Thread destruction and actions
+     * 
+     * @param pStackOverflowHandler     Callback to be called
+     * 
+     * @return false     only return false on errors
+     */
     bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void));
 
+    /**
+     * @brief This will start all the threads
+     * 
+     * @note At least ONE thread must be defines before using this function
+     */
     void CorePartition_Join (void);
        
+    
+    /**
+     * @brief   Function to be called inside a thread to change context
+     * 
+     * @return true  always return true while the thread is valid
+     */
     bool CorePartition_Yield(void);
     
+
+    /**
+     * @brief  Will set the thread to a special sleep state
+     * 
+     * @param nDelayTickTime    How much ticks to sleep
+     * 
+     * @note    if Time has been overriden it tick will the corespond
+     *          the time frame used by sleep overriden function 
+     */
     void CorePartition_Sleep (uint32_t nDelayTickTime);
 
-    size_t CorePartition_GetID(void);
-    
-    size_t CorePartition_GetStackSize(void);
-    size_t CorePartition_GetMaxStackSize(void);
 
+    /**
+     * @brief Get Current Thread ID
+     * 
+     * @return size_t   Thread ID
+     */
+    size_t CorePartition_GetID(void);
+
+
+    /**
+     * @brief Get Current Thread ID
+     * 
+     * @param   nID     A valid ID
+     * 
+     * @return size_t   Thread ID
+     * 
+     * @note    if a non valid ID is provided it will return 0
+     */
+    size_t CorePartition_GetStackSizeByID (size_t nID);
+
+    /**
+     * @brief Get Current Thread Stack Size
+     */
+    #define CorePartition_GetStackSize() CorePartition_GetStackSizeByID (CorePartition_GetID ())
+
+
+    /**
+     * @brief  Get total size of stack context page for a Thread ID
+     * 
+     * @param   nID     Thread ID
+     * 
+     * @return size_t  total size of stack context page
+     */
+    size_t CorePartition_GetMaxStackSizeByID(size_t nID);
+
+    /**
+     * @brief Get Current Thread Total Stack context page size
+     */
+    #define CorePartition_GetMaxStackSize() CorePartition_GetMaxStackSizeByID(CorePartition_GetID ())
+
+
+    /**
+     * @brief Get Thread context size 
+     * 
+     * @return size_t total size of the thread context
+     */
     size_t CorePartition_GetThreadContextSize (void);
     
-    uint8_t CorePartition_GetStatus (void);
 
-    uint32_t CorePartition_GetNice(void);
+    /**
+     * @brief  Get a thread status for a thread ID
+     * 
+     * @param   nID  Thread ID
+     * 
+     * @return uint8_t Actual thread context
+     */
+    uint8_t CorePartition_GetStatusByID (size_t nID);
     
+    /**
+     * @brief Get current Thread Status
+     */
+    #define CorePartition_GetStatus()  CorePartition_GetStatusbyID (CorePartition_GetID ())
+
+
+    /**
+     * @brief Current Thread Nice
+     * 
+     * @param   nID  Thread ID
+     * 
+     * @return uint32_t Nice representing tick
+     * 
+     * @note    Tick will represent the overriden time interface othersize it will 
+     *          be a single context switch to each 
+     */
+    uint32_t CorePartition_GetNiceByID(size_t nID);
+    
+    /**
+     * @brief Get Current Thread Nice
+     */
+    #define CorePartition_GetNice() CorePartition_GetNiceByID (CorePartition_GetID ())
+
+
+    /**
+     * @brief Set Current Thread Nice 
+     * 
+     * @param nNice  Nice to be used
+     */
     void CorePartition_SetNice (uint32_t nNice);
 
-    uint32_t CorePartition_GetLastMomentum (void);
+
+    /**
+     * @brief Get Current Thread last momentum on swtich back
+     * 
+     * @param   nID  Thread ID
+     * 
+     * @return uint32_t the LastMomentum in Tick 
+     * 
+     * @note    Tick will represent the overriden time interface othersize it will 
+     *          be a single context switch to each. 
+     */
+    uint32_t CorePartition_GetLastMomentumByID (size_t nID);
+
+    /**
+     * @brief Get current Thread Last Momentum 
+     */
+    #define CorePartition_GetLastMomentum() CorePartition_GetLastMomentumByID (CorePartition_GetID ())
+
+
+    /**
+     * @brief  Last Duty Cycle of the current Thread
+     * 
+     * @param   nID  Thread ID
+     * 
+     * @return uint32_t  time in Tick
+     * 
+     * @note    Tick will represent the overriden time interface othersize it will 
+     *          be a single context switch to each.
+     */
+    uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
+
+    /**
+     * @brief  Get Current Thread DutyClycle
+     */
+    #define CorePartition_GetLastDutyCycle() CorePartition_GetLastDutyCycleByID (CorePartition_GetID ())
     
-    uint32_t CorePartition_GetLastDutyCycle (void);
-    
+
+    /**
+     * @brief  Get Number of total active Threads
+     * 
+     * @return size_t numver of threads
+     */
     size_t CorePartition_GetNumberOfThreads(void);
 
-    size_t CorePartition_GetStackSizeByID (size_t nID);
-    
-    size_t CorePartition_GetMaxStackSizeByID (size_t nID);
-    
-    uint32_t CorePartition_GetNiceByID (size_t nID);
-    
-    int CorePartition_GetStatusByID (size_t nID);
-    
-    uint32_t CorePartition_GetLastMomentumByID (size_t nID);
-    
-    uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
-    
-    /*
-    uint32_t CorePartition_getFactorByID (size_t nID);
-    uint32_t CorePartition_getFactor (void);
-    */
-
+    /**
+     * @brief Return the Secure Status for a thread ID
+     * 
+     * @param nID  Thread OD
+     * 
+     * @return char  return 'S' for secure and 'N' for normal
+     */
     char CorePartition_IsSecureByID (size_t nID);
+
+    /**
+     * @brief Report if there is any running thread
+     * 
+     * @return false in case there is none running
+     */
+    bool CorePartition_IsCoreRunning(void);
 
 #ifdef __cplusplus
 } // extern "C"

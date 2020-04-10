@@ -39,9 +39,20 @@
 
 #define TERMINAL_BS     8
 
+
 class Terminal 
 {
 public:
+
+    class Command
+    {
+    public:
+            
+        std::string  m_commandName;
+        std::string  m_commandDescription;
+
+        virtual void Run (Terminal& terminal, Stream& client, const std::string commandLine) = 0;
+    };
 
     /**
      * @brief Construct a new Terminal object
@@ -89,9 +100,35 @@ public:
      */
     void SetPromptString (const std::string& promptString);
 
+    /**
+     * @brief Assign a command to be used with Terminal 
+     * 
+     * @param commandFunction       Function call back to execute the command
+     * @param commandName           Name of the commando to be used by the terminal
+     * @param commandDescription    Description of the Command to be shown on Help 
+     */
+
+    void AssignCommand (Terminal::Command& terminalCommand);
+
+
+     /**
+     * @brief Get the Option string from a specific Index
+     * 
+     * @param commandLine       The read command line from prompt
+     * @param nCommandIndex     The index of command starting from 0
+     * @param returnText        Return Text from the CommandLine 
+     * @param countOnly         will only count and return the total itens
+     * 
+     * @return uint8_t  return the index number, otherwise return
+     *                  0 for the error. 
+     *                  if you ask 5 it will return 
+     */
+    uint8_t ParseOption (const std::string& commandLine, uint8_t nCommandIndex, std::string& returnText, bool countOnly = false);
+
 
 protected:
 
+    friend class TerminalCommand;
 
     /**
      * @brief read a line from Stream 
@@ -117,20 +154,14 @@ protected:
      * @return Stream& 
      */
     Stream& GetStream ();
-
+    
 
     /**
-     * @brief Get the Option string from a specific Index
+     * @brief execute command based on assigned command list
      * 
-     * @param commandLine       The read command line from prompt
-     * @param nCommandIndex     The index of command starting from 0
-     * @param countOnly         will only count and return the total itens
-     * 
-     * @return uint8_t  return the index number, otherwise return
-     *                  0 for the error. 
-     *                  if you ask 5 it will return 
+     * @param readCommand   command read by the   terminal
      */
-    uint8_t getOption (const std::string& commandLine, uint8_t nCommandIndex, bool countOnly = false);
+    void ExecCommand (const std::string readCommand);
 
 private:
 
@@ -140,5 +171,8 @@ private:
 
         //Default prompt message
         std::string   m_promptString;
+
+        //List of assigned commands Stream, command name, command help
+        std::list<Terminal::Command*> m_listAssignedCommands;
 
 };
