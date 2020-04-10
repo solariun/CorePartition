@@ -362,7 +362,7 @@ float fMin = 1000, fMax = 0;
 
 void Thread1 (void* pValue)
 {
-    MatrixTextScroller matrixTextScroller (4, 2);
+    MatrixTextScroller matrixTextScroller (4, 3);
     
     char szMessage[50] = "";
     uint8_t nStep = 0;
@@ -504,9 +504,9 @@ void setup()
 
     CorePartition_CreateThread (Thread1, NULL, 150, 0);
     
-    CorePartition_CreateThread (Thread3, NULL, 150, 0);
+    CorePartition_CreateThread (Thread3, NULL, 150, 10);
 
-    CorePartition_CreateThread (Thread2, NULL, 150, 0);
+    CorePartition_CreateThread (Thread2, NULL, 150, 10);
 }
 
 

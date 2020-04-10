@@ -79,52 +79,58 @@ int CLK = D5; //SS    - NodeMCU - D5 (HSCLK)
 LedControl lc=LedControl(DIN,CLK,CS, MAX_LED_MATRIX);
 
 
-void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
+void SetLocation (Stream& device, uint16_t nY, uint16_t nX)
 {
     uint8_t szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
 
-    Serial.write (szTemp, nLen);
+    device.write (szTemp, nLen);
 }
 
 
 //workis with 256 colors
-void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void SetColor (Stream& device, const uint8_t nFgColor, const uint8_t nBgColor)
 {
     byte szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
 
-    Serial.write (szTemp, nLen);
+    device.write (szTemp, nLen);
 }
 
 
-void resetColor ()
+void LocalEcho (Stream& device, bool state)
 {
-    Serial.print ("\033[0m");
+    device.print ("\033[12");
+    device.print (state ? "l" : "h");
+}
+
+void ResetColor (Stream& device)
+{
+    device.print ("\033[0m");
 }
 
 
-void hideCursor ()
+void HideCursor (Stream& device)
 {
-    Serial.print ("\033[?25l");
+    device.print ("\033[?25l");
 }
 
 
-void showCursor ()
+void ShowCursor (Stream& device)
 {
-    Serial.print ("\033[?25h");
+    device.print ("\033[?25h");
 }
 
 
-void clearConsole ()
+void ClearConsole (Stream& device)
 {
-    Serial.print ("\033[2J"); 
+    device.print ("\033c\033[2J"); 
 }
 
 
-void reverseColor ()
+void ReverseColor (Stream& device)
 {
-    Serial.print ("\033[7m");   
+    device.print ("\033[7m");   
 }
 
 
@@ -141,7 +147,7 @@ void Delay (uint64_t nSleep)
 
 
 
-void __attribute__ ((noinline)) ShowRunningThreads ()
+void ShowRunningThreads ()
 {
     size_t nCount = 0;
     
@@ -256,7 +262,7 @@ protected:
            nRow >>= 1;
         }
 
-        setLocation (nLocY + nRowIndex, nLocX + (nDigit * 8));
+        SetLocation (Serial, nLocY + nRowIndex, nLocX + (nDigit * 8));
         Serial.print (nLine);
     }
 
@@ -514,10 +520,13 @@ void setup()
     //Initialize serial and wait for port to open:
     Serial.begin(115200);
 
-    resetColor ();
-    clearConsole ();
-    setLocation (1,1);
-    hideCursor ();
+    ResetColor (Serial);
+    ClearConsole (Serial);
+    SetLocation (Serial, 1,1);
+    ShowCursor (Serial);
+
+    LocalEcho (Serial, false);
+
     
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
@@ -538,7 +547,8 @@ void setup()
         lc.clearDisplay(nCount);         // and clear the display
     }
 
-    CorePartition_Start (8);
+    //Max threads on system.
+    CorePartition_Start (25); 
     
 
     CorePartition_SetCurrentTimeInterface(getTimeTick);

@@ -377,9 +377,9 @@ bool CorePartition_Yield ()
     {
         pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
         
-        //volatile uint8_t nValue = 0xBB;
-        //pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
-        pCoreThread [nCurrentThread]->pLastStack = alloca(0);
+        volatile uint8_t nValue = 0xBB;
+        pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
+        //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
         
         pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
 
@@ -401,8 +401,8 @@ bool CorePartition_Yield ()
         }
         
         //This existis to re-align after jump alignment optmizations
-        //pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
-        pCoreThread [nCurrentThread]->pLastStack = alloca(0);
+        pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
+        //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
         pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
 
         sleepCTime (0); //Do not take it out EVER! it will sincronize processing
