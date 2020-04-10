@@ -37,34 +37,108 @@
 #include <list>
 #include "CorePartition.h"
 
+#define TERMINAL_BS     8
+
 class Terminal 
 {
-    public:
+public:
 
+    /**
+     * @brief Construct a new Terminal object
+     * 
+     * @param streamDev  Stream object for in and out procedures
+     */
     Terminal (Stream& streamDev);
 
+
+    /**
+     * @brief Destroy the Terminal object
+     * 
+     */
     virtual ~Terminal ();
 
-    virtual bool isConnected ();
 
+    /**
+     * @brief Specialized isConnected for special devices like WiFi
+     * 
+     * @return true if it is conencted
+     */
+    virtual bool IsConnected ();
+
+
+    /**
+     * @brief Specialize Greetings message
+     * 
+     * @return true if it was OK.
+     */
     virtual bool ExecuteMOTD ();   
 
+
+    /**
+     * @brief Wait until a command is entered
+     * 
+     * @return false in case of disconnection or I/O fail
+     */
     bool WaitForACommand();
 
+
+    /**
+     * @brief Set the Prompt String 
+     * 
+     * @param promptString Prompt to be used
+     */
     void SetPromptString (const std::string& promptString);
 
-    protected:
 
-    bool ReadCommand (std::string& readCommand);
+protected:
 
+
+    /**
+     * @brief read a line from Stream 
+     * 
+     * @param readCommand return the read command line
+     * 
+     * @return false in disconnection or I/O error
+     */
+    bool ReadCommandLine (std::string& readCommand);
+
+
+    /**
+     * @brief Wait for data being available for reading
+     * 
+     * @return false  in disconnection or I/O errors
+     */
     bool WaitAvailableForReading ();
 
-    Stream& getStream ();
 
-    private:
+    /**
+     * @brief Get the Stream object
+     * 
+     * @return Stream& 
+     */
+    Stream& GetStream ();
+
+
+    /**
+     * @brief Get the Option string from a specific Index
+     * 
+     * @param commandLine       The read command line from prompt
+     * @param nCommandIndex     The index of command starting from 0
+     * @param countOnly         will only count and return the total itens
+     * 
+     * @return uint8_t  return the index number, otherwise return
+     *                  0 for the error. 
+     *                  if you ask 5 it will return 
+     */
+    uint8_t getOption (const std::string& commandLine, uint8_t nCommandIndex, bool countOnly = false);
+
+private:
+
 
         //Default Stream used to in and out information 
         Stream&  m_client;
+
+        //Default prompt message
         std::string   m_promptString;
 
 };

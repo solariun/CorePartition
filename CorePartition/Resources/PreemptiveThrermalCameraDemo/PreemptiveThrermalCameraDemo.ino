@@ -502,7 +502,7 @@ void setup()
     
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateSecureThread (Thread1, NULL, 150, 0);
+    CorePartition_CreateThread (Thread1, NULL, 150, 0);
     
     CorePartition_CreateThread (Thread3, NULL, 150, 0);
 

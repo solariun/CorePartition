@@ -53,10 +53,10 @@ void Terminal::SetPromptString (const std::string& promptString)
 bool Terminal::WaitAvailableForReading ()
 {
     CorePartition_Sleep (0);
-    
+
     do
     {
-        if (isConnected () == false)
+        if (IsConnected () == false)
         {
             return false;
         }
@@ -67,16 +67,18 @@ bool Terminal::WaitAvailableForReading ()
     return true;
 }
 
-bool Terminal::isConnected ()
+
+bool Terminal::IsConnected ()
 {
     return true;
 }
 
 
-Stream& Terminal::getStream ()
+Stream& Terminal::GetStream ()
 {
    return m_client;
 }
+
 
 bool Terminal::ExecuteMOTD ()
 {
@@ -91,18 +93,41 @@ bool Terminal::ExecuteMOTD ()
 }
 
 
-bool Terminal::ReadCommand (std::string& readCommand)
+bool Terminal::ReadCommandLine (std::string& readCommand)
 {
-    uint8_t szChar = 0;
+    uint8_t chChar = 0;
+
+    readCommand.clear ();
 
     while (WaitAvailableForReading () == true)
     {
-        m_client.readBytes (&szChar, 1);
+        m_client.readBytes (&chChar, 1);
+        //m_client.printf ("Read: (%u)-> [%c]\n\r", chChar, chChar >= 32 && chChar < 127 ? chChar : '.');
 
-        m_client.printf ("Read: (%u)-> [%c]\n\r", szChar, szChar);
+        if (chChar == TERMINAL_BS && readCommand.length () > 0)
+        {
+            m_client.print ((char) TERMINAL_BS);
+            m_client.print (' ');
+            m_client.print ((char) TERMINAL_BS);
+
+            readCommand.pop_back ();
+        }
+        else if (chChar == '\r')
+        {
+            m_client.println ("");
+            break;
+        }
+        else if (chChar >= 32 && chChar < 127)
+        {
+            m_client.print ((char) chChar);
+            readCommand.push_back (chChar);
+        }
+
+        //m_client.print ("Read: ");
+        //m_client.println (readCommand.c_str ());
     }
 
-    if (isConnected () == false)
+    if (IsConnected () == false)
     {
         return false;
     }
@@ -110,12 +135,13 @@ bool Terminal::ReadCommand (std::string& readCommand)
     return true;
 }
 
+
 bool Terminal::WaitForACommand()
 {
     std::string readCommand = "";
 
     do 
-    {
+    {        
         if (readCommand.length() > 0)
         {
             m_client.print ("Command: ");
@@ -123,8 +149,7 @@ bool Terminal::WaitForACommand()
         }
 
         m_client.printf ("%s> ", m_promptString.c_str());
-
-    } while (ReadCommand (readCommand));
+    } while (ReadCommandLine (readCommand));
 
     return false;
 }

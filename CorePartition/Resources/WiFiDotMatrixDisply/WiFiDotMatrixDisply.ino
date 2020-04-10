@@ -375,9 +375,9 @@ class WiFiCTerminal : public Terminal
     
     using Terminal::Terminal;
 
-    bool isConnected ()
+    bool IsConnected ()
     {
-        return ((WiFiClient&) getStream ()).connected ();
+        return ((WiFiClient&) GetStream ()).connected ();
     }
 };
 
@@ -545,7 +545,7 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    //CorePartition_CreateSecureThread  (SerialTerminalHandler, NULL, 500, 200);
+    CorePartition_CreateSecureThread  (SerialTerminalHandler, NULL, 500, 200);
     CorePartition_CreateThread (LedDisplayShow, NULL, 300, 50);
     CorePartition_CreateThread (TelnetListner, NULL, 300, 500);
 }
