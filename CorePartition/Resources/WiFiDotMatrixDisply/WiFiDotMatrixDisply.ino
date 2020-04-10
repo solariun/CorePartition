@@ -178,6 +178,8 @@ void ShowRunningThreads (Stream& client)
         client.print (F("\t"));
         client.print (CorePartition_GetLastDutyCycleByID (nCount));
         client.println ("ms");
+
+        CorePartition_Yield ();
     }
 }
 
@@ -408,7 +410,7 @@ class CommandShow : public Terminal::Command
 
         if ((nNumCommands = terminal.ParseOption (commandLine, 1, strOption)) > 0)
         {
-            if (nNumCommands > 1)
+            if (nNumCommands > 2)
             {
                 client.printf ("Warning: detected more options (%u) than necessery, aborting. \n", nNumCommands);
                 client.println (m_commandDescription.c_str ());
@@ -416,13 +418,13 @@ class CommandShow : public Terminal::Command
                 return;
             }
 
-            if (strOption == "show")
+            if (strOption == "threads")
             {
                 ShowRunningThreads (client);
             }
             else
             {
-                client.println ("Eror, invalid option");
+                client.println ("Error, invalid option");
                 client.println (m_commandDescription.c_str ());
             }
         }
@@ -447,9 +449,9 @@ class CommandDisplay : public Terminal::Command
 
         if ((nNumCommands = terminal.ParseOption (commandLine, 1, strDisplay)) > 0)
         {
-            if (nNumCommands > 1)
+            if (nNumCommands > 2)
             {
-                client.printf ("Warning: detected more options (%u) than necessery, aborting. \n", nNumCommands);
+                client.printf ("Warning: detected more options (%u) than necessery, aborting. \n\r", nNumCommands);
                 client.println (m_commandDescription.c_str ());
 
                 return;
@@ -484,7 +486,7 @@ void ClientHandler (void* pSrvClient)
     CommandDisplay commandDisplay;
     terminal.AssignCommand (commandDisplay);
 
-    CommandDisplay commandShow;
+    CommandShow commandShow;
     terminal.AssignCommand (commandShow);
 
 

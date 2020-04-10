@@ -173,7 +173,7 @@ uint8_t Terminal::ParseOption (const std::string& commandLine, uint8_t nCommandI
         }
     }
 
-    if (nCommandIndex == nCommandOffSet)
+    if (nCommandIndex != nCommandOffSet)
     {
         returnText.clear ();
     }
@@ -255,12 +255,15 @@ bool Terminal::WaitForACommand()
     do 
     {        
         std::string commandItem = "";
+        uint8_t nNumCommands;
 
         if (readCommand.length() > 0)
         {
-            ParseOption (readCommand, 0, commandItem);
+            nNumCommands = ParseOption (readCommand, 0, commandItem);
 
-            m_client.print ("Executing: [");
+            m_client.print ("Executing: (");
+            m_client.print (nNumCommands);
+            m_client.print ("),[");
             m_client.print (readCommand.c_str ());
             m_client.print ("],[");
             m_client.print (commandItem.c_str ());
