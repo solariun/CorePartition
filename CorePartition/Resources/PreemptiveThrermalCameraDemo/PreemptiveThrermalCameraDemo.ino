@@ -209,7 +209,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
 
 
 
-const uint64_t byteImages[] PROGMEM =
+const uint64_t m_byteImages[] PROGMEM =
 {
     0x0000000000000000, 0x00180018183c3c18, 0x0000000012246c6c, 0x0036367f367f3636, 0x000c1f301e033e0c,
     0x0063660c18336300, 0x006e333b6e1c361c, 0x0000000000030606, 0x00180c0606060c18, 0x00060c1818180c06,
@@ -232,7 +232,7 @@ const uint64_t byteImages[] PROGMEM =
     0x3c0c18303c000000, 0x00380c0c070c0c38, 0x0c0c0c0c0c0c0c0c, 0x00070c0c380c0c07, 0x0000000000003b6e
  };
 
-const int byteImagesLen = sizeof(byteImages)/8;
+const int m_byteImagesLen = sizeof(m_byteImages)/8;
 
       
 class TextScroller
@@ -244,32 +244,32 @@ private:
      int  nIndex = nNumberDigits * (-1);
      uint8_t nSpeed;
     
-    uint64_t getLetter (int nIndex, const char* pszMessage, uint16_t nMessageLen)
+    uint64_t GetLetter (int nIndex, const char* pszMessage, uint16_t nMessageLen)
     {
         int nCharacter = nIndex > nMessageLen || nIndex < 0 ? ' ' : pszMessage [nIndex];
         
-        return getImage (nCharacter - ' ');
+        return GetImage (nCharacter - ' ');
     }
 
-    uint64_t getImage (int nIndex)
+    uint64_t GetImage (int nIndex)
     {
         uint64_t nBuffer= 0xAA;
 
-        nIndex = nIndex > byteImagesLen ||  nIndex < 0  ? 0 : nIndex;
+        nIndex = nIndex > m_byteImagesLen ||  nIndex < 0  ? 0 : nIndex;
 
-        memcpy_P (&nBuffer, byteImages + nIndex, sizeof (uint64_t));
+        memcpy_P (&nBuffer, m_byteImages + nIndex, sizeof (uint64_t));
         
         return nBuffer;
     }
 
-    void printScrollBytes(uint16_t  nLocY, uint16_t nLocX, uint16_t nDigit, const uint64_t charLeft, const uint64_t charRight, uint8_t nOffset)
+    void PrintScrollBytes(uint16_t  nLocY, uint16_t nLocX, uint16_t nDigit, const uint64_t charLeft, const uint64_t charRight, uint8_t nOffset)
     {
         int i = 0;
         
         lock();
         for(i=0;i<8;i++)
         {
-            printRow (nLocY, nLocX, nDigit, i, (((uint8_t*) &charLeft) [i] << (8-nOffset) | ((uint8_t*) &charRight) [i] >> nOffset));
+            PrintRow (nLocY, nLocX, nDigit, i, (((uint8_t*) &charLeft) [i] << (8-nOffset) | ((uint8_t*) &charRight) [i] >> nOffset));
         }
         unlock ();
     }
@@ -277,7 +277,7 @@ private:
     
 protected:
     
-    virtual void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
+    virtual void PrintRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
     {
         static char nLine [9] = "        ";
         int8_t nOffset = 8;
@@ -330,7 +330,7 @@ public:
               
         for (nCount=0; nCount < nNumberDigits; nCount++)
         {
-            printScrollBytes (nLocY, nLocX, nCount, getLetter(nIndex + 1, pszMessage, nMessageLen), getLetter(nIndex, pszMessage, nMessageLen), (uint8_t) nOffset);
+            PrintScrollBytes (nLocY, nLocX, nCount, GetLetter(nIndex + 1, pszMessage, nMessageLen), GetLetter(nIndex, pszMessage, nMessageLen), (uint8_t) nOffset);
           
             nIndex =  (int) nIndex + 1;
         }
@@ -346,7 +346,7 @@ class MatrixTextScroller : public TextScroller
 {
 protected:
 
-    void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow) override
+    void PrintRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow) override
     {
         lc.setRow(nDigit, 7-nRowIndex, nRow);
     }
