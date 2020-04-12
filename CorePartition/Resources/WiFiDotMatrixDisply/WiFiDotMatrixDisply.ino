@@ -160,26 +160,29 @@ void ShowRunningThreads (Stream& client)
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
-        client.print (F("\e[K"));
-        client.print (nCount);
-        client.print (F("\t"));
-        client.print (CorePartition_GetStatusByID (nCount));
-        client.print (CorePartition_IsSecureByID (nCount));
-        client.print (F("\t"));
-        client.print (CorePartition_GetNiceByID (nCount));
-        client.print (F("\t"));
-        client.print (CorePartition_GetStackSizeByID (nCount));
-        client.print (F("\t"));
-        client.print (CorePartition_GetMaxStackSizeByID (nCount));
-        client.print (F("\t"));
-        client.print (CorePartition_GetThreadContextSize ());
-        client.print (F("\t"));
-        client.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
-        client.print (F("\t"));
-        client.print (CorePartition_GetLastDutyCycleByID (nCount));
-        client.println ("ms");
-
-        CorePartition_Yield ();
+        if (CorePartition_GetStatusByID (nCount) > 0)
+        {
+            client.print (F("\e[K"));
+            client.print (nCount);
+            client.print (F("\t"));
+            client.print (CorePartition_GetStatusByID (nCount));
+            client.print (CorePartition_IsSecureByID (nCount));
+            client.print (F("\t"));
+            client.print (CorePartition_GetNiceByID (nCount));
+            client.print (F("\t"));
+            client.print (CorePartition_GetStackSizeByID (nCount));
+            client.print (F("\t"));
+            client.print (CorePartition_GetMaxStackSizeByID (nCount));
+            client.print (F("\t"));
+            client.print (CorePartition_GetThreadContextSize ());
+            client.print (F("\t"));
+            client.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+            client.print (F("\t"));
+            client.print (CorePartition_GetLastDutyCycleByID (nCount));
+            client.println ("ms");
+            client.flush ();
+            CorePartition_Sleep (60);
+        }
     }
 }
 

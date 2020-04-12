@@ -94,7 +94,7 @@ bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
 }
 
 
-volatile uint32_t getDefaultCTime()
+uint32_t getDefaultCTime()
 {
    static uint32_t nCounter=0;
 
@@ -102,9 +102,9 @@ volatile uint32_t getDefaultCTime()
 }
 
 
-volatile uint32_t (*getCTime)(void) = (volatile uint32_t (*)(void)) getDefaultCTime;
+uint32_t (*getCTime)(void) = (uint32_t (*)(void)) getDefaultCTime;
 
-volatile static uint32_t getTime()
+static uint32_t getTime()
 {
     return getCTime ();
 }
@@ -115,7 +115,7 @@ bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface)(void))
     if (getCTime != getDefaultCTime || pTimeInterface == NULL)
         return false;
     
-    getCTime = (volatile uint32_t (*)(void)) pTimeInterface;
+    getCTime = (uint32_t (*)(void)) pTimeInterface;
     
     return true;
 }
@@ -129,14 +129,14 @@ void sleepDefaultCTime (uint32_t nSleepTime)
 }
 
 
-volatile void (*sleepCTime)(const uint32_t nSleepTime) = (volatile void (*)(const uint32_t)) sleepDefaultCTime;
+void (*sleepCTime)(const uint32_t nSleepTime) = ( void (*)(const uint32_t)) sleepDefaultCTime;
 
 bool CorePartition_SetSleepTimeInterface (void (*pSleepTime)(const uint32_t nSleepTime))
 {
     if ((void*) sleepCTime != (void*) sleepDefaultCTime || pSleepTime == NULL)
         return false;
     
-    sleepCTime = (volatile void (*)(const uint32_t)) pSleepTime;
+    sleepCTime = (void (*)(const uint32_t)) pSleepTime;
     
     return true;
 }
@@ -396,9 +396,10 @@ bool CorePartition_Yield ()
         //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
         pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
 
-        sleepCTime (0); //Do not take it out EVER! it will sincronize processing
+        //sleepCTime (0); //Do not take it out EVER! it will sincronize processing
         RestoreStack();        
-        
+        sleepCTime (0); //Do not take it out EVER! it will sincronize processing
+
         pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
         
         return true;

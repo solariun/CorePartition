@@ -370,7 +370,7 @@ void Thread3 (void* pValue)
 
 void Thread4 (void* pValue)
 {
-    uint32_t nValue = 100;
+    //uint32_t nValue = 100;
 
     static char szMessage [] = "#4 - Works every where from Windwows, Linux, Mac, to AVR, ARM, RISC-V and ESP";
         
