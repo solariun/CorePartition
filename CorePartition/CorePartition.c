@@ -270,7 +270,7 @@ static inline size_t Scheduler (void)
 #define __NEXTIME(TH) (pCoreThread [TH]->nLastMomentun +  pCoreThread [TH]->nNice)
 #define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
-    nMin = __CALC(nThread);
+     nMin = (pCoreThread [nThread] != NULL ? (__CALC(nThread)) : SIZE_MAX);
     
     for (size_t nCount=0; nCount < nMaxThreads; nCount++, nCThread++)
     {
