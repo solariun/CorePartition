@@ -261,13 +261,13 @@ bool Terminal::WaitForACommand()
         {
             nNumCommands = ParseOption (readCommand, 0, commandItem);
 
-            m_client.print ("Executing: (");
-            m_client.print (nNumCommands);
-            m_client.print ("),[");
-            m_client.print (readCommand.c_str ());
-            m_client.print ("],[");
-            m_client.print (commandItem.c_str ());
-            m_client.println ("]");
+            // m_client.print ("Executing: (");
+            // m_client.print (nNumCommands);
+            // m_client.print ("),[");
+            // m_client.print (readCommand.c_str ());
+            // m_client.print ("],[");
+            // m_client.print (commandItem.c_str ());
+            // m_client.println ("]");
 
             if (commandItem == "exit")
             {

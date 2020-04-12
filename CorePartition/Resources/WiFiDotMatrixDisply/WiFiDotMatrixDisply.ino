@@ -49,6 +49,8 @@
 
 #include "CorePartition.h"
 
+#include "user_interface.h"
+
 #include "Arduino.h"
 
 #include <Wire.h>
@@ -403,7 +405,7 @@ class CommandShow : public Terminal::Command
     CommandShow () 
     {
         m_commandName = "show";
-        m_commandDescription = "use show [threads] to display information";
+        m_commandDescription = "use show [threads|display|memory] to display information";
     }
 
     void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
@@ -424,6 +426,18 @@ class CommandShow : public Terminal::Command
             if (strOption == "threads")
             {
                 ShowRunningThreads (client);
+            }
+            else if (strOption == "display")
+            {
+                client.print ("Message: [");
+                client.print (strDisplay.c_str ());
+                client.println ("]");
+            }
+            else if (strOption == "memory")
+            {
+                client.print ("free heap: ");
+                client.print (system_get_free_heap_size () / 1024);
+                client.println ("Kb");
             }
             else
             {
