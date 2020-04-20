@@ -397,7 +397,6 @@ class WiFiCTerminal : public Terminal
 };
 
 
-
 class CommandShow : public Terminal::Command
 {
     public:
@@ -417,7 +416,7 @@ class CommandShow : public Terminal::Command
         {
             if (nNumCommands > 2)
             {
-                client.printf ("Warning: detected more options (%u) than necessery, aborting. \n", nNumCommands);
+                client.printf ("Warning: detected more options (%u) than necessary, aborting. \n", nNumCommands);
                 client.println (m_commandDescription.c_str ());
 
                 return;
@@ -439,6 +438,16 @@ class CommandShow : public Terminal::Command
                 client.print (system_get_free_heap_size () / 1024);
                 client.println ("Kb");
             }
+            else if (strOption == "system")
+            {
+                client.println ("ESP8266 System ------------------");
+                client.printf ("%-20s: [%u]\r\n", "Processor ID", system_get_chip_id ());
+                client.printf ("%-20s: [%s]\r\n", "SDK Version", system_get_sdk_version ());
+                client.printf ("%-20s: [%uMhz]\r\n", "CPU Freequency", system_get_cpu_freq());
+                client.printf ("%-20s: [%u Bytes\r\n", "Memory", system_get_free_heap_size());
+                client.println ("-[Process]----------------------");
+                ShowRunningThreads (client);
+            }
             else
             {
                 client.println ("Error, invalid option");
@@ -447,7 +456,6 @@ class CommandShow : public Terminal::Command
         }
     }
 };
-
 
 
 class CommandDisplay : public Terminal::Command
@@ -468,7 +476,7 @@ class CommandDisplay : public Terminal::Command
         {
             if (nNumCommands > 2)
             {
-                client.printf ("Warning: detected more options (%u) than necessery, aborting. \n\r", nNumCommands);
+                client.printf ("Warning: detected more options (%u) than necessary, aborting. \n\r", nNumCommands);
                 client.println (m_commandDescription.c_str ());
 
                 return;
@@ -520,7 +528,7 @@ void ClientHandler (void* pSrvClient)
 
 /// Will Listen for New Clients coming in
 /// @param pValue Information injected from CorePartition on startup
-void TelnetListner (void* pValue)
+void TelnetListener (void* pValue)
 {
     WiFi.mode(WIFI_STA);
     
@@ -580,6 +588,12 @@ void SerialTerminalHandler (void* injection)
 {
     Terminal serial (Serial);
 
+        CommandDisplay commandDisplay;
+    serial.AssignCommand (commandDisplay);
+
+    CommandShow commandShow;
+    serial.AssignCommand (commandShow);
+
     while (CorePartition_Yield ())
     {
         serial.ExecuteMOTD ();
@@ -597,11 +611,11 @@ uint32_t getTimeTick()
 }
 
 
-/// Especializaing CorePartition Idle time
+/// Specializing CorePartition Idle time
 /// @param nSleepTime How log the sleep will lest
 void sleepTick (uint32_t nSleepTime)
 {
-    delay (nSleepTime);
+    delayMicroseconds (nSleepTime * 1000);
 }
 
 
@@ -664,7 +678,7 @@ void setup()
 
     CorePartition_CreateSecureThread  (SerialTerminalHandler, NULL, 500, 200);
     CorePartition_CreateThread (LedDisplayShow, NULL, 300, 50);
-    CorePartition_CreateThread (TelnetListner, NULL, 300, 500);
+    CorePartition_CreateThread (TelnetListener, NULL, 300, 500);
 }
 
 

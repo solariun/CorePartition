@@ -36,6 +36,7 @@
 
 #include "Terminal.hpp"
 
+
 Terminal::Terminal (Stream& streamClient) : m_client (streamClient), m_promptString {}
 {
     m_promptString = "Terminal";
