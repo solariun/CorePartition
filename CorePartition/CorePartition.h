@@ -283,7 +283,7 @@ extern "C"{
     uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
 
     /**
-     * @brief  Get Current Thread DutyClycle
+     * @brief  Get Current Thread DutyCalycle
      */
     #define CorePartition_GetLastDutyCycle() CorePartition_GetLastDutyCycleByID (CorePartition_GetID ())
     
@@ -310,6 +310,27 @@ extern "C"{
      * @return false in case there is none running
      */
     bool CorePartition_IsCoreRunning(void);
+
+    /**
+     * @brief   Set the default name of the current thread
+     * 
+     * @param nID           Thread ID
+     * @param pszName       Name of the Thread
+     * @param nNameSize     Size of the name
+     * 
+     * @return false        if the size is zero or name is null 
+     */
+    bool CorePartition_SetThreadName (size_t nID, const char* pszName, uint8_t nNameSize);
+
+
+    /**
+     * @brief Get the thread name of a specific Thread ID
+     * 
+     * @param nID   Thread ID to return the name
+     * 
+     * @return const char*  The associated name;
+     */
+    const char* CorePartition_GetThreadName (size_t nID);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -1,6 +1,6 @@
 ///
 /// @author   GUSTAVO CAMPOS
-/// @author   GUSTAVO CAMPOS
+
 /// @date   28/05/2019 19:44
 /// @version  <#version#>
 ///
@@ -37,7 +37,14 @@
 #include "Terminal.hpp"
 
 
-Terminal::Terminal (Stream& streamClient) : m_client (streamClient), m_promptString {}
+size_t Terminal::ThreadStream::write(const uint8_t *buffer, size_t size)
+{
+    CorePartition_Yield ();
+    return Stream::write (buffer, size);
+}
+
+
+Terminal::Terminal (Terminal::ThreadStream& streamClient) : m_client (streamClient), m_promptString {}
 {
     m_promptString = "Terminal";
 }
@@ -239,7 +246,7 @@ void Terminal::ExecCommand (const std::string readCommand)
     {
         if (command->m_commandName == strCommand)
         {
-            command->Run (*this, m_client, readCommand);
+            command->Run (*this, static_cast<Terminal::ThreadStream&>(m_client), readCommand);
 
             return;
         }

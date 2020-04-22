@@ -36,6 +36,8 @@
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
 #define THREAD_FACTOR_MAXBYTES 8
 
+#define THREAD_NAME_MAX   10
+
 typedef struct
 {
     uint8_t   nStatus;
@@ -66,7 +68,9 @@ typedef struct
     
     uint8_t    nIsolation;
 
+    char       pszThreadName [THREAD_NAME_MAX + 1];
     uint8_t    stackPage;
+
 } CoreThread;
 
 
@@ -181,6 +185,8 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     {
         return false;
     }
+
+    CorePartition_SetThreadName (nThread, "thread", 6);
 
     //adjust the size to be mutiple of the size_t lenght
     pCoreThread [nThread]->nStackMaxSize = nStackMaxSize + (nStackMaxSize % sizeof (size_t));
@@ -512,5 +518,28 @@ void CorePartition_SetNice (uint32_t nNice)
     pCoreThread [nCurrentThread]->nNice = nNice == 0 ? 1 : nNice;
 }
 
+
+bool CorePartition_SetThreadName (size_t nID, const char* pszName, uint8_t nNameSize)
+{
+    if (pszName == NULL || nNameSize == 0)
+    {
+        return false;
+    }
+    uint8_t nCopySize = (nNameSize > THREAD_NAME_MAX ? THREAD_NAME_MAX : nNameSize);
+
+    memcpy (pCoreThread [nID]->pszThreadName, pszName, nCopySize);
+
+    pCoreThread [nID]->pszThreadName [nCopySize] = '\0';
+
+    return true;
+}
+
+
+const char* CorePartition_GetThreadName (size_t nID)
+{
+     if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return "-";
+
+    return pCoreThread [nID]->pszThreadName;
+}
 
 

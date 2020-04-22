@@ -151,14 +151,14 @@ void Delay (uint64_t nSleep)
 
 
 
-void ShowRunningThreads (Stream& client)
+void ShowRunningThreads (Terminal::ThreadStream& client)
 {
     size_t nCount = 0;
     
     client.println ();
     client.println (F("Listing all running threads"));
     client.println (F("--------------------------------------"));
-    client.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    client.println (F("ID\tName\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
     for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
     {
@@ -166,6 +166,7 @@ void ShowRunningThreads (Stream& client)
         {
             client.print (F("\e[K"));
             client.print (nCount);
+            client.printf ("\t%-8s", CorePartition_GetThreadName (nCount));
             client.print (F("\t"));
             client.print (CorePartition_GetStatusByID (nCount));
             client.print (CorePartition_IsSecureByID (nCount));
@@ -397,6 +398,33 @@ class WiFiCTerminal : public Terminal
 };
 
 
+
+const char* GetWiFiStatus ()
+{
+    wl_status_t nStatus = WiFi.status ();
+
+    switch (nStatus)
+    {
+        case WL_CONNECTED:
+            return "CONNECTED";
+        case WL_NO_SHIELD:
+            return "NO WIFI DEVICE";
+        case WL_IDLE_STATUS:
+            return "IDLE";
+        case WL_NO_SSID_AVAIL:
+            return "NO SSID FOUND";
+        case WL_SCAN_COMPLETED:
+            return "SCAN COMPLETED";
+        case WL_CONNECTION_LOST:
+            return "CONNECTION LOST";
+        case WL_DISCONNECTED:
+            return "DISCONNECTED";
+    }
+
+    return "Unknown";
+}
+
+
 class CommandShow : public Terminal::Command
 {
     public:
@@ -407,7 +435,7 @@ class CommandShow : public Terminal::Command
         m_commandDescription = "use show [threads|display|memory] to display information";
     }
 
-    void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
+    void Run (Terminal& terminal, Terminal::ThreadStream& client, const std::string commandLine) override
     {
         uint8_t nNumCommands;
         std::string strOption;
@@ -444,7 +472,23 @@ class CommandShow : public Terminal::Command
                 client.printf ("%-20s: [%u]\r\n", "Processor ID", system_get_chip_id ());
                 client.printf ("%-20s: [%s]\r\n", "SDK Version", system_get_sdk_version ());
                 client.printf ("%-20s: [%uMhz]\r\n", "CPU Freequency", system_get_cpu_freq());
-                client.printf ("%-20s: [%u Bytes\r\n", "Memory", system_get_free_heap_size());
+                client.printf ("%-20s: [%u Bytes]\r\n", "Memory", system_get_free_heap_size());
+                if (WiFi.status () != WL_NO_SHIELD)
+                {
+                    client.println ("-[Connection]----------------------");
+                    client.printf ("%-20s: [%s] (%u)\r\n", "Status", GetWiFiStatus (), WiFi.status ());
+                    client.printf ("%-20s: [%s]\r\n", "Mac Address", WiFi.macAddress ().c_str ());
+                    if (WiFi.status () == WL_CONNECTED)
+                    {
+                        client.printf ("%-20s: [%s]\r\n", "SSID", WiFi.SSID().c_str ());
+                        client.printf ("%-20s: [%d dBm]\r\n", "Signal", WiFi.RSSI ());
+                        client.printf ("%-20s: [%u Mhz]\r\n", "Channel", WiFi.channel ());
+                        client.printf ("%-20s: [%s]\r\n", "IPAddress", WiFi.localIP ().toString().c_str ());
+                        client.printf ("%-20s: [%s]\r\n", "Net Mask", WiFi.subnetMask ().toString ().c_str ());
+                        client.printf ("%-20s: [%s]\r\n", "Gateway", WiFi.gatewayIP ().toString ().c_str ());
+                        client.printf ("%-20s: [%s]\r\n", "DNS", WiFi.dnsIP ().toString ().c_str ());
+                    }
+                }
                 client.println ("-[Process]----------------------");
                 ShowRunningThreads (client);
             }
@@ -468,7 +512,7 @@ class CommandDisplay : public Terminal::Command
         m_commandDescription = "use show 'message to display' to display on Led display";
     }
 
-    void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
+    void Run (Terminal& terminal, Terminal::ThreadStream& client, const std::string commandLine) override
     {
         uint8_t nNumCommands;
 
@@ -492,13 +536,14 @@ class CommandDisplay : public Terminal::Command
 
 void ClientHandler (void* pSrvClient)
 {
+    CorePartition_SetThreadName (CorePartition_GetID (), "R_Client", 8);
     pSrvClient;
     
     WiFiClient client = server.available ();
     
     Serial.println ("Starting Client.....");
         
-    WiFiCTerminal terminal (client);
+    WiFiCTerminal terminal ((Terminal::ThreadStream&) client);
 
     //Setting remote terminal to no echo    
     client.printf ("%c%c%c", 255, 251, 1);
@@ -530,6 +575,7 @@ void ClientHandler (void* pSrvClient)
 /// @param pValue Information injected from CorePartition on startup
 void TelnetListener (void* pValue)
 {
+    CorePartition_SetThreadName (CorePartition_GetID (), "Listener", 8);
     WiFi.mode(WIFI_STA);
     
     WiFi.begin(ssid, password);
@@ -542,7 +588,6 @@ void TelnetListener (void* pValue)
     
     while (WiFi.status() != WL_CONNECTED)
     {
-        Serial.print (".");
         CorePartition_Sleep(500);
     }
     
@@ -586,9 +631,11 @@ void TelnetListener (void* pValue)
 
 void SerialTerminalHandler (void* injection)
 {
-    Terminal serial (Serial);
+    CorePartition_SetThreadName (CorePartition_GetID (), "Terminal", 8);
 
-        CommandDisplay commandDisplay;
+    Terminal serial ((Terminal::ThreadStream&) Serial);
+
+    CommandDisplay commandDisplay;
     serial.AssignCommand (commandDisplay);
 
     CommandShow commandShow;
@@ -627,7 +674,7 @@ void StackOverflowHandler ()
     Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
     Serial.println (CorePartition_GetID ());
     Serial.println (F("--------------------------------------"));
-    ShowRunningThreads (Serial);
+    ShowRunningThreads ((Terminal::ThreadStream&)(Serial));
     Serial.flush ();
     exit(0);
 }
