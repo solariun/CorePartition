@@ -60,7 +60,7 @@ void Terminal::SetPromptString (const std::string& promptString)
 
 bool Terminal::WaitAvailableForReading ()
 {
-    CorePartition_Sleep (0);
+    CorePartition_Sleep (10);
 
     do
     {
@@ -69,7 +69,7 @@ bool Terminal::WaitAvailableForReading ()
             return false;
         }
 
-        CorePartition_Sleep (0);
+        CorePartition_Sleep (10);
     } while (m_client.available() == 0);
 
     return true;

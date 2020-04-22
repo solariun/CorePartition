@@ -48,7 +48,8 @@ public:
     class ThreadStream : public Stream
     {
         public:
-         size_t write(const uint8_t *buffer, size_t size) override;
+
+         virtual size_t write(const uint8_t *buffer, size_t size) override;
     };
 
     class Command

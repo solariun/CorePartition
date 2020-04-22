@@ -184,7 +184,7 @@ void ShowRunningThreads (Terminal::ThreadStream& client)
             client.print (CorePartition_GetLastDutyCycleByID (nCount));
             client.println ("ms");
             client.flush ();
-            CorePartition_Sleep (60);
+            CorePartition_Yield ();
         }
     }
 }
@@ -613,7 +613,7 @@ void TelnetListener (void* pValue)
             
             //Create a thread to start handling
             //otherwise send busy and close it
-            if (CorePartition_CreateThread (ClientHandler, (void*) nullptr, 512, 200) == false)
+            if (CorePartition_CreateThread (ClientHandler, (void*) nullptr, 512, 300) == false)
             {
                 server.available().println("LedDisplay: Busy");
                 
