@@ -40,6 +40,7 @@
 size_t Terminal::ThreadStream::write(const uint8_t *buffer, size_t size)
 {
     CorePartition_Yield ();
+    Stream::write(".",1);
     return Stream::write (buffer, size);
 }
 

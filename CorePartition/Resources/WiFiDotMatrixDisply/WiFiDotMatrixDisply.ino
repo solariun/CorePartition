@@ -633,7 +633,7 @@ void SerialTerminalHandler (void* injection)
 {
     CorePartition_SetThreadName (CorePartition_GetID (), "Terminal", 8);
 
-    Terminal serial ((Terminal::ThreadStream&) Serial);
+    Terminal serial (reinterpret_cast<Terminal::ThreadStream&>(Serial));
 
     CommandDisplay commandDisplay;
     serial.AssignCommand (commandDisplay);
