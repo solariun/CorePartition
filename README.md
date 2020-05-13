@@ -16,6 +16,7 @@ Partitioning a CORE into several Threads with a fast scheduler capable to be spe
      - Better thread with stack
      - Speed and amazing stability improvements
      - Dynamic full stack size key for Secure Thread (Stack Isolation)
+     - Now you can name a thread up to 8 characters 
 
 # Important information
 
@@ -49,7 +50,7 @@ NOW! CorePartition is Preemption ready a example of full preemption is already p
 
 # Introducing Thread Isolation 
 
-Now, CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on back and restore of the memory page, it does not intend to be the best securety, but one more barier against digital threats. Every thread with Secure Memory Page, will be encrypted using a 128 bits key that will be dynamically changed every context switch. The developer will have no power or awereness of the procedure and the whole memory page will encrypted on memory.
+Now, CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on back and restore of the memory page, it does not intend to be the best security, but one more barrier against digital threats. Every thread with Secure Memory Page, will be encrypted using a 128 bits key that will be dynamically changed every context switch. The developer will have no power or awareness of the procedure and the whole memory page will encrypted on memory.
 
 Note that it will ONLY encrypt the stack, heap will remain original.
 
@@ -57,7 +58,7 @@ This feature will remain on Experimental for certain time.
 
 # Momentum Scheduler
 
-*The Momentum Scheduler* is optimised to only allow thread to come back to work only upon its "nice" time or later that, with means it will work on real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialised nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exemplo for keeping it simple).
+*The Momentum Scheduler* is optimise to only allow thread to come back to work only upon its "nice" time or later that, with means it will work on real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialized nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exempla for keeping it simple).
 
 HIGHLY suitable for Arduino (All official models included) as well, a .ino project is also provided with an example.
 
@@ -65,8 +66,13 @@ Be aware that the CorePartition Lib is a pico Virtual Core emulation, it will sl
 
 To calculate how much memory it will consume, start with the notion that each thread will consume around 60 ~ 170 bites depending on your target default bit channel size (8bits, 16bits, 32bits ... processor) plus the virtual stack page. 
 
-Be AWARE comes with no warrant or guarantees, since I still have a limited number to target to test, but for those it is  fully functional till this point. If you intend  to use this code, please make a reference of me as its creator.  The comercial use is also permitted as long as I am notified and referenced in the code.
+Be AWARE comes with no warrant or guarantees, since I still have a limited number to target to test, but for those it is  fully functional till this point. If you intend  to use this code, please make a reference of me as its creator.  The commercial use is also permitted as long as I am notified and referenced in the code.
 
+
+## Important
+    
+     If possible a HIGHLY RECOMMEND implement the momentum with a proper time. It will ensure stability and the developer will be able to use time to control thread process
+   
 Tested at:
 
 ESP8266 8 different boars including ESP-01
@@ -122,42 +128,73 @@ This is how to use it
 
 void Thread1(void* pValue)
 {
-int nValue = 100;
+     int nValue = 100;
 
-while (1)
-{
-printf ("Thread1: Value [%d]\n", nValue++);
+     while (1)
+     {
+          printf ("Thread1: Value [%d]\n", nValue++);
 
-CorePartition_Yield();
-}
+          CorePartition_Yield();
+     }
 }
 
 void Thread2(void* pValue)
 {
-int nValue = 1000;
+     int nValue = 1000;
 
-while (1)
+     while (1)
+     {
+     printf ("Thread2: Value [%d]\n", nValue++);
+
+     CorePartition_Yield();
+     }
+}
+
+/*
+ * I totally advise for the use of the 
+ * momentum interface to setup a time measurement
+ * for the CorePartition Kernel, also, some 
+ * controllers like ESP required a realignment
+ * that can be done by calling  sleep, so 
+ * using it is highly recommended 
+ * / 
+
+static void sleepMSTicks (uint32_t nSleepTime)
 {
-printf ("Thread2: Value [%d]\n", nValue++);
-
-CorePartition_Yield();
-}
+    usleep ((useconds_t) nSleepTime * 1000);
 }
 
+static uint32_t getMsTicks(void)
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    
+    return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+}
+
+static void StackOverflowHandler ()
+{
+    printf ("Error, Thread#%zu Stack %zu / %zu max\n", CorePartition_GetID(), CorePartition_GetStackSize(), CorePartition_GetMaxStackSize());
+}
+    
 
 int main ()
 {
 
-CorePartition_Start (2);
+     CorePartition_Start (2);
 
-//Every 1000 cycles with a Stack page of 210 bytes
-CorePartition_CreateThread (Thread1, NULL,  210, 1000);
+     CorePartition_SetCurrentTimeInterface(getMsTicks);
+     CorePartition_SetSleepTimeInterface (sleepMSTicks);
+     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-//All the time with a Stack page of 150 bytes and
-//thread isolation
-CorePartition_CreateSecureThread (Thread2, NULL, 150, 0);
+     //Every 1000 cycles with a Stack page of 210 bytes
+     CorePartition_CreateThread (Thread1, NULL,  210, 1000);
 
-join();
+     //All the time with a Stack page of 150 bytes and
+     //thread isolation
+     CorePartition_CreateSecureThread (Thread2, NULL, 150, 0);
+
+     join();
 }
 ```
 
