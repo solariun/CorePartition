@@ -6,9 +6,16 @@ Version 2.5
 
 Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and tick-sleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
 
+#NEW
 # 2.5
 
-     Better memory management, now using memory provisioning instead of full empty context, better scheduler (lighter and faster). Memory safe-critical principals, better thread with stack 
+     - Better memory management, 
+     - Now using memory provisioning instead of full empty context, 
+     - Better scheduler (lighter and faster),
+     - Memory safe-critical principals
+     - Better thread with stack
+     - Speed and amazing stability improvements
+     - Dynamic full stack size key for Secure Thread (Stack Isolation)
 
 # Important information
 
