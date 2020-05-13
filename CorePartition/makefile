@@ -31,7 +31,7 @@ TARGET = CorePartition.bin
 LDFLAGS = -lm 
 
 $(TARGET): $(obj)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -O4 -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 clean:

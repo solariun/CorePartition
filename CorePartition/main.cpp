@@ -98,7 +98,7 @@ void Thread2 (void* pValue)
         
         printf ("## %lu:  Value: [%u] - Returning\n", CorePartition_GetID(), nValue);
         
-        CorePartition_Sleep (400);
+        CorePartition_Sleep ((uint32_t) 400);
     }
 }
 
@@ -140,6 +140,7 @@ static void StackOverflowHandler ()
 
 int main(int argc, const char * argv[])
 {    
+
     CorePartition_Start(3);
     
     CorePartition_SetCurrentTimeInterface(getMsTicks);

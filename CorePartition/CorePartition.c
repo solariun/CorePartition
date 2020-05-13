@@ -294,9 +294,10 @@ static inline size_t Scheduler (void)
         {
             continue;
         }
-        else if (__NEXTIME (nCThread) <= nCurTime || pCoreThread [nCurrentThread]->nStatus == THREADL_START)
+        else if (__NEXTIME (nCThread) <= nCurTime || pCoreThread [nCThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
+            nMin = 0;
             break;
         }
         else if (nMin > __CALC (nCThread))
@@ -306,13 +307,9 @@ static inline size_t Scheduler (void)
         }
     }
     
-
     if (pCoreThread [nThread] != NULL)
     {
-        if (__NEXTIME(nThread) > nCurTime)
-        {
-            sleepCTime (__NEXTIME(nThread) - nCurTime);
-        }
+       sleepCTime (nMin);
         
         pCoreThread [nThread]->nLastMomentun = getCTime();
     }
