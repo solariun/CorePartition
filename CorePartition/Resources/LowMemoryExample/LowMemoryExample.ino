@@ -217,15 +217,13 @@ static uint32_t getTimeTick()
    return (uint32_t) millis();
 }
 
+
 static void sleepTick (uint32_t nSleepTime)
 {
-    Serial.println ("------");
-    Serial.println (nSleepTime);
-    Serial.flush ();
-
     delay (nSleepTime);
     //delayMicroseconds  (nSleepTime * 1000);
 }
+
 
 void StackOverflowHandler ()
 {
@@ -237,6 +235,7 @@ void StackOverflowHandler ()
     ShowRunningThreads ();
     Serial.flush ();
 }
+
 
 void setup()
 {

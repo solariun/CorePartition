@@ -1,10 +1,14 @@
 # CorePartition
 
-Version 2.4
+Version 2.5
 
 ![License information](https://raw.githubusercontent.com/solariun/CorePartition/master/License.png)
 
-Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and ticksleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
+Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and tick-sleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
+
+# 2.5
+
+     Better memory management, now using memory provisioning instead of full empty context, better scheduler (lighter and faster). Memory safe-critical principals, better thread with stack 
 
 # Important information
 

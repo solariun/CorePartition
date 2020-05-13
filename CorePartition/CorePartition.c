@@ -237,32 +237,36 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
 }
 
 
-inline static void fastmemcpy (void* pDestine, const void* pSource, size_t nSize)
+inline static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
 {
-    const void* nTop = (const void*) pSource + nSize;
-    
+    const uint8_t* nTop = (const uint8_t*) pSource + nSize;
+
     if (pCoreThread [nCurrentThread]->nIsolation != 0)
     {
         srand(pCoreThread [nCurrentThread]->nLastBackup);
         
-        for (;pSource <= nTop; pSource++, pDestine++) *((uint8_t*) pDestine) = *((uint8_t*) pSource) ^ ((uint8_t) (rand() % 255) );
+        for (;pSource <= nTop;) 
+        {
+            *((uint8_t*) pDestine) = *(pSource) ^ ((uint8_t) (rand() % 255) );
+            pSource++; 
+            pDestine++;
+        }
     }
     else
-        memcpy(pDestine, pSource, nSize);
+        memcpy((void*)pDestine, (const void*) pSource, nSize);
 }
 
 
 inline static void BackupStack(void)
 {
-    fastmemcpy ((void*) &pCoreThread [nCurrentThread]->stackPage, pCoreThread [nCurrentThread]->pLastStack, pCoreThread [nCurrentThread]->nStackSize);
-    
+    fastmemcpy ((uint8_t*) &pCoreThread [nCurrentThread]->stackPage, (const uint8_t*) pCoreThread [nCurrentThread]->pLastStack, pCoreThread [nCurrentThread]->nStackSize);
     //pCoreThread [nCurrentThread]->nProcTime = getCTime () - pCoreThread [nCurrentThread]->nLastBackup;
 }
 
 
 inline static void RestoreStack(void)
 {
-    fastmemcpy (pCoreThread [nCurrentThread]->pLastStack, (void*) &pCoreThread [nCurrentThread]->stackPage, pCoreThread [nCurrentThread]->nStackSize);
+    fastmemcpy ((uint8_t*) pCoreThread [nCurrentThread]->pLastStack, (const uint8_t*) &pCoreThread [nCurrentThread]->stackPage, pCoreThread [nCurrentThread]->nStackSize);
 }
 
 
@@ -282,7 +286,7 @@ static inline size_t Scheduler (void)
 #define __NEXTIME(TH) (pCoreThread [TH]->nLastMomentun +  pCoreThread [TH]->nNice)
 #define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
-    nMin =  SIZE_MAX;
+    nMin =  ~((uint32_t)0);
     
     for (size_t nCount=0; nCount < nMaxThreads; nCount++, nCThread++)
     {
@@ -419,7 +423,7 @@ bool CorePartition_Yield ()
 }
 
 
-inline void CorePartition_Sleep (uint32_t nDelayTickTime)
+void CorePartition_Sleep (uint32_t nDelayTickTime)
 {
     uint32_t nBkpNice = 0;
     
