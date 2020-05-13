@@ -223,7 +223,7 @@ extern "C"{
     /**
      * @brief Get current Thread Status
      */
-    #define CorePartition_GetStatus()  CorePartition_GetStatusbyID (CorePartition_GetID ())
+    #define CorePartition_GetStatus()  CorePartition_GetStatusByID (CorePartition_GetID ())
 
 
     /**

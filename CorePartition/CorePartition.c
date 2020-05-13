@@ -57,6 +57,7 @@ typedef struct
         } func;
     } mem;
     
+    char       pszThreadName [THREAD_NAME_MAX + 1];
     
     uint32_t   nNice;
     uint32_t   nLastMomentun;
@@ -68,7 +69,6 @@ typedef struct
     
     uint8_t    nIsolation;
 
-    char       pszThreadName [THREAD_NAME_MAX + 1];
     uint8_t    stackPage;
 
 } CoreThread;
@@ -152,9 +152,15 @@ bool CorePartition_Start (size_t nThreadPartitions)
     
     nMaxThreads = nThreadPartitions;
     
-    pCoreThread = (CoreThread**) malloc (sizeof (CoreThread**) * nThreadPartitions);
+    if ((pCoreThread = (CoreThread**) malloc (sizeof (CoreThread**) * nThreadPartitions)) == NULL)
+    {
+        return false;
+    }
     
-    memset((void*) pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions);
+    if (memset((void*) pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
+    {
+        return false;
+    }
     
     srand (getCTime ());
     
@@ -188,7 +194,7 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
 
     CorePartition_SetThreadName (nThread, "thread", 6);
 
-    //adjust the size to be mutiple of the size_t lenght
+    //adjust the size to be mutiple of the size_t length
     pCoreThread [nThread]->nStackMaxSize = nStackMaxSize + (nStackMaxSize % sizeof (size_t));
  
     pCoreThread[nThread]->mem.func.pValue = pValue;
@@ -276,7 +282,7 @@ static inline size_t Scheduler (void)
 #define __NEXTIME(TH) (pCoreThread [TH]->nLastMomentun +  pCoreThread [TH]->nNice)
 #define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
-     nMin = (pCoreThread [nThread] != NULL ? (__CALC(nThread)) : SIZE_MAX);
+    nMin =  SIZE_MAX;
     
     for (size_t nCount=0; nCount < nMaxThreads; nCount++, nCThread++)
     {
@@ -285,7 +291,9 @@ static inline size_t Scheduler (void)
         //printf ("%s :Max:[%zu) [%u] - (%zu)[%u] - Min: %zu (%u) \n", __FUNCTION__, nMaxThreads, nCurTime, nCThread, (uint32_t) __NEXTIME(nCThread), nThread, pCoreThread [nCThread]->nStatus);
         
         if (pCoreThread [nCThread] == NULL)
+        {
             continue;
+        }
         else if (__NEXTIME (nCThread) <= nCurTime || pCoreThread [nCurrentThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
@@ -315,7 +323,6 @@ static inline size_t Scheduler (void)
 
 static void CorePartition_StopThread ()
 {
-
     if (pCoreThread [nCurrentThread] != NULL)
     {
         free (pCoreThread [nCurrentThread]);

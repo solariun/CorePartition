@@ -45,13 +45,6 @@ class Terminal
 {
 public:
 
-    class ThreadStream : public Stream
-    {
-        public:
-            using Print::write;
-            virtual size_t write(const uint8_t *buffer, size_t size) override;
-    };
-
     class Command
     {
     public:
@@ -59,7 +52,7 @@ public:
         std::string  m_commandName;
         std::string  m_commandDescription;
 
-        virtual void Run (Terminal& terminal, Terminal::ThreadStream& client, const std::string commandLine) = 0;
+        virtual void Run (Terminal& terminal, Stream& client, const std::string commandLine) = 0;
     };
 
     /**
@@ -67,7 +60,7 @@ public:
      * 
      * @param streamDev  Stream object for in and out procedures
      */
-    Terminal (Terminal::ThreadStream& streamDev);
+    Terminal (Stream& streamDev);
 
 
     /**
@@ -175,7 +168,7 @@ private:
 
 
         //Default Stream used to in and out information 
-        Terminal::ThreadStream&  m_client;
+        Stream&  m_client;
 
         //Default prompt message
         std::string   m_promptString;

@@ -151,7 +151,7 @@ void Delay (uint64_t nSleep)
 
 
 
-void ShowRunningThreads (Terminal::ThreadStream& client)
+void ShowRunningThreads (Stream& client)
 {
     size_t nCount = 0;
     
@@ -188,6 +188,56 @@ void ShowRunningThreads (Terminal::ThreadStream& client)
         }
     }
 }
+    
+
+enum GRAPH_CHAR
+{
+    CHAR_FULL_SIGNAL = 127,
+    CHAR_EMPTY_BAT, //128
+    CHAR_BAT_1, //129
+    CHAR_BAT_2, //130
+    CHAR_BAT_3, //131
+    CHAR_BAT_CHARG_1, //132
+    CHAR_BAT_CHARG_2, //133
+    CHAR_OK, //134
+    CHAR_ARROW_DOWN, //135
+    CHAR_ARROW_LEFT, //136
+    CHAR_ARROW_UP, //137
+    CHAR_ARROW_RIGHT, //138
+    CHAR_ATTENTION, //139
+    CHAR_WIFI, //140
+    CHAR_WIFI_REV, //141
+    CHAR_BELL, //142
+    CHAR_CLOCK, //143
+    CHAR_SUN, //144
+    CHAR_CLOUD, //145
+    CHAR_RAINING, //146
+    CHAR_PARTIALLY_CLOUD, //147
+    CHAR_UMBRELLA, //148
+    CHAR_PIN, //149
+    CHAR_SIGNAL_0, //150
+    CHAR_SIGNAL_1, //151
+    CHAR_SIGNAL_2, //152
+    CHAR_SIGNAL_3, //153
+    CHAR_SIGNAL_OK, //154
+    CHAR_INFO, //155
+    CHAR_NO, //156
+    CHAR_NO_2, //157
+    CHAR_NO_3, //158
+    CHAR_OPEN_ENVELOP, //159
+    CHAR_PAW, //160
+    CHAR_CLOSE_ENVELOPE, //161
+    CHAR_POWER, //162
+    CHAR_ANIME_1, //163
+    CHAR_ANIME_2, //164
+    CHAR_ANIME_3, //165
+    CHAR_ANIME_4, //166
+    CHAR_ANIME_5, //167
+    CHAR_ANIME_6, //168
+    CHAR_ANIME_7, //169
+    CHAR_ANIME_8, //170
+    CHAR_ANIME_9, //171
+};
 
 
 
@@ -211,7 +261,16 @@ const uint64_t byteImages[] PROGMEM =
     0x66361e3666060600, 0x1818181818181800, 0xd6d6feeec6000000, 0x6666667e3e000000, 0x3c6666663c000000,
     0x06063e66663e0000, 0xf0b03c36363c0000, 0x060666663e000000, 0x3e603c067c000000, 0x1818187e18180000,
     0x7c66666666000000, 0x183c666600000000, 0x7cd6d6d6c6000000, 0x663c183c66000000, 0x3c607c6666000000,
-    0x3c0c18303c000000, 0x00380c0c070c0c38, 0x0c0c0c0c0c0c0c0c, 0x00070c0c380c0c07, 0x0000000000003b6e
+    0x3c0c18303c000000, 0x00380c0c070c0c38, 0x0c0c0c0c0c0c0c0c, 0x00070c0c380c0c07, 0x0000000000003b6e,
+    0x5554545050404000, 0x3f21212121212121, 0x3f212d2121212121, 0x3f212d212d212121, 0x3f212d212d212d21,
+    0x3f212d2d2d212121, 0x3f212d2d2d2d2d2d, 0x00040a1120408000, 0x081c3e7f1c1c1c1c, 0x0010307fff7f3010,
+    0x1c1c1c1c7f3e1c08, 0x00080cfefffe0c08, 0x40e040181e0f0f07, 0x939398cc6730180f, 0xffa9a9b7d9eff1ff,
+    0x1800ff7a3a3a3c18, 0x3c428199b985423c, 0x18423ca5a53c4218, 0x0000ff81864c3800, 0x1428ff81864c3800,
+    0x0000ff81864f3e05, 0x0000ff81864f3e05, 0x18141010fe7c3800, 0x08081c1c3e363e1c, 0x00aa000000000000, 
+    0x000a080000000000, 0x002a282000000000, 0x00aaa8a0840a1000, 0x3c46e7e7e3ff663c, 0x0082442810284482, 
+    0x003844aa92aa4438, 0x003864f2ba9e4c38, 0xff8199a5c3422418, 0x7e3cdbc383343624, 0xff8199a5c3ff0000,
+    0x3c66c39999db5a18, 0xff000001010000ff, 0xff000003030000ff, 0xff000006060000ff, 0xff00000c0c0000ff, 
+    0xff000018180000ff, 0xff000030300000ff, 0xff000060600000ff, 0xff0000c0c00000ff, 0xff000080800000ff
  };
 
 const int byteImagesLen = sizeof(byteImages)/8;
@@ -287,6 +346,18 @@ public:
     }
     
     
+    void setSpeed (uint8_t nSpeed)
+    {
+        this->nSpeed = nSpeed;
+    }
+
+
+    uint8_t getSpeed () 
+    {
+        return this->nSpeed;
+    }
+
+
     bool show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
     {
         uint8_t nCount;
@@ -307,7 +378,11 @@ public:
               nOffset = (int) nOffset + (nSpeed  % 8);
           }
         } while (nOffset >= 8);
-
+        else
+        {
+            nOffset = 0;
+            nIndex = 0;
+        }
               
         for (nCount=0; nCount < nNumberDigits; nCount++)
         {
@@ -341,6 +416,9 @@ public:
 
 std::string strDisplay = "CorePartition Works!";
 
+
+MatrixTextScroller matrixTextScroller (4, 2);
+
 /// LedDisplayShow - Will update information o Display
 /// @param pValue  Information injected from CorePartition on startup
 void LedDisplayShow (void* pValue)
@@ -348,21 +426,20 @@ void LedDisplayShow (void* pValue)
     unsigned long start = millis();
     size_t nValue = 0;
     
+    CorePartition_SetThreadName (CorePartition_GetID (), "Display", 7);
+
     uint8_t a = 0;
     uint8_t b = 0;
     uint8_t nOffset = 0;
     uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
     //setCoreNice (100);
 
-    MatrixTextScroller matrixTextScroller (4, 2);
-    
     uint8_t nStep = 0;
     
     while (1)
     {
             matrixTextScroller.show (0, 0, strDisplay.c_str(), strDisplay.length ());
-        
-        CorePartition_Yield ();
+            CorePartition_Yield ();
     }
 }
 
@@ -435,7 +512,7 @@ class CommandShow : public Terminal::Command
         m_commandDescription = "use show [threads|display|memory] to display information";
     }
 
-    void Run (Terminal& terminal, Terminal::ThreadStream& client, const std::string commandLine) override
+    void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
     {
         uint8_t nNumCommands;
         std::string strOption;
@@ -512,7 +589,7 @@ class CommandDisplay : public Terminal::Command
         m_commandDescription = "use show 'message to display' to display on Led display";
     }
 
-    void Run (Terminal& terminal, Terminal::ThreadStream& client, const std::string commandLine) override
+    void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
     {
         uint8_t nNumCommands;
 
@@ -543,7 +620,7 @@ void ClientHandler (void* pSrvClient)
     
     Serial.println ("Starting Client.....");
         
-    WiFiCTerminal terminal ((Terminal::ThreadStream&) client);
+    WiFiCTerminal terminal ((Stream&) client);
 
     //Setting remote terminal to no echo    
     client.printf ("%c%c%c", 255, 251, 1);
@@ -562,13 +639,12 @@ void ClientHandler (void* pSrvClient)
 
     while (terminal.WaitForACommand () && client.connected ())
         CorePartition_Yield ();
-    
-    client.println ("Bye Bye");
 
-    Serial.println ("");
-    Serial.printf ("Desconecting %s\n\r", client.remoteIP ().toString ().c_str ());
+    if (client.connected () == true)
+    {
+        client.stop ();
+    }
 }
-
 
 
 /// Will Listen for New Clients coming in
@@ -586,14 +662,33 @@ void TelnetListener (void* pValue)
     strDisplay = "Connecting to ";
     strDisplay += ssid;
     
+    std::string strValue;
+    uint8_t nOffset=0;
+    bool    bRev = false;
+
+    uint8_t nSpeed = matrixTextScroller.getSpeed ();
+    matrixTextScroller.setSpeed (0);
+
     while (WiFi.status() != WL_CONNECTED)
     {
-        CorePartition_Sleep(500);
+        strDisplay = ((char) bRev ? CHAR_WIFI_REV : CHAR_WIFI); 
+        if (nOffset % 3 == 0) bRev = !bRev;
+
+        strDisplay.push_back ((char) ' ');
+
+        strDisplay.push_back ((char) CHAR_ANIME_1 + nOffset);
+        nOffset = nOffset < 8 ? nOffset+1 : 0;
+
+        CorePartition_Sleep(100);
     }
     
-    strDisplay = "connected, address=";
+    matrixTextScroller.setSpeed (nSpeed);
+
+    strDisplay = (char) CHAR_OK;
+    strDisplay += ': ';
+    strDisplay += (char) CHAR_WIFI;
+    strDisplay += ':';
     strDisplay += WiFi.localIP().toString().c_str();
-    strDisplay += ", Waiting connection...";
     
 
     //start server
@@ -633,7 +728,7 @@ void SerialTerminalHandler (void* injection)
 {
     CorePartition_SetThreadName (CorePartition_GetID (), "Terminal", 8);
 
-    Terminal serial (reinterpret_cast<Terminal::ThreadStream&>(Serial));
+    Terminal serial (reinterpret_cast<Stream&>(Serial));
 
     CommandDisplay commandDisplay;
     serial.AssignCommand (commandDisplay);
@@ -674,7 +769,7 @@ void StackOverflowHandler ()
     Serial.print (F("[ERROR] - Stack Overflow - Thread #"));
     Serial.println (CorePartition_GetID ());
     Serial.println (F("--------------------------------------"));
-    ShowRunningThreads ((Terminal::ThreadStream&)(Serial));
+    ShowRunningThreads ((Stream&)(Serial));
     Serial.flush ();
     exit(0);
 }
@@ -708,6 +803,13 @@ void setup()
     
     uint8_t nCount;
     
+    for (nCount=0; nCount < MAX_LED_MATRIX; nCount++)
+    {
+        lc.shutdown(nCount,false);       //The MAX72XX is in power-saving mode on startup
+        lc.setIntensity(nCount,4);      // Set the brightness to maximum value
+        lc.clearDisplay(nCount);         // and clear the display
+    }
+
     for (nCount=0; nCount < MAX_LED_MATRIX; nCount++)
     {
         lc.shutdown(nCount,false);       //The MAX72XX is in power-saving mode on startup

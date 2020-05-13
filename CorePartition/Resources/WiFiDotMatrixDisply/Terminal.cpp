@@ -37,15 +37,8 @@
 #include "Terminal.hpp"
 
 
-size_t Terminal::ThreadStream::write(const uint8_t *buffer, size_t size)
-{
-    CorePartition_Yield ();
-    Stream::write(".",1);
-    return Stream::write (buffer, size);
-}
 
-
-Terminal::Terminal (Terminal::ThreadStream& streamClient) : m_client (streamClient), m_promptString {}
+Terminal::Terminal (Stream& streamClient) : m_client (streamClient), m_promptString {}
 {
     m_promptString = "Terminal";
 }
@@ -119,6 +112,8 @@ uint8_t Terminal::ParseOption (const std::string& commandLine, uint8_t nCommandI
     returnText.clear ();
     bool boolScape = false;
 
+    std::string strBuffer;
+
     for (char chChar : commandLine)
     {
         if (currentState == state::NoText)
@@ -156,9 +151,11 @@ uint8_t Terminal::ParseOption (const std::string& commandLine, uint8_t nCommandI
                 if (chChar == '\\')
                 {
                     boolScape = true;
+                    strBuffer.clear ();
+                    continue;
                 }
             }
-            else
+            else if (! isdigit (chChar))
             {
                 boolScape = false;
             }
@@ -176,7 +173,24 @@ uint8_t Terminal::ParseOption (const std::string& commandLine, uint8_t nCommandI
             {
                 if (countOnly == false) 
                 {
-                    returnText.push_back (chChar);
+                    if (boolScape == true and isdigit (chChar))
+                    {
+                        strBuffer += chChar;
+                    }
+                    else
+                    {
+                        //To add special char \000\ 00 = number only
+                        if (strBuffer.length () > 0)
+                        {
+                            returnText.push_back (static_cast<char>(atoi (strBuffer.c_str ())));
+                            strBuffer.clear ();
+                        }
+                        else
+                        {
+                            returnText.push_back (chChar);   /* code */
+                        }
+                        
+                    }
                 }
             }
         }
@@ -247,7 +261,7 @@ void Terminal::ExecCommand (const std::string readCommand)
     {
         if (command->m_commandName == strCommand)
         {
-            command->Run (*this, static_cast<Terminal::ThreadStream&>(m_client), readCommand);
+            command->Run (*this, static_cast<Stream&>(m_client), readCommand);
 
             return;
         }
