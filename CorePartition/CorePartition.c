@@ -410,15 +410,13 @@ bool CorePartition_Yield ()
         //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
         pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
 
-        //sleepCTime (0); //Do not take it out EVER! it will sincronize processing
         RestoreStack();        
-        sleepCTime (0); //Do not take it out EVER! it will sincronize processing
 
         pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
         
         return true;
     }
-        
+   
     return false;
 }
 
@@ -457,49 +455,37 @@ size_t CorePartition_GetStackSizeByID(size_t nID)
 
 size_t CorePartition_GetMaxStackSizeByID(size_t nID)
 {
-    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
-    
-    return pCoreThread [nID]->nStackMaxSize;
+    return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? 0 : pCoreThread [nID]->nStackMaxSize;
 }
 
 
 uint32_t CorePartition_GetNiceByID(size_t nID)
 {
-    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
-    
-    return pCoreThread [nID]->nNice;
+    return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? 0 : pCoreThread [nID]->nNice;
 }
 
 
 uint8_t CorePartition_GetStatusByID (size_t nID)
 {
-    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
-    
-    return pCoreThread [nID]->nStatus;
+    return (nID >= nMaxThreads ||  NULL == pCoreThread [nID] ) ? 0 : pCoreThread [nID]->nStatus;
 }
 
 
 char CorePartition_IsSecureByID (size_t nID)
 {
-    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
-    
-    return pCoreThread [nID]->nIsolation != 0 ? 'S' : 'N';
+    return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? 0 : (pCoreThread [nID]->nIsolation != 0 ? 'S' : 'N');
 }
 
 
 uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
 {
-    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
-    
-    return pCoreThread [nID]->nExecTime;
+    return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? 0 : pCoreThread [nID]->nExecTime;
 }
 
 
 uint32_t CorePartition_GetLastMomentumByID (size_t nID)
 {
-    if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return 0;
-    
-    return pCoreThread [nID]->nLastMomentun;
+    return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? 0 : pCoreThread [nID]->nLastMomentun;
 }
 
 
@@ -529,25 +515,24 @@ void CorePartition_SetNice (uint32_t nNice)
 
 bool CorePartition_SetThreadName (size_t nID, const char* pszName, uint8_t nNameSize)
 {
-    if (pszName == NULL || nNameSize == 0)
+    if (NULL != pszName && nNameSize > 0)
     {
-        return false;
+        uint8_t nCopySize = (nNameSize > THREAD_NAME_MAX ? THREAD_NAME_MAX : nNameSize);
+
+        memcpy (pCoreThread [nID]->pszThreadName, pszName, nCopySize);
+
+        pCoreThread [nID]->pszThreadName [nCopySize] = '\0';
+
+        return true;
     }
-    uint8_t nCopySize = (nNameSize > THREAD_NAME_MAX ? THREAD_NAME_MAX : nNameSize);
-
-    memcpy (pCoreThread [nID]->pszThreadName, pszName, nCopySize);
-
-    pCoreThread [nID]->pszThreadName [nCopySize] = '\0';
-
-    return true;
+    
+    return false;
 }
 
 
 const char* CorePartition_GetThreadName (size_t nID)
 {
-     if (nID >= nMaxThreads || pCoreThread [nID] == NULL) return "-";
-
-    return pCoreThread [nID]->pszThreadName;
+     return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? "-" : pCoreThread [nID]->pszThreadName;
 }
 
 
