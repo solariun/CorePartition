@@ -116,6 +116,8 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetID()+1);
         Serial.print (": ");
         Serial.print (nValue++);
+        Serial.print (", running: ");
+        Serial.print (CorePartition_GetNumberOfActiveThreads ());
         Serial.print (", Sleep Time: ");
         Serial.print ((unsigned long) CorePartition_GetLastMomentum () - nLast);  nLast = CorePartition_GetLastMomentum ();
         Serial.print ("ms, Nice: ");
@@ -130,7 +132,6 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetLastDutyCycle ());
         Serial.println ("ms\n");
 
-        Serial.flush ();
     
         CorePartition_Yield ();
         
@@ -167,7 +168,6 @@ void eventualThread (void* pValue)
         Serial.print ((uint32_t) CorePartition_GetLastMomentum () - nLast); nLast = CorePartition_GetLastMomentum ();
         Serial.println (F("ms\n"));
 
-        Serial.flush ();
     }
     
     Serial.print ("\e[");
@@ -189,7 +189,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println (F("--------------------------------------"));
     Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
-    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
     {
         Serial.print (F("\e[K"));
         Serial.print (nCount);
@@ -238,9 +238,7 @@ void StackOverflowHandler ()
 
 
 void setup()
-{
-    bool status; 
-    
+{    
     //Initialize serial and wait for port to open:
     Serial.begin(115200);
         
@@ -270,7 +268,7 @@ void setup()
     
     CorePartition_CreateThread (Thread, NULL, 25 * sizeof (size_t), 1000);
 
-    CorePartition_CreateThread (Thread, NULL, 25 * sizeof (size_t), 100);
+    CorePartition_CreateThread (Thread, NULL, 25 * sizeof (size_t), 0);
 
 }
 

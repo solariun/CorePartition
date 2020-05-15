@@ -76,7 +76,7 @@ void Thread1 (void* pValue)
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - ScructSize: [%zu] - Memory: [%zu]  Type:[%c]\n", CorePartition_GetID(), nValue, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize(), CorePartition_IsSecureByID(CorePartition_GetID()));
+        printf (">> %lu:  Value: [%u] - StructSize: [%zu] - Memory: [%zu]  Type:[%c]\n", CorePartition_GetID(), nValue, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize(), CorePartition_IsSecureByID(CorePartition_GetID()));
         
         nValue = addOne (nValue);
     }
@@ -98,7 +98,7 @@ void Thread2 (void* pValue)
         
         printf ("## %lu:  Value: [%u] - Returning\n", CorePartition_GetID(), nValue);
         
-        CorePartition_Sleep ((uint32_t) 400);
+        CorePartition_Sleep ((uint32_t) 100);
     }
 }
 
@@ -122,6 +122,7 @@ void Thread3 (void* pValue)
 
 static void sleepMSTicks (uint32_t nSleepTime)
 {
+    //printf ("Sleeping: %u\n", nSleepTime);
     usleep ((useconds_t) nSleepTime * 1000);
 }
 
@@ -147,9 +148,9 @@ int main(int argc, const char * argv[])
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread1, NULL, 256, 5000);
-    CorePartition_CreateThread (Thread2, NULL, 256, 1000);
-    CorePartition_CreateSecureThread (Thread3, NULL, 256, 1500);
+    CorePartition_CreateThread (Thread1, NULL, 256, 1302);
+    CorePartition_CreateThread (Thread2, NULL, 256, 100);
+    CorePartition_CreateSecureThread (Thread3, NULL, 256, 500);
     
     CorePartition_Join();
     

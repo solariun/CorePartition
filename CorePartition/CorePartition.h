@@ -293,7 +293,15 @@ extern "C"{
      * 
      * @return size_t numver of threads
      */
-    size_t CorePartition_GetNumberOfThreads(void);
+    size_t CorePartition_GetNumberOfActiveThreads(void);
+
+
+    /**
+     * @brief  Get Max Number of total active Threads
+     * 
+     * @return size_t numver of threads
+     */
+    size_t CorePartition_GetMaxNumberThreads(void);
 
     /**
      * @brief Return the Secure Status for a thread ID

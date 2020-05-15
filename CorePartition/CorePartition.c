@@ -76,7 +76,7 @@ typedef struct
 
 static volatile size_t nMaxThreads = 0;
 static volatile size_t nThreadCount = 0;
-static volatile size_t nRunningThread = 0;
+static volatile size_t nRunningThreads = 0;
 static volatile size_t nCurrentThread;
 
 CoreThread** pCoreThread = NULL;
@@ -276,9 +276,10 @@ static inline size_t Scheduler (void)
     uint32_t nMin;
     size_t nCThread;
     size_t nThread;
-    
+    size_t nCount;
+
     nCurTime = getTime();
-    nCThread = nCurrentThread + 1;
+    nCThread = nCurrentThread+1;
     nThread = nCurrentThread;
     
     srand (nCurTime);
@@ -287,13 +288,12 @@ static inline size_t Scheduler (void)
 #define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
     nMin =  ~((uint32_t)0);
-    
-    for (size_t nCount=0; nCount < nMaxThreads; nCount++, nCThread++)
+    for (nCount=0; nCount < nMaxThreads; nCount++, nCThread++)
     {
         nCThread = nCThread >= nMaxThreads ? 0 : nCThread;
-        
-        //printf ("%s :Max:[%zu) [%u] - (%zu)[%u] - Min: %zu (%u) \n", __FUNCTION__, nMaxThreads, nCurTime, nCThread, (uint32_t) __NEXTIME(nCThread), nThread, pCoreThread [nCThread]->nStatus);
-        
+                
+        //printf ("%zu . nMin:\n", nCThread, nMin);
+
         if (pCoreThread [nCThread] == NULL)
         {
             continue;
@@ -309,12 +309,11 @@ static inline size_t Scheduler (void)
             nThread = nCThread;
             nMin = __CALC (nCThread);
         }
-    }
+    }        /* code */
     
     if (pCoreThread [nThread] != NULL)
     {
-       sleepCTime (nMin);
-        
+        sleepCTime (nMin + 1);
         pCoreThread [nThread]->nLastMomentun = getCTime();
     }
 
@@ -330,7 +329,7 @@ static void CorePartition_StopThread ()
         pCoreThread [nCurrentThread] = NULL;
     }
     
-    nRunningThread--;
+    nRunningThreads--;
 }
 
 
@@ -349,7 +348,7 @@ void CorePartition_Join ()
             {
                 case THREADL_START:
                     
-                    nRunningThread++;
+                    nRunningThreads++;
                     
                     pCoreThread [nCurrentThread]->nStatus = THREADL_RUNNING;
                     
@@ -379,7 +378,7 @@ void CorePartition_Join ()
 
 bool CorePartition_Yield ()
 {
-    if (nRunningThread > 0)
+    if (nRunningThreads > 0)
     {
         pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
         
@@ -489,7 +488,13 @@ uint32_t CorePartition_GetLastMomentumByID (size_t nID)
 }
 
 
-size_t CorePartition_GetNumberOfThreads(void)
+size_t CorePartition_GetNumberOfActiveThreads(void)
+{
+    return nRunningThreads;
+}
+
+
+size_t CorePartition_GetMaxNumberOfThreads(void)
 {
     return nMaxThreads;
 }
@@ -503,7 +508,7 @@ size_t CorePartition_GetThreadContextSize(void)
 
 bool CorePartition_IsCoreRunning(void)
 {
-    return nRunningThread > 0 ? true : false;
+    return nRunningThreads > 0 ? true : false;
 }
 
 

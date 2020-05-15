@@ -160,7 +160,7 @@ void ShowRunningThreads (Stream& client)
     client.println (F("--------------------------------------"));
     client.println (F("ID\tName\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
-    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
     {
         if (CorePartition_GetStatusByID (nCount) > 0)
         {

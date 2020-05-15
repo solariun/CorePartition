@@ -388,7 +388,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println (F("--------------------------------------"));
     Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
-    for (nCount = 0; nCount < CorePartition_GetNumberOfThreads (); nCount++)
+    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
     {
         Serial.print (F("\e[K"));
         Serial.print (nCount);
