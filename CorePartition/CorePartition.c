@@ -314,7 +314,7 @@ static inline size_t Scheduler (void)
     if (pCoreThread [nThread] != NULL)
     {
         sleepCTime (nMin + 1);
-        pCoreThread [nThread]->nLastMomentun = getCTime();
+        pCoreThread [nThread]->nLastMomentun = nCurTime;
     }
 
     return nThread;
@@ -334,16 +334,16 @@ static void CorePartition_StopThread ()
 
 
 void CorePartition_Join ()
-{
-    volatile uint8_t nValue = 0xAA;
-    pStartStck =  (void*) &nValue;
-    
+{    
     if (nThreadCount == 0) return;
  
     do
     {
         if (pCoreThread [nCurrentThread] != NULL)
         {
+             volatile uint8_t nValue = 0xAA;
+             pStartStck =  (void*) &nValue;
+
             if (setjmp(jmpJoinPointer) == 0) switch (pCoreThread [nCurrentThread]->nStatus)
             {
                 case THREADL_START:
@@ -378,45 +378,45 @@ void CorePartition_Join ()
 
 bool CorePartition_Yield ()
 {
-    if (nRunningThreads > 0)
+     volatile uint8_t nValue = 0xBB; 
+
+    if (nRunningThreads == 0)
     {
-        pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
-        
-        volatile uint8_t nValue = 0xBB;
-        pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
-        //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
-        
-        pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
-
-        if (pCoreThread [nCurrentThread]->nStackSize > pCoreThread [nCurrentThread]->nStackMaxSize)
-        {
-            CorePartition_StopThread ();
-            
-            if (stackOverflowHandler != NULL) stackOverflowHandler ();
-            
-            longjmp(jmpJoinPointer, 1);
-        }
-        
-        BackupStack();
-                
-        if (setjmp(pCoreThread [nCurrentThread]->mem.jmpRegisterBuffer) == 0)
-        {
-            longjmp(jmpJoinPointer, 1);
-        }
-        
-        //This existis to re-align after jump alignment optmizations
-        pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
-        //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
-        pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
-
-        RestoreStack();        
-
-        pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
-        
-        return true;
+        return false;
     }
-   
-    return false;
+    pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
+    
+    pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
+    //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
+    
+    pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
+
+    if (pCoreThread [nCurrentThread]->nStackSize > pCoreThread [nCurrentThread]->nStackMaxSize)
+    {
+        CorePartition_StopThread ();
+        
+        if (stackOverflowHandler != NULL) stackOverflowHandler ();
+        
+        longjmp(jmpJoinPointer, 1);
+    }
+    
+    BackupStack();
+            
+    if (setjmp(pCoreThread [nCurrentThread]->mem.jmpRegisterBuffer) == 0)
+    {
+        longjmp(jmpJoinPointer, 1);
+    }
+    
+    //This existis to re-align after jump alignment optmizations
+    pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
+    //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
+    pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
+
+    RestoreStack();        
+
+    pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
+    
+    return true;
 }
 
 
