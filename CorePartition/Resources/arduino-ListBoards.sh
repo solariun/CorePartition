@@ -1,0 +1,1 @@
+arduino-cli board listall

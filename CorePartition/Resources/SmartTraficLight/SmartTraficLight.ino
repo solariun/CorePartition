@@ -67,7 +67,7 @@ struct
 
 uint32_t  nTime = 0;
 
-void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
+void __attribute__ ((noinline)) SetLocation (uint16_t nY, uint16_t nX)
 {
     uint8_t szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
@@ -77,7 +77,7 @@ void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
 
 
 //workis with 256 colors
-void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void __attribute__ ((noinline)) SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
     byte szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
@@ -86,31 +86,31 @@ void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t 
 }
 
 
-void __attribute__ ((noinline)) resetColor ()
+void __attribute__ ((noinline)) ResetColor ()
 {
     Serial.print (F("\033[0m"));
 }
 
 
-void __attribute__ ((noinline)) hideCursor ()
+void __attribute__ ((noinline)) HideCursor ()
 {
     Serial.print (F("\033[?25l"));
 }
 
 
-void __attribute__ ((noinline)) showCursor ()
+void __attribute__ ((noinline)) ShowCursor ()
 {
     Serial.print (F("\033[?25h"));
 }
 
 
-void __attribute__ ((noinline)) clearConsole ()
+void __attribute__ ((noinline)) ClearConsole ()
 {
     Serial.print (F("\033[2J")); 
 }
 
 
-void __attribute__ ((noinline)) reverseColor ()
+void __attribute__ ((noinline)) ReverseColor ()
 {
     Serial.print (F("\033[7m"));   
 }
@@ -177,7 +177,7 @@ public:
        {
            if (boolRedraw == true)
            {
-               hideCursor ();
+               HideCursor ();
                Serial.print (F("\r\033[0m[\033["));
                
                Serial.print (TraficLightData.boolRedLight ? 91 :
@@ -192,7 +192,7 @@ public:
                
                Serial.print (F(" \033[0m]\033[92mTraficLigth \033[94m>\033[0m "));
                Serial.print (pszCommand);
-               showCursor ();
+               ShowCursor ();
                Serial.flush ();
            }
            
@@ -316,13 +316,15 @@ void TraficLight (void* pValue)
     pinMode (TraficLightData.nYellowLightPin, OUTPUT);
     pinMode (TraficLightData.nGreenLightPin, OUTPUT);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         nBlink = nBlink ^ 1;
         
-            digitalWrite (TraficLightData.nRedLightPin, TraficLightData.boolRedLight == true ? HIGH : LOW);
-            digitalWrite (TraficLightData.nYellowLightPin, TraficLightData.boolAttention == true ? nBlink ? HIGH : LOW : TraficLightData.boolYellowLight == true ? HIGH : LOW);
-            digitalWrite (TraficLightData.nGreenLightPin, TraficLightData.boolGreenLight == true ? HIGH : LOW);
+        digitalWrite (TraficLightData.nRedLightPin, TraficLightData.boolRedLight == true ? HIGH : LOW);
+        digitalWrite (TraficLightData.nYellowLightPin, TraficLightData.boolAttention == true ? nBlink ? HIGH : LOW : TraficLightData.boolYellowLight == true ? HIGH : LOW);
+        digitalWrite (TraficLightData.nGreenLightPin, TraficLightData.boolGreenLight == true ? HIGH : LOW);
+
+        CorePartition_Yield ();
     }
 }
 
@@ -335,7 +337,7 @@ void WalkerSign (void* pValue)
     pinMode (TraficLightData.nWalkerWaitPin, OUTPUT);
     pinMode (TraficLightData.nWalkerGoPin, OUTPUT);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         if (TraficLightData.boolAttention == true)
         {
@@ -375,6 +377,8 @@ void WalkerSign (void* pValue)
             digitalWrite (TraficLightData.nWalkerWaitPin, nBlink ? HIGH : LOW);
             digitalWrite (TraficLightData.nWalkerGoPin, LOW);
         }
+
+        CorePartition_Yield ();
     }
 }
 
@@ -481,9 +485,9 @@ void Terminal (void* pValue)
             bool    boolPrintPrompt = true;
             
             
-            resetColor();
-            setLocation(1,1);
-            clearConsole ();
+            ResetColor();
+            SetLocation(1,1);
+            ClearConsole ();
             
             Serial.println (F("Trafic Light Manager v1.0"));
             Serial.println (F("By Gustavo Campos"));
@@ -646,7 +650,7 @@ void  TraficLightKernel (void* pValue)
     
     nTime=0;
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         nTimeCounter += nFactor;
         
@@ -676,6 +680,8 @@ void  TraficLightKernel (void* pValue)
         {
             setTraficLights (false, false, true);
         }
+
+        CorePartition_Yield ();
     }
 
 }

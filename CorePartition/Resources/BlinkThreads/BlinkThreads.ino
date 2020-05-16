@@ -141,9 +141,10 @@ void WhachDog (void* pValue)
 {
     Serial.begin(230400);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         ShowRunningThreads ();
+        CorePartition_Yield ();
     }
 }
 #endif

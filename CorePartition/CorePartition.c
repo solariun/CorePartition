@@ -376,47 +376,45 @@ void CorePartition_Join ()
 }
 
 
-bool CorePartition_Yield ()
+void CorePartition_Yield ()
 {
-     volatile uint8_t nValue = 0xBB; 
-
-    if (nRunningThreads == 0)
+    if (nRunningThreads != 0)
     {
-        return false;
-    }
-    pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
-    
-    pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
-    //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
-    
-    pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
+        volatile uint8_t nValue = 0xBB; 
 
-    if (pCoreThread [nCurrentThread]->nStackSize > pCoreThread [nCurrentThread]->nStackMaxSize)
-    {
-        CorePartition_StopThread ();
-        
-        if (stackOverflowHandler != NULL) stackOverflowHandler ();
-        
-        longjmp(jmpJoinPointer, 1);
-    }
+        pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
     
-    BackupStack();
+        pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
+        //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
+        
+        pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
+
+        if (pCoreThread [nCurrentThread]->nStackSize > pCoreThread [nCurrentThread]->nStackMaxSize)
+        {
+            CorePartition_StopThread ();
             
-    if (setjmp(pCoreThread [nCurrentThread]->mem.jmpRegisterBuffer) == 0)
-    {
-        longjmp(jmpJoinPointer, 1);
+            if (stackOverflowHandler != NULL) stackOverflowHandler ();
+            
+            longjmp(jmpJoinPointer, 1);
+        }
+        
+        BackupStack();
+                
+        if (setjmp(pCoreThread [nCurrentThread]->mem.jmpRegisterBuffer) == 0)
+        {
+            longjmp(jmpJoinPointer, 1);
+        }
+        
+        //This existis to re-align after jump alignment optmizations
+        pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
+        //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
+        pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
+
+        RestoreStack();        
+
+        pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
     }
-    
-    //This existis to re-align after jump alignment optmizations
-    pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
-    //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
-    pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
 
-    RestoreStack();        
-
-    pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
-    
-    return true;
 }
 
 

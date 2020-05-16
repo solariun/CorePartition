@@ -77,13 +77,15 @@ void TraficLight (void* pValue)
     pinMode (TraficLightData.nYellowLightPin, OUTPUT);
     pinMode (TraficLightData.nGreenLightPin, OUTPUT);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         nBlink = nBlink ^ 1;
         
             digitalWrite (TraficLightData.nRedLightPin, TraficLightData.boolRedLight == true ? HIGH : LOW);
             digitalWrite (TraficLightData.nYellowLightPin, TraficLightData.boolAttention == true ? nBlink ? HIGH : LOW : TraficLightData.boolYellowLight == true ? HIGH : LOW);
             digitalWrite (TraficLightData.nGreenLightPin, TraficLightData.boolGreenLight == true ? HIGH : LOW);
+
+            CorePartition_Yield ();
     }
 }
 
@@ -96,7 +98,7 @@ void WalkerSign (void* pValue)
     pinMode (TraficLightData.nWalkerWaitPin, OUTPUT);
     pinMode (TraficLightData.nWalkerGoPin, OUTPUT);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         if (TraficLightData.boolAttention == true)
         {
@@ -136,6 +138,8 @@ void WalkerSign (void* pValue)
             digitalWrite (TraficLightData.nWalkerWaitPin, nBlink ? HIGH : LOW);
             digitalWrite (TraficLightData.nWalkerGoPin, LOW);
         }
+
+        CorePartition_Yield ();
     }
 }
 
@@ -158,7 +162,7 @@ void  TraficLightKernel (void* pValue)
     
     nTime=0;
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         nTimeCounter += nFactor;
         
@@ -188,6 +192,8 @@ void  TraficLightKernel (void* pValue)
         {
             setTraficLights (false, false, true);
         }
+
+        CorePartition_Yield ();
     }
 
 }

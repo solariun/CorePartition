@@ -38,7 +38,7 @@
 #include "Arduino.h"
 #include "CorePartition.h"
 
-void setLocation (uint16_t nY, uint16_t nX)
+void SetLocation (uint16_t nY, uint16_t nX)
 {
     byte szTemp [10];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uf", nY, nX);
@@ -48,7 +48,7 @@ void setLocation (uint16_t nY, uint16_t nX)
 
 
 //workis with 256 colors
-void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
     byte szTemp [10];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
@@ -57,31 +57,31 @@ void setColor (const uint8_t nFgColor, const uint8_t nBgColor)
 }
 
 
-void resetColor ()
+void ResetColor ()
 {
     Serial.print ("\033[0m");
 }
 
 
-void hideCursor ()
+void HideCursor ()
 {
     Serial.print ("\033[?25l");
 }
 
 
-void showCursor ()
+void ShowCursor ()
 {
     Serial.print ("\033[?25h");
 }
 
 
-void clearConsole ()
+void ClearConsole ()
 {
     Serial.print ("\033[2J"); 
 }
 
 
-void reverseColor ()
+void ReverseColor ()
 {
     Serial.print ("\033[7m");   
 }
@@ -187,7 +187,7 @@ protected:
            nRow >>= 1;
         }
 
-        setLocation (nLocY + nRowIndex, nLocX + (nDigit * 9));
+        SetLocation (nLocY + nRowIndex, nLocX + (nDigit * 9));
         Serial.print (nLine);
         //Serial.print (nTmp, BIN);
     }
@@ -288,18 +288,19 @@ void ThreadTOP (void* pValue)
 {
     int nCounter = 0;
     
-    while (CorePartition_Yield ())
+    while (true)
     {
-        resetColor ();
+        ResetColor ();
         
-        setLocation (45, 10);
+        SetLocation (45, 10);
         
         Serial.println (nCounter++);
         
         ShowRunningThreads ();
         
         Serial.flush ();
-        Serial.flush ();
+
+        CorePartition_Yield ()
     }
 }
 
@@ -318,15 +319,17 @@ void Thread1 (void* pValue)
     TextScroller textScroller (15, 8);
 
     
-    while (CorePartition_Yield ())
+    while (true)
     {
-        setColor (1, 0);
+        SetColor (1, 0);
         
         nSize = snprintf (szMessage, sizeof (szMessage) -1, "Thread #1: (%d) .", nValue++);
         
         textScroller.show (5, 7, szMessage, nSize);
 
         Serial.flush ();
+
+        CorePartition_Yield ();
     }
 }
 
@@ -339,13 +342,15 @@ void Thread2 (void* pValue)
         
     TextScroller textScroller (15, 8);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
-        setColor (4, 0);
+        SetColor (4, 0);
         
         textScroller.show (15, 7, szMessage, sizeof (szMessage) - 1);
         
         Serial.flush ();
+
+        CorePartition_Yield ();
     }
 }
 
@@ -358,13 +363,15 @@ void Thread3 (void* pValue)
     TextScroller textScroller (15, 8);
 
     
-    while (CorePartition_Yield ())
+    while (true)
     {
-        setColor (3, 0);
+        SetColor (3, 0);
         
         textScroller.show (25, 10, szMessage, sizeof (szMessage) - 1);
         
         Serial.flush ();
+
+        CorePartition_Yield ();
     }
 }
 
@@ -376,13 +383,15 @@ void Thread4 (void* pValue)
         
     TextScroller textScroller (15, 8);
     
-    while (CorePartition_Yield ())
+    while (true)
     {
-        setColor (2, 0);
+        SetColor (2, 0);
         
         textScroller.show (35, 10, szMessage, sizeof (szMessage) - 1);
         
         Serial.flush ();
+
+        CorePartition_Yield ();
     }
 }
 
@@ -422,10 +431,10 @@ void setup()
     
     delay (1000);
    
-    setLocation (1,1);
-    resetColor ();
-    hideCursor ();
-    clearConsole ();
+    SetLocation (1,1);
+    ResetColor ();
+    HideCursor ();
+    ClearConsole ();
     
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);

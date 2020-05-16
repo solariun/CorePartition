@@ -700,7 +700,7 @@ void TelnetListener (void* pValue)
     Serial.printf(" %d' to connect\n", port);
     
     
-    while (CorePartition_Yield ())
+    while (true)
     {
         if (server.hasClient())
         {
@@ -720,6 +720,8 @@ void TelnetListener (void* pValue)
                 Serial.printf("server is busy with %d active connections\n", MAX_SRV_CLIENTS);
             }
         }
+
+        CorePartition_Yield ();
     }
 }
 
@@ -736,7 +738,7 @@ void SerialTerminalHandler (void* injection)
     CommandShow commandShow;
     serial.AssignCommand (commandShow);
 
-    while (CorePartition_Yield ())
+    while (true)
     {
         serial.ExecuteMOTD ();
 

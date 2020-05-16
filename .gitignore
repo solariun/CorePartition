@@ -1,4 +1,10 @@
+*.xcodeproj
 *.o
 *.bin
 *.elf
+*.out
+*.hex
+*.jlink
 .DS_Store
+._.DS_Store
+.jlink

@@ -113,7 +113,7 @@ int CLK = 10; //SS
 LedControl lc=LedControl(DIN,CLK,CS, MAX_LED_MATRIX);
 
 
-void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
+void __attribute__ ((noinline)) SetLocation (uint16_t nY, uint16_t nX)
 {
     uint8_t szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
@@ -123,7 +123,7 @@ void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
 
 
 //workis with 256 colors
-void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void __attribute__ ((noinline)) SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
     byte szTemp [15];
     uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
@@ -132,31 +132,31 @@ void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t 
 }
 
 
-void resetColor ()
+void ResetColor ()
 {
     Serial.print ("\033[0m");
 }
 
 
-void hideCursor ()
+void HideCursor ()
 {
     Serial.print ("\033[?25l");
 }
 
 
-void showCursor ()
+void ShowCursor ()
 {
     Serial.print ("\033[?25h");
 }
 
 
-void clearConsole ()
+void ClearConsole ()
 {
     Serial.print ("\033[2J"); 
 }
 
 
-void reverseColor ()
+void ReverseColor ()
 {
     Serial.print ("\033[7m");   
 }
@@ -290,7 +290,7 @@ protected:
            nRow >>= 1;
         }
 
-        setLocation (nLocY + nRowIndex, nLocX + (nDigit * 8));
+        SetLocation (nLocY + nRowIndex, nLocX + (nDigit * 8));
         Serial.print (nLine);
     }
 
@@ -409,8 +409,8 @@ void Thread2 (void* pValue)
             fMax = MAX (fMax, pixels[i-1]);      
           }
 
-          setLocation (1,1);
-          resetColor ();
+          SetLocation (1,1);
+          ResetColor ();
           
           for(int i=AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
           {
@@ -422,7 +422,7 @@ void Thread2 (void* pValue)
             if( (i-1)%8 == 0 ) Serial.println();
           }
     
-          setLocation (10, 1);
+          SetLocation (10, 1);
           ShowRunningThreads ();
           
           Serial.flush();
@@ -465,10 +465,10 @@ void setup()
     //Initialize serial and wait for port to open:
     Serial.begin(230400);
 
-    resetColor ();
-    clearConsole ();
-    setLocation (1,1);
-    hideCursor ();
+    ResetColor ();
+    ClearConsole ();
+    SetLocation (1,1);
+    HideCursor ();
     
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);

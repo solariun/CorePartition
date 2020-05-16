@@ -40,52 +40,56 @@
 #include "Arduino.h"
 
 
-void __attribute__ ((noinline)) setLocation (uint16_t nY, uint16_t nX)
+void SetLocation (uint16_t nY, uint16_t nX)
 {
-    uint8_t szTemp [15];
-    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%uH", nY, nX);
-
-    Serial.write (szTemp, nLen);
-    Serial.flush();
+    Serial.print ("\e[");
+    Serial.print (nY);
+    Serial.print (";");
+    Serial.print (nX);
+    Serial.print ("H");
 }
 
 
 //works with 256 colors
-void __attribute__ ((noinline)) setColor (const uint8_t nFgColor, const uint8_t nBgColor)
+void SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
 {
-    byte szTemp [15];
-    uint8_t nLen = snprintf ((char*) szTemp, sizeof(szTemp), "\033[%u;%um", nFgColor + 30, nBgColor + 40);
-
-    Serial.write (szTemp, nLen);
-    Serial.flush();
+    Serial.print ("\e[");
+    Serial.print (nFgColor + 30);
+    Serial.print (";");
+    Serial.print (nBgColor + 40);
+    Serial.print ("m");
 }
 
+void ClearCurrentLine ()
+{
+    Serial.print ("\e[K");
+}
 
-void __attribute__ ((noinline)) resetColor ()
+void ResetColor ()
 {
     Serial.print (F("\033[0m"));
 }
 
 
-void __attribute__ ((noinline)) hideCursor ()
+void HideCursor ()
 {
     Serial.print (F("\033[?25l"));
 }
 
 
-void __attribute__ ((noinline)) showCursor ()
+void ShowCursor ()
 {
     Serial.print (F("\033[?25h"));
 }
 
 
-void __attribute__ ((noinline)) clearConsole ()
+void ClearConsole ()
 {
     Serial.print (F("\033[2J"));
 }
 
 
-void __attribute__ ((noinline)) reverseColor ()
+void ReverseColor ()
 {
     Serial.print (F("\033[7m"));
 }
@@ -104,7 +108,7 @@ void Delay (uint64_t nSleep)
 
 
 
-void __attribute__ ((noinline)) ShowRunningThreads ()
+void ShowRunningThreads ()
 {
     size_t nCount = 0;
     
@@ -141,9 +145,11 @@ void CounterThread (void* pValue)
 {
     uint32_t* pnValue = (uint32_t*) pValue;
 
-    while (CorePartition_Yield ())
+    while (true)
     {
         pnValue[0] ++;
+
+        CorePartition_Yield ();
     }
 }
 
@@ -155,9 +161,10 @@ void Thread (void* pValue)
 
     while (1)
     {
-        setLocation (5,5);
+        SetLocation (5,5);
+        ClearCurrentLine ();
 
-        Serial.print ("\e[K>> Thread");
+        Serial.print (">>Thread");
         Serial.print (CorePartition_GetID()+1);
         Serial.print (": [");
         Serial.print (pnValues [0]);
@@ -184,7 +191,7 @@ void Thread (void* pValue)
         Serial.flush ();
         CorePartition_Yield ();
 
-        setLocation (8,1);
+        SetLocation (8,1);
         ShowRunningThreads ();
 
         Serial.flush ();
@@ -200,31 +207,39 @@ void Thread (void* pValue)
 
 void eventualThread (void* pValue)
 {
-    int nValue = 0;
-    unsigned long nLast = millis ();
+    uint32_t nValue = 0;
+    uint32_t nLast = getTimeTick ();
+    
+    SetLocation (6,5);
+    ClearCurrentLine ();
 
-    setLocation (6,5);
-    Serial.print ("\e[K>> Eventual Thread");
-    Serial.print (CorePartition_GetID()+1);
+    Serial.print (">> Eventual Thread");
+    Serial.print (CorePartition_GetID());
     Serial.print (": Requested, Starting Up...");
 
-    while (nValue <= 5)
-    {
-        CorePartition_Yield ();
-        
-        setLocation (6,5);
+    CorePartition_Yield ();
 
-        Serial.print ("\e[K>> Eventual Thread");
+    while (nValue <= 5)
+    {   
+        SetLocation (6,5);
+        ClearCurrentLine ();
+
+        Serial.print (" Eventual Thread");
         Serial.print (CorePartition_GetID()+1);
         Serial.print (": ");
-        Serial.print (++nValue);
+        Serial.print (nValue++);
         Serial.print (F(", Sleep Time: "));
-        Serial.print ((uint32_t) CorePartition_GetLastMomentum () - nLast); nLast = CorePartition_GetLastMomentum ();
+        Serial.print (CorePartition_GetLastMomentum () - nLast); 
+
+        nLast = CorePartition_GetLastMomentum ();
         Serial.println (F("ms\n"));
 
+        CorePartition_Yield ();
     }
 
-    setLocation (6,5);
+    SetLocation (6,5);
+    ClearCurrentLine ();
+
     Serial.print ("\e[K>> Eventual Thread");
     Serial.print (CorePartition_GetID()+1);
     Serial.print (": Thread done!");
@@ -272,10 +287,10 @@ void setup()
     
     delay (1000);
 
-    resetColor ();
-    clearConsole ();
-    hideCursor ();
-    setLocation (1,1);
+    ResetColor ();
+    ClearConsole ();
+    HideCursor ();
+    SetLocation (1,1);
 
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
@@ -291,11 +306,11 @@ void setup()
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
 
-    CorePartition_CreateThread (CounterThread, &nValues [0], 25 * sizeof (size_t), 0);
+    CorePartition_CreateThread (CounterThread, &nValues [0], 20 * sizeof (size_t), 0);
     
-    CorePartition_CreateThread (CounterThread, &nValues [1], 25 * sizeof (size_t), 50);
+    CorePartition_CreateThread (CounterThread, &nValues [1], 20 * sizeof (size_t), 50);
 
-    CorePartition_CreateThread (CounterThread, &nValues [2], 25 * sizeof (size_t), 200);
+    CorePartition_CreateThread (CounterThread, &nValues [2], 20 * sizeof (size_t), 200);
 
     CorePartition_CreateThread (Thread, nValues, 25 * sizeof (size_t), 100);
 
