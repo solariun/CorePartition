@@ -157,7 +157,7 @@ void Thread (void* pValue)
     {
         setLocation (5,5);
 
-        Serial.print (">> Thread");
+        Serial.print ("\e[K>> Thread");
         Serial.print (CorePartition_GetID()+1);
         Serial.print (": [");
         Serial.print (pnValues [0]);
@@ -179,12 +179,15 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetMaxStackSize ());
         Serial.print (", DutyCycle Time: ");
         Serial.print (CorePartition_GetLastDutyCycle ());
-        Serial.println ("ms\n");
+        Serial.println ("ms\n\n");
+        
+        Serial.flush ();
+        CorePartition_Yield ();
 
+        setLocation (8,1);
         ShowRunningThreads ();
 
         Serial.flush ();
-
         CorePartition_Yield ();
         
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
@@ -200,9 +203,8 @@ void eventualThread (void* pValue)
     int nValue = 0;
     unsigned long nLast = millis ();
 
-    Serial.print ("\e[");
-    Serial.print ((CorePartition_GetID()*2) + 6);
-    Serial.print (";10H\e[K>> Eventual Thread");
+    setLocation (6,5);
+    Serial.print ("\e[K>> Eventual Thread");
     Serial.print (CorePartition_GetID()+1);
     Serial.print (": Requested, Starting Up...");
 
@@ -210,9 +212,9 @@ void eventualThread (void* pValue)
     {
         CorePartition_Yield ();
         
-        Serial.print ("\e[");
-        Serial.print ((CorePartition_GetID()*2) + 6);
-        Serial.print (";10H\e[K>> Eventual Thread");
+        setLocation (6,5);
+
+        Serial.print ("\e[K>> Eventual Thread");
         Serial.print (CorePartition_GetID()+1);
         Serial.print (": ");
         Serial.print (++nValue);
@@ -221,10 +223,9 @@ void eventualThread (void* pValue)
         Serial.println (F("ms\n"));
 
     }
-    
-    Serial.print ("\e[");
-    Serial.print ((CorePartition_GetID()*2) + 6);
-    Serial.print (";10H\e[K>> Eventual Thread");
+
+    setLocation (6,5);
+    Serial.print ("\e[K>> Eventual Thread");
     Serial.print (CorePartition_GetID()+1);
     Serial.print (": Thread done!");
         
