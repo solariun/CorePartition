@@ -71,7 +71,7 @@ Be AWARE comes with no warrant or guarantees, since I still have a limited numbe
 
 ## Important
     
-     If possible a HIGHLY RECOMMEND implementing the momentum with a proper time. It will ensure stability and the developer will be able to use time to control thread process
+     If possible it is  HIGHLY RECOMMEND to implement the momentum with a proper time function. It will ensure stability and the developer will be able to use time to control thread process
    
 Tested at:
 

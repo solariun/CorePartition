@@ -224,8 +224,8 @@ void eventualThread (void* pValue)
         SetLocation (6,5);
         ClearCurrentLine ();
 
-        Serial.print (" Eventual Thread");
-        Serial.print (CorePartition_GetID()+1);
+        Serial.print (">> Eventual Thread");
+        Serial.print (CorePartition_GetID());
         Serial.print (": ");
         Serial.print (nValue++);
         Serial.print (F(", Sleep Time: "));
@@ -240,8 +240,8 @@ void eventualThread (void* pValue)
     SetLocation (6,5);
     ClearCurrentLine ();
 
-    Serial.print ("\e[K>> Eventual Thread");
-    Serial.print (CorePartition_GetID()+1);
+    Serial.print (">> Eventual Thread");
+    Serial.print (CorePartition_GetID());
     Serial.print (": Thread done!");
         
     CorePartition_Yield ();
