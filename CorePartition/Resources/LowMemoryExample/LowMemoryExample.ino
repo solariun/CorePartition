@@ -110,35 +110,37 @@ void Delay (uint64_t nSleep)
 
 void ShowRunningThreads ()
 {
-    size_t ThreadID = 0;
+    size_t nThreadID = 0;
     
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
     Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime\tName"));
     
-    for (ThreadID = 0; ThreadID < CorePartition_GetNumberOfActiveThreads (); ThreadID++)
+    for (nThreadID = 0; nThreadID < CorePartition_GetMaxNumberOfThreads (); nThreadID++)
     {
         Serial.print (F("\e[K"));
-        Serial.print (ThreadID);
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetStatusByID (ThreadID));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetNiceByID (ThreadID));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetStackSizeByID (ThreadID));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (ThreadID));
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (ThreadID) + CorePartition_GetThreadContextSize ());
-        Serial.print (F("\t"));
-        Serial.print (CorePartition_GetLastDutyCycleByID (ThreadID));
-        Serial.print ("ms\t\t");
-        Serial.print (CorePartition_GetThreadNameByID (ThreadID));
-        Serial.println ();
-
+        if (CorePartition_GetStatusByID (nThreadID) != THREADL_NONE)
+        {
+            Serial.print (nThreadID);
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetStatusByID (nThreadID));
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetNiceByID (nThreadID));
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetStackSizeByID (nThreadID));
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetMaxStackSizeByID (nThreadID));
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetThreadContextSize ());
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetMaxStackSizeByID (nThreadID) + CorePartition_GetThreadContextSize ());
+            Serial.print (F("\t"));
+            Serial.print (CorePartition_GetLastDutyCycleByID (nThreadID));
+            Serial.print ("ms\t\t");
+            Serial.print (CorePartition_GetThreadNameByID (nThreadID));
+        }
+        Serial.println ("\e[0K");
     }
 }
 
@@ -158,6 +160,7 @@ void CounterThread (void* pValue)
     }
 }
 
+
 void Thread (void* pValue)
 {
     unsigned long nLast = millis();
@@ -169,7 +172,6 @@ void Thread (void* pValue)
     while (1)
     {
         SetLocation (5,5);
-        ClearCurrentLine ();
 
         Serial.print (">>Thread");
         Serial.print (CorePartition_GetID()+1);
@@ -193,7 +195,7 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetMaxStackSize ());
         Serial.print (", DutyCycle Time: ");
         Serial.print (CorePartition_GetLastDutyCycle ());
-        Serial.println ("ms\n\n");
+        Serial.println ("ms\e[0k\n\n");
         
         Serial.flush ();
         CorePartition_Yield ();
@@ -212,6 +214,7 @@ void Thread (void* pValue)
     }
 }
 
+
 void eventualThread (void* pValue)
 {
     uint32_t nValue = 0;
@@ -220,7 +223,6 @@ void eventualThread (void* pValue)
     CorePartition_SetThreadName ("Eventual", 8);
 
     SetLocation (6,5);
-    ClearCurrentLine ();
 
     Serial.print (">> Eventual Thread");
     Serial.print (CorePartition_GetID());
@@ -231,7 +233,6 @@ void eventualThread (void* pValue)
     while (nValue <= 5)
     {   
         SetLocation (6,5);
-        ClearCurrentLine ();
 
         Serial.print (">> Eventual Thread");
         Serial.print (CorePartition_GetID());
@@ -241,7 +242,7 @@ void eventualThread (void* pValue)
         Serial.print (CorePartition_GetLastMomentum () - nLast); 
 
         nLast = CorePartition_GetLastMomentum ();
-        Serial.println (F("ms\n"));
+        Serial.println (F("ms\e[0K\n"));
 
         CorePartition_Yield ();
     }
@@ -283,7 +284,6 @@ void StackOverflowHandler ()
 }
 
 
-
 uint32_t nValues [3] = { 0, 0, 0 };    
 
 
@@ -320,9 +320,7 @@ void setup()
     CorePartition_CreateThread (CounterThread, &nValues [2], 20 * sizeof (size_t), 200);
 
     CorePartition_CreateThread (Thread, nValues, 25 * sizeof (size_t), 100);
-
 }
-
 
 
 void loop()
