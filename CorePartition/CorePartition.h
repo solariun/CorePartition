@@ -328,17 +328,34 @@ extern "C"{
      * 
      * @return false        if the size is zero or name is null 
      */
-    bool CorePartition_SetThreadName (size_t nID, const char* pszName, uint8_t nNameSize);
+    bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize);
 
-
+    /**
+     * @brief Set current thread name
+     * 
+     * @param pszName       String with the new thread name
+     * @param nSize         Size of the string with the Thread name
+     * 
+     * @return  false       if the data is null
+     */
+    #define CorePartition_SetThreadName(pszName, nNameSize) CorePartition_SetThreadNameByID (CorePartition_GetID (), pszName, nNameSize)
+            
     /**
      * @brief Get the thread name of a specific Thread ID
      * 
      * @param nID   Thread ID to return the name
      * 
-     * @return const char*  The associated name;
+     * @return const char*  The associated thread's name;
      */
-    const char* CorePartition_GetThreadName (size_t nID);
+    const char* CorePartition_GetThreadNameByID (size_t nID);
+
+    /**
+     * @brief Get the current thread name
+     * 
+     * @return      const char* The associated thread's name 
+     */
+    #define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
+
 
 #ifdef __cplusplus
 } // extern "C"

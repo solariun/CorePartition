@@ -166,7 +166,7 @@ void ShowRunningThreads (Stream& client)
         {
             client.print (F("\e[K"));
             client.print (nCount);
-            client.printf ("\t%-8s", CorePartition_GetThreadName (nCount));
+            client.printf ("\t%-8s", CorePartition_GetThreadNameByID (nCount));
             client.print (F("\t"));
             client.print (CorePartition_GetStatusByID (nCount));
             client.print (CorePartition_IsSecureByID (nCount));
@@ -426,7 +426,7 @@ void LedDisplayShow (void* pValue)
     unsigned long start = millis();
     size_t nValue = 0;
     
-    CorePartition_SetThreadName (CorePartition_GetID (), "Display", 7);
+    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Display", 7);
 
     uint8_t a = 0;
     uint8_t b = 0;
@@ -613,7 +613,7 @@ class CommandDisplay : public Terminal::Command
 
 void ClientHandler (void* pSrvClient)
 {
-    CorePartition_SetThreadName (CorePartition_GetID (), "R_Client", 8);
+    CorePartition_SetThreadNameByID (CorePartition_GetID (), "R_Client", 8);
     pSrvClient;
     
     WiFiClient client = server.available ();
@@ -651,7 +651,7 @@ void ClientHandler (void* pSrvClient)
 /// @param pValue Information injected from CorePartition on startup
 void TelnetListener (void* pValue)
 {
-    CorePartition_SetThreadName (CorePartition_GetID (), "Listener", 8);
+    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Listener", 8);
     WiFi.mode(WIFI_STA);
     
     WiFi.begin(ssid, password);
@@ -728,7 +728,7 @@ void TelnetListener (void* pValue)
 
 void SerialTerminalHandler (void* injection)
 {
-    CorePartition_SetThreadName (CorePartition_GetID (), "Terminal", 8);
+    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Terminal", 8);
 
     Terminal serial (reinterpret_cast<Stream&>(Serial));
 

@@ -192,7 +192,7 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
         return false;
     }
 
-    CorePartition_SetThreadName (nThread, "thread", 6);
+    CorePartition_SetThreadNameByID (nThread, "thread", 6);
 
     //adjust the size to be mutiple of the size_t length
     pCoreThread [nThread]->nStackMaxSize = nStackMaxSize + (nStackMaxSize % sizeof (size_t));
@@ -241,7 +241,11 @@ inline static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t
 {
     const uint8_t* nTop = (const uint8_t*) pSource + nSize;
 
-    if (pCoreThread [nCurrentThread]->nIsolation != 0)
+    if (pCoreThread [nCurrentThread]->nIsolation == 0)
+    {
+        memcpy((void*)pDestine, (const void*) pSource, nSize);
+    }
+    else
     {
         srand(pCoreThread [nCurrentThread]->nLastBackup);
         
@@ -251,9 +255,7 @@ inline static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t
             pSource++; 
             pDestine++;
         }
-    }
-    else
-        memcpy((void*)pDestine, (const void*) pSource, nSize);
+    }   
 }
 
 
@@ -321,27 +323,28 @@ static inline size_t Scheduler (void)
 }
 
 
-static void CorePartition_StopThread ()
+inline static void CorePartition_StopThread ()
 {
     if (pCoreThread [nCurrentThread] != NULL)
     {
         free (pCoreThread [nCurrentThread]);
         pCoreThread [nCurrentThread] = NULL;
+
+        nRunningThreads--;
     }
-    
-    nRunningThreads--;
 }
 
 
 void CorePartition_Join ()
 {    
+    volatile uint8_t nValue = 0xAA;
+
     if (nThreadCount == 0) return;
  
     do
     {
         if (pCoreThread [nCurrentThread] != NULL)
         {
-             volatile uint8_t nValue = 0xAA;
              pStartStck =  (void*) &nValue;
 
             if (setjmp(jmpJoinPointer) == 0) switch (pCoreThread [nCurrentThread]->nStatus)
@@ -356,7 +359,13 @@ void CorePartition_Join ()
                     
                     CorePartition_StopThread ();
                     
-                    break;
+                    /* the use of continue here is 
+                     * to force memory realignment for the 
+                     * stack starting, do not replace to Break
+                     * can break freeRTOS stack control 
+                     */
+                    
+                    continue;
                     
                 case THREADL_RUNNING:
                 case THREADL_SLEEP:
@@ -516,7 +525,7 @@ void CorePartition_SetNice (uint32_t nNice)
 }
 
 
-bool CorePartition_SetThreadName (size_t nID, const char* pszName, uint8_t nNameSize)
+bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize)
 {
     if (NULL != pszName && nNameSize > 0)
     {
@@ -533,7 +542,7 @@ bool CorePartition_SetThreadName (size_t nID, const char* pszName, uint8_t nName
 }
 
 
-const char* CorePartition_GetThreadName (size_t nID)
+const char* CorePartition_GetThreadNameByID (size_t nID)
 {
      return (nID >= nMaxThreads || NULL == pCoreThread [nID]) ? "-" : pCoreThread [nID]->pszThreadName;
 }
