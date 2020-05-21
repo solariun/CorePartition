@@ -1,0 +1,48 @@
+#######################################
+# Syntax Coloring Map For Test
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Test	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+CorePartition_CreateSecureThread        KEYWORD2
+CorePartition_CreateThread      KEYWORD2
+CorePartition_GetID     KEYWORD2
+CorePartition_GetLastDutyCycleByID      KEYWORD2
+CorePartition_GetLastMomentumByID       KEYWORD2
+CorePartition_GetNiceByID       KEYWORD2
+CorePartition_GetStackSizeByID  KEYWORD2
+CorePartition_GetStatusByID     KEYWORD2
+CorePartition_GetThreadContextSize      KEYWORD2
+CorePartition_GetThreadName     KEYWORD2
+CorePartition_GetThreadNameByID KEYWORD2
+CorePartition_IsSecureByID      KEYWORD2
+CorePartition_Join      KEYWORD2
+CorePartition_SetCurrentTimeInterface   KEYWORD2
+CorePartition_SetNice   KEYWORD2
+CorePartition_SetSleepTimeInterface     KEYWORD2
+CorePartition_SetStackOverflowHandler   KEYWORD2
+CorePartition_SetThreadNameByID KEYWORD2
+CorePartition_Sleep     KEYWORD2
+CorePartition_Start     KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+THREADL_NONE        LITERAL1
+THREADL_START       LITERAL1
+THREADL_RUNNING     LITERAL1
+THREADL_SLEEP       LITERAL1
+THREADL_STOPPED     LITERAL1
