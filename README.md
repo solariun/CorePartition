@@ -1,6 +1,6 @@
 # CorePartition
 
-Version 2.5
+Version 2.5.1
 
 ![License information](https://raw.githubusercontent.com/solariun/CorePartition/master/License.png)
 
