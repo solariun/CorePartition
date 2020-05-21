@@ -23,15 +23,19 @@
 
 
 CC=gcc
-src = $(wildcard *.c)
-srcpp = $(wildcard *.cpp)
+CPP=g++
+src = $(wildcard *.c) $(wildcard ../*.c) 
+srcpp = $(wildcard *.cpp) 
 obj = $(src:.c=.o) $(srcpp:.cpp=.o)
-
+INC=-I../
+DEPS=CorePartition.h
 TARGET = CorePartition.bin
 LDFLAGS = -lm 
 
+
+
 $(TARGET): $(obj)
-	$(CC) -Os -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $< $(LDFLAGS) 
 
 .PHONY: clean
 clean:
