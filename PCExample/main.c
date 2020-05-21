@@ -55,7 +55,7 @@ void Sleep (uint32_t nSleep)
     long nMomentum =  getMiliseconds();
     
     do {
-        //sleepUseconds (100000);
+        sleepUseconds (10000);
         CorePartition_Yield();
     } while ((getMiliseconds() - nMomentum) < nSleep);
 }
@@ -65,7 +65,7 @@ unsigned int addOne (unsigned int nValue)
 {
     nValue = nValue + 1;
     
-    CorePartition_Yield (); //Sleep (10);
+    CorePartition_Yield (); 
     
     return nValue;
 }
@@ -88,8 +88,6 @@ void Thread2 (void* pValue)
 {
     unsigned int nValue = 0;
     
-    //setCoreNice(200);
-    
     while (1)
     {
         printf ("## %lu:  Value: [%u]  Type:[%c]\n", CorePartition_GetID(), nValue, CorePartition_IsSecureByID(CorePartition_GetID()));
@@ -108,8 +106,6 @@ void Thread3 (void* pValue)
 {
     unsigned int nValue = 0;
     
-    //setCoreNice(10);
-    
     while (1)
     {
         printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu] Type:[%c]\n", CorePartition_GetID(), nValue,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2), CorePartition_IsSecureByID(CorePartition_GetID()));
@@ -122,7 +118,6 @@ void Thread3 (void* pValue)
 
 static void sleepMSTicks (uint32_t nSleepTime)
 {
-    //printf ("Sleeping: %u\n", nSleepTime);
     usleep ((useconds_t) nSleepTime * 1000);
 }
 
