@@ -26,13 +26,13 @@ This lib can, also, perform as Preemptive, but since the intent is a universal l
 
 # FreeRTOS
 
-     Now we are adding support for FreeRTOS, which means you can run cooperative and highly manageable threads over your existing FreeRTOS. To use it run it on the main after initializing all the threads. Do not mix CorePartition over different threads, it must stain confined in a single one.
+Now we are adding support for FreeRTOS, which means you can run cooperative and highly manageable threads over your existing FreeRTOS. To use it run it on the main after initializing all the threads. Do not mix CorePartition over different threads, it must stain confined in a single one.
 
-     Arduino official documentation for adding libraries: https://www.arduino.cc/en/guide/libraries
-     
+Arduino official documentation for adding libraries: https://www.arduino.cc/en/guide/libraries
+
 # Arduino
 
-    As always reported, it is fully compatible with Arduino, any one, to use it download it the zip file (https://github.com/solariun/CorePartition/archive/master.zip) and import it at arduino -> Sketch -> Include Library -> Add ZIP Library... and you are good to go.
+As always reported, it is fully compatible with Arduino, any one, to use it download it the zip file (https://github.com/solariun/CorePartition/archive/master.zip) and import it at arduino -> Sketch -> Include Library -> Add ZIP Library... and you are good to go.
 
     
 
