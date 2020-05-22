@@ -54,7 +54,7 @@ To compile this lib make sure your toolchain or software compiler works with sta
 memaloc
 free
 setjmp
-longjmo
+longjmp
 srand
 rand
 
@@ -68,7 +68,7 @@ NOW! CorePartition is Preemption ready a example of full preemption is already p
 
 # Introducing Thread Isolation 
 
-Now, CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on back and restore of the memory page, it does not intend to be the best security, but one more barrier against digital threats. Every thread with Secure Memory Page, will be encrypted using a 128 bits key that will be dynamically changed every context switch. The developer will have no power or awareness of the procedure and the whole memory page will encrypted on memory.
+Now, CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on back and restore of the memory page, it does not intend to be the best security, but one more barrier against digital threats. Every thread with Secure Memory Page, will be encrypted using a key with the same size of the context and dynamically changed on every context switch. The developer will have no power or awareness of the procedure and the whole memory page will encrypted on memory.
 
 Note that it will ONLY encrypt the stack, heap will remain original.
 
@@ -89,7 +89,7 @@ Be AWARE comes with no warrant or guarantees, since I still have a limited numbe
 
 ## Important
     
-     If possible it is  HIGHLY RECOMMEND to implement the momentum with a proper time function. It will ensure stability and the developer will be able to use time to control thread process
+If possible it is  HIGHLY RECOMMEND to implement the momentum with a proper time function. It will ensure stability and the developer will be able to use time to control thread process
    
 Tested at:
 
