@@ -1,1 +1,1 @@
-Compile using  g++ -o CorePartition.bin -I.. ../CorePartition.c main.cpp
+type make and hit return to compile, this example uses the same code as used by processors or microcontrollers.
