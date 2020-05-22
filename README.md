@@ -42,11 +42,11 @@ As always reported, it is fully compatible with Arduino, any one, to use it down
 
 Core partition was design for single cores processors and micro controllers, since it will have a unique thread-context. But it i will also works as a lib for a  softwares, enabling it to be able to use Threads without compromising whole system.
 
-By default it will use Cooperative thread, which mean the developer will need to call Yield() for changing context. But, by using a timer you will be able to make it preemptive. An example of perceptiveness is also provided for a micro controller Atmel 328P. Use Arduino IDE and a NANO for better results.
+By default it will use Cooperative thread, which mean the developer will need to call CorePartition_Yield() for changing context. But, by using a timer you will be able to make it preemptive. An example of perceptiveness is also provided for a micro controller Atmel 328P. Use Arduino IDE and a NANO for better results.
 
-All the resources examples are done using Arduino, why? First because it will abstract the who hardware interface, so, doesn't mater the processor or microcontroler, this Thread will deploy the same results, since this is its philosophy (ready fir any hardware interaction, timer, interruption and architecture)
+All the resources examples are done using Arduino, why? First because it will abstract the who hardware interface, so, doesn't mater the processor or microcontroller, this Thread will deploy the same results, since this is its philosophy (ready fir any hardware interaction, timer, interruption and architecture)
 
-CoreParition really deploy threads, it is not proto-thread or any re-entrant thing, it is a fully thread implementation with memory page to isolate the thread context and even with a secure context (just introduced)
+CorePartition really deploys threads, it is not proto-thread, task lib or any re-entrant thing, it is a fully thread implementation with memory page to isolate the thread context and even with a secure context (just introduced)
 
 
 # Minimal Resources 
