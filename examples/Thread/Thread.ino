@@ -402,7 +402,7 @@ extern "C" uint32_t getTimeTick()
 
 extern "C"  void sleepTick (uint32_t nSleepTime)
 {
-    if (nSleepTime)  delay  (nSleepTime);
+    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 100);
 }
 
 void StackOverflowHandler ()

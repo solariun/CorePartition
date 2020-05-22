@@ -300,7 +300,7 @@ static inline size_t Scheduler (void)
         {
             continue;
         }
-        else if (__NEXTIME (nCThread) < nCurTime || pCoreThread [nCThread]->nStatus == THREADL_START)
+        else if (pCoreThread [nCThread] == 0 || __NEXTIME (nCThread) <= nCurTime || pCoreThread [nCThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
             nMin = 0;
@@ -316,7 +316,7 @@ static inline size_t Scheduler (void)
     if (pCoreThread [nThread] != NULL)
     {
         sleepCTime (nMin);
-        pCoreThread [nThread]->nLastMomentun = getCTime();
+        pCoreThread [nThread]->nLastMomentun = nCurTime + nMin;
     }
 
     return nThread;
@@ -381,7 +381,7 @@ void CorePartition_Join ()
         
         nCurrentThread = Scheduler (); //(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1);
         
-    } while (true);
+    } while (pCoreThread [nCurrentThread] != NULL);
 }
 
 

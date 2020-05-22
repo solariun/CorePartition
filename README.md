@@ -30,6 +30,8 @@ Now we are adding EXPERIMENTAL support for FreeRTOS, which means you can run coo
 
 Arduino official documentation for adding libraries: https://www.arduino.cc/en/guide/libraries
 
+Please note: Processors and Microcontroller or System that relays os Watchdog. it is necessary to give it have at least a 100 nano seconds time once a while, otherwise it will trigger and reboot the system for infinity loop. so having thread with zero priority can be problematic, so, always implement time and sleep interface to let the kernel call for sleep on appropriate time and be sure to execute at least 100 nano seconds, even on zero sleep request (That is why it request zero...).
+
 # Arduino
 
 As always reported, it is fully compatible with Arduino, any one, to use it download it the zip file (https://github.com/solariun/CorePartition/archive/master.zip) and import it at arduino -> Sketch -> Include Library -> Add ZIP Library... and you are good to go.
@@ -113,9 +115,9 @@ Arduino NANO 33 SENCE nRF52840
 
 STM32F103 (Bluepill)
 
-MEGA2506 
+MEGA2560 
 
-MEGA1260
+MEGA1280
 
 Sipeed Longan Nano (GD32VF103 32-bit rv32imac RISC-V “Bumblebee Core” @ 108 MHz)
 
@@ -127,6 +129,7 @@ tested with ISP chain connections
 tested and developed at OSX
 tested at Linux
 tested at Linux PI Zero, 1, 3 
+tested on Windows 
 
 
 If you want to start, what about you dust off a old arduino, like a nano, and open the thread.ino example that comes with resource and have a look at it?
