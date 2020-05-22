@@ -300,7 +300,7 @@ void ThreadTOP (void* pValue)
         
         Serial.flush ();
 
-        CorePartition_Yield ()
+        CorePartition_Yield ();
     }
 }
 
@@ -469,15 +469,15 @@ void setup()
     
     
     
-    CorePartition_CreateThread (Thread1, NULL, 25 * sizeof (size_t), 100);
+    CorePartition_CreateThread (Thread1, NULL, 30 * sizeof (size_t), 100);
 
-    CorePartition_CreateSecureThread (ThreadTOP, NULL, 15 * sizeof (size_t), 0);
+    CorePartition_CreateSecureThread (ThreadTOP, NULL, 20 * sizeof (size_t), 0);
     
     CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 500);
     
-    CorePartition_CreateSecureThread (Thread3, NULL, 25 * sizeof (size_t), 900);
+    CorePartition_CreateSecureThread (Thread3, NULL, 30 * sizeof (size_t), 900);
     
-    CorePartition_CreateThread (Thread4, NULL, 25 * sizeof (size_t), 2000);
+    CorePartition_CreateThread (Thread4, NULL, 30 * sizeof (size_t), 2000);
 
 
 }
