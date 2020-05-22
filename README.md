@@ -30,7 +30,7 @@ Now we are adding EXPERIMENTAL support for FreeRTOS, which means you can run coo
 
 Arduino official documentation for adding libraries: https://www.arduino.cc/en/guide/libraries
 
-Please note: Processors and Microcontroller or System that relays os Watchdog. it is necessary to give it at least a 100 nano seconds of free time once a while, otherwise it will trigger and reboot the system for supposedly infinity loop. so having thread with zero priority can be problematic, to fix it, always implement time and sleep interface to let the kernel call for sleep on appropriate time and be sure to execute at least 100 nano seconds for the sleep interface, even on zero sleep request (That is why it request zero...). For examples, look at any example provided by the lib
+Please note: Processors and Microcontroller or System that relays os Watchdog. it is necessary to give it at least a 100 nano seconds of free time once a while, otherwise it will trigger and reboot the system for supposedly infinity loop. so having thread with zero priority can be problematic, to fix it, always implement time and sleep interface to let the kernel call for sleep on appropriate time and be sure to execute at least 500 nano seconds for the sleep interface, even on zero sleep request (That is why it request zero...). For examples, look at any example provided by the lib
 
 # Arduino
 
