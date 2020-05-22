@@ -696,7 +696,7 @@ static uint32_t getTimeTick()
 
 static void sleepTick (uint32_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 100);
+    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 300);
 }
 
 void StackOverflowHandler ()

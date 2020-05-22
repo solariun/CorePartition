@@ -759,7 +759,7 @@ uint32_t getTimeTick()
 /// @param nSleepTime How log the sleep will lest
 void sleepTick (uint32_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 100);
+    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 300);
 }
 
 
