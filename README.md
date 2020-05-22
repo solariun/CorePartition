@@ -6,7 +6,8 @@ Version 2.5.1
 
 Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and tick-sleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
 
-This Thread Lig is a full Cooperative Thread Library, (it is not a task lib, it will really contextualize the thread and memory) that uses stack context and scheduler managements. It was design to work virtually into any processor, microcontroller but will perform amazingly as a thread for your software, using little memory and giving you a power and control need for complex projects.
+PLEASE NOTE THAT:
+This Thread Library is a full Cooperative Thread Library, (it is not a task lib, it will really contextualize the thread and memory) that uses stack context and scheduler managements. It was design to work virtually into any processor, microcontroller but will perform amazingly as a thread for your software, using little memory and giving you a power and control need for complex projects.
 
 This lib can, also, perform as Preemptive, but since the intent is a universal lib, I will leave it up to you, just define a timer to call CorePartition_Yield () a good lock and it will run. There is a example of how to do it.
 
