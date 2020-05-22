@@ -4,7 +4,7 @@ Version 2.5.1
 
 ![License information](https://raw.githubusercontent.com/solariun/CorePartition/master/License.png)
 
-Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and tick-sleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications, windows applications and Mac to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
+Partitioning a CORE into several Threads with a fast scheduler capable to be specialised through Tick and tick-sleep interface, this way you can use nanoseconds, milliseconds or even real ticks to predict time, turning it into a powerful real time processor.  This lib was designed to work, virtually, with any modern micro controller or Microchip as long as it uses reverse bottom - up stack addressing, but was aiming single core processors and user space like MSDOS, linux applications (embedded or not), windows applications, Mac and (experimental) FreeRTOS to allow desktop softwares and processor to split a core into functions and with a momentum scheduler.
 
 PLEASE NOTE THAT:
 This Thread Library is a full Cooperative Thread Library, (it is not a task lib, it will really contextualize the thread and memory) that uses stack context and scheduler managements. It was design to work virtually into any processor, microcontroller but will perform amazingly as a thread for your software, using little memory and giving you a power and control need for complex projects.
@@ -130,11 +130,6 @@ tested at Linux PI Zero, 1, 3
 
 
 If you want to start, what about you dust off a old arduino, like a nano, and open the thread.ino example that comes with resource and have a look at it?
-
-# windows users
-
-This thread has been developed and test on windows, mac, some Unix and Linux but it has been developed using a macintosh, so I am using some unix features like link and it is not available on windows. So, in order to have all the exemples running on windows, copy CorePartition.c and CorePartition.h to the directory you want, open the the ino file using your Arduino IDE, select your board and port and just flash it.  it is fully compatible with all arduinos.
-
 
 
 # A Simple example
