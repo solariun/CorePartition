@@ -197,20 +197,16 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetLastDutyCycle ());
         Serial.println ("ms\e[0k\n\n");
         
-        Serial.flush ();
-        CorePartition_Yield ();
-
         SetLocation (8,1);
         ShowRunningThreads ();
 
-        Serial.flush ();
-        CorePartition_Yield ();
         
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
             CorePartition_CreateThread (eventualThread, NULL, 25 * sizeof (size_t), 1000);
         }
-            
+
+        CorePartition_Yield ();            
     }
 }
 
@@ -319,7 +315,7 @@ void setup()
 
     CorePartition_CreateThread (CounterThread, &nValues [2], 20 * sizeof (size_t), 200);
 
-    CorePartition_CreateThread (Thread, nValues, 25 * sizeof (size_t), 100);
+    CorePartition_CreateThread (Thread, nValues, 25 * sizeof (size_t), 250);
 }
 
 

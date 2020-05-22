@@ -60,6 +60,20 @@ void Sleep (uint32_t nSleep)
     } while ((getMiliseconds() - nMomentum) < nSleep);
 }
 
+static void sleepMSTicks (uint32_t nSleepTime)
+{
+    //printf (">>>> Sleeping for: [%u]\n", nSleepTime);
+    usleep ((useconds_t) nSleepTime * 1000);
+}
+
+static uint32_t getMsTicks(void)
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    
+    return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+}
+
 
 unsigned int addOne (unsigned int nValue)
 {
@@ -72,62 +86,22 @@ unsigned int addOne (unsigned int nValue)
 
 void Thread1 (void* pValue)
 {
-    unsigned int nValue = 0;
+    uint32_t nValue = 0;
+    uint32_t nSleepTime = getMsTicks();
+    uint32_t nReturnedSleep = getMsTicks();
     
     while (1)
     {
-        printf (">> %lu:  Value: [%u] - StructSize: [%zu] - Memory: [%zu]  Type:[%c]\n", CorePartition_GetID(), nValue, CorePartition_GetThreadContextSize(), CorePartition_GetThreadContextSize(), CorePartition_IsSecureByID(CorePartition_GetID()));
-        
-        nValue = addOne (nValue);
+        printf (">> %lu:  Value: [%u], Nice: [%u] Sleep Time: [%u ms]\n", CorePartition_GetID(), nValue, CorePartition_GetNice(), nReturnedSleep - nSleepTime);
+        nValue = nValue + 1;
+
+        nSleepTime = getMsTicks();
+        CorePartition_Yield ();
+        nReturnedSleep = getMsTicks();         //nValue = addOne (nValue);
     }
 }
 
 
-
-void Thread2 (void* pValue)
-{
-    unsigned int nValue = 0;
-    
-    while (1)
-    {
-        printf ("## %lu:  Value: [%u]  Type:[%c]\n", CorePartition_GetID(), nValue, CorePartition_IsSecureByID(CorePartition_GetID()));
-        
-        nValue = addOne (nValue);
-        
-        printf ("## %lu:  Value: [%u] - Returning\n", CorePartition_GetID(), nValue);
-        
-        CorePartition_Sleep ((uint32_t) 100);
-    }
-}
-
-
-
-void Thread3 (void* pValue)
-{
-    unsigned int nValue = 0;
-    
-    while (1)
-    {
-        printf ("** %lu:  Value: [%u] - Status: [%u], Nice: [%u], Stack: [%zu/%zu] Type:[%c]\n", CorePartition_GetID(), nValue,  CorePartition_GetStatusByID(2), CorePartition_GetNiceByID(2), CorePartition_GetStackSizeByID(2), CorePartition_GetMaxStackSizeByID(2), CorePartition_IsSecureByID(CorePartition_GetID()));
-        
-        nValue = addOne (nValue);
-    }
-}
-
-
-
-static void sleepMSTicks (uint32_t nSleepTime)
-{
-    usleep ((useconds_t) nSleepTime * 1000);
-}
-
-static uint32_t getMsTicks(void)
-{
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    
-    return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
-}
 
 static void StackOverflowHandler ()
 {
@@ -137,15 +111,16 @@ static void StackOverflowHandler ()
 int main(int argc, const char * argv[])
 {    
 
-    CorePartition_Start(3);
+    CorePartition_Start(4);
     
     CorePartition_SetCurrentTimeInterface(getMsTicks);
     CorePartition_SetSleepTimeInterface (sleepMSTicks);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
-    CorePartition_CreateThread (Thread1, NULL, 256, 1302);
-    CorePartition_CreateThread (Thread2, NULL, 256, 100);
-    CorePartition_CreateSecureThread (Thread3, NULL, 256, 500);
+    CorePartition_CreateThread (Thread1, NULL, 256, 500);
+    CorePartition_CreateThread (Thread1, NULL, 256, 600);
+    CorePartition_CreateThread (Thread1, NULL, 256, 1000);
+    CorePartition_CreateThread (Thread1, NULL, 256, 1500);
     
     CorePartition_Join();
     

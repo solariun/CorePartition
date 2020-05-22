@@ -300,7 +300,7 @@ static inline size_t Scheduler (void)
         {
             continue;
         }
-        else if (__NEXTIME (nCThread) <= nCurTime || pCoreThread [nCThread]->nStatus == THREADL_START)
+        else if (__NEXTIME (nCThread) < nCurTime || pCoreThread [nCThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
             nMin = 0;
@@ -315,8 +315,8 @@ static inline size_t Scheduler (void)
     
     if (pCoreThread [nThread] != NULL)
     {
-        sleepCTime (nMin + 1);
-        pCoreThread [nThread]->nLastMomentun = nCurTime;
+        sleepCTime (nMin);
+        pCoreThread [nThread]->nLastMomentun = getCTime();
     }
 
     return nThread;
