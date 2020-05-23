@@ -206,7 +206,7 @@ void Thread (void* pValue)
         
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
-            CorePartition_CreateThread (eventualThread, NULL, 30 * sizeof (size_t), 1000);
+            CorePartition_CreateSecureThread (eventualThread, NULL, 30 * sizeof (size_t), 1000);
         }
             
     }

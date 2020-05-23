@@ -12,7 +12,7 @@ This Thread Library is a full Cooperative Thread Library, (it is not a task lib,
 This lib can, also, perform as Preemptive, but since the intent is a universal lib, I will leave it up to you, just define a timer to call CorePartition_Yield () a good lock and it will run. There is a example of how to do it.
 
 # NEW
-# 2.5.1
+# 2.5.1 stable
 
 - Better memory management, 
 - Now using memory provisioning instead of full empty context, 
