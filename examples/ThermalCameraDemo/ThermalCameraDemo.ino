@@ -462,7 +462,7 @@ void Thread4 (void* pValue)
         
         CorePartition_Yield ();
         
-        if (CorePartition_GetStatusByID (4) == THREADL_STOPPED)
+        if (CorePartition_GetStatusByID (4) == THREADL_NONE)
             CorePartition_CreateThread (Thread5, NULL, 25, 1000);
 
         CorePartition_Yield ();
@@ -504,7 +504,7 @@ static uint32_t getTimeTick()
 
 static void sleepTick (const uint32_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 500);
+    delay (nSleepTime);
 }
 
 void StackOverflowHandler ()
@@ -579,15 +579,15 @@ void setup()
     CorePartition_SetSleepTimeInterface(sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 
-    CorePartition_CreateThread (Thread1, NULL, 110, 0);
+    CorePartition_CreateThread (Thread1, NULL, 60, 0);
     
-    CorePartition_CreateThread (Thread3, NULL, 20, 0);
+    CorePartition_CreateThread (Thread2, NULL, 20, 0);
 
-    CorePartition_CreateThread (Thread2, NULL, 25, 0);
+    CorePartition_CreateThread (Thread3, NULL, 25, 0);
 
-    CorePartition_CreateThread (Thread4, NULL, 110, 0);
+    CorePartition_CreateThread (Thread4, NULL, 15, 0);
     
-    CorePartition_CreateThread (Thread5, NULL, 25, 0);
+    //CorePartition_CreateThread (Thread5, NULL, 11, 0);
 }
 
 

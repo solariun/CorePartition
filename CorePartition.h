@@ -149,7 +149,7 @@ extern "C"{
      * 
      * @return true  always return true while the thread is valid
      */
-    void CorePartition_Yield(void);
+    uint8_t CorePartition_Yield(void);
     
 
     /**

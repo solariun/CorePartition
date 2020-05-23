@@ -36,13 +36,10 @@
 #define THREADL_ER_STACKOVFLW 1 //Stack Overflow
 #define THREAD_FACTOR_MAXBYTES 8
 
-#define THREAD_NAME_MAX   10
+#define THREAD_NAME_MAX   8
 
 typedef struct
 {
-    uint8_t   nStatus;
-    uint8_t   nErrorType;
-    
     size_t    nStackMaxSize;
     size_t    nStackSize;
  
@@ -56,21 +53,17 @@ typedef struct
             void* pValue;
         } func;
     } mem;
-    
+
     char       pszThreadName [THREAD_NAME_MAX + 1];
     
+    void*      pLastStack;    
     uint32_t   nNice;
     uint32_t   nLastMomentun;
     uint32_t   nLastBackup;
-
-    void*      pLastStack;
-    
     uint32_t   nExecTime;
-    
     uint8_t    nIsolation;
-
+    uint8_t   nStatus;    
     uint8_t    stackPage;
-
 } CoreThread;
 
 
@@ -99,7 +92,6 @@ bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
 
 
 static uint32_t (*getCTime)(void) = NULL;
-
 static uint32_t getTime()
 {
     return getCTime ();
@@ -195,14 +187,12 @@ bool CorePartition_CreateThread_ (void(*pFunction)(void*), void* pValue, size_t 
     }
 
     CorePartition_SetThreadNameByID (nThread, "thread", 6);
-    //adjust the size to be mutiple of the size_t length
-    pCoreThread [nThread]->nStackMaxSize = nStackMaxSize + (nStackMaxSize % sizeof (size_t));
+    
+    pCoreThread [nThread]->nStackMaxSize = nStackMaxSize;
  
     pCoreThread[nThread]->mem.func.pValue = pValue;
     
     pCoreThread[nThread]->nStatus = THREADL_START;
-
-    pCoreThread[nThread]->nErrorType = THREADL_NONE;
     
     pCoreThread[nThread]->nStackSize = 0;
 
@@ -238,7 +228,7 @@ bool CorePartition_CreateThread (void(*pFunction)(void*), void* pValue, size_t n
 }
 
 
-inline static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
+static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
 {
     const uint8_t* nTop = (const uint8_t*) pSource + nSize;
 
@@ -260,20 +250,20 @@ inline static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t
 }
 
 
-inline static void BackupStack(void)
+static void BackupStack(void)
 {
     fastmemcpy ((uint8_t*) &pCoreThread [nCurrentThread]->stackPage, (const uint8_t*) pCoreThread [nCurrentThread]->pLastStack, pCoreThread [nCurrentThread]->nStackSize);
     //pCoreThread [nCurrentThread]->nProcTime = getCTime () - pCoreThread [nCurrentThread]->nLastBackup;
 }
 
 
-inline static void RestoreStack(void)
+static void RestoreStack(void)
 {
     fastmemcpy ((uint8_t*) pCoreThread [nCurrentThread]->pLastStack, (const uint8_t*) &pCoreThread [nCurrentThread]->stackPage, pCoreThread [nCurrentThread]->nStackSize);
 }
 
 
-static inline size_t Scheduler (void)
+static size_t Scheduler (void)
 {
     uint32_t nCurTime;
     uint32_t nMin;
@@ -287,7 +277,7 @@ static inline size_t Scheduler (void)
     
     srand (nCurTime);
     
-#define __NEXTIME(TH) (pCoreThread [TH]->nLastMomentun +  pCoreThread [TH]->nNice)
+#define __NEXTIME(TH) ((uint32_t) (pCoreThread [TH]->nLastMomentun +  pCoreThread [TH]->nNice))
 #define __CALC(TH) (uint32_t) (__NEXTIME(TH) - nCurTime)
     
     nMin =  ~((uint32_t)0);
@@ -325,7 +315,7 @@ static inline size_t Scheduler (void)
 }
 
 
-inline static void CorePartition_StopThread ()
+static void CorePartition_StopThread ()
 {
     if (pCoreThread [nCurrentThread] != NULL)
     {
@@ -337,6 +327,7 @@ inline static void CorePartition_StopThread ()
 }
 
 
+size_t nNextThread = 0;
 void CorePartition_Join ()
 {    
     volatile uint8_t nValue = 0xAA;
@@ -361,6 +352,8 @@ void CorePartition_Join ()
                     
                     pCoreThread [nCurrentThread]->mem.func.pFunction (pCoreThread [nCurrentThread]->mem.func.pValue);
                     
+                    nNextThread = Scheduler ();
+
                     CorePartition_StopThread ();
                     
                     /* the use of continue here is 
@@ -383,31 +376,25 @@ void CorePartition_Join ()
             }
         }
         
-        nCurrentThread = Scheduler (); //(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1);
+        nCurrentThread = nNextThread; //(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1);
         
     } while (pCoreThread [nCurrentThread] != NULL);
 }
 
 
-void CorePartition_Yield ()
+static void CorePartition_Yield_IntoVoid ()
 {
-    if (nRunningThreads != 0)
-    {
         volatile uint8_t nValue = 0xBB; 
-
-        pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
-    
         pCoreThread [nCurrentThread]->pLastStack = (void*)&nValue;
         //pCoreThread [nCurrentThread]->pLastStack = alloca(0);
-        
         pCoreThread [nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread [nCurrentThread]->pLastStack;
 
         if (pCoreThread [nCurrentThread]->nStackSize > pCoreThread [nCurrentThread]->nStackMaxSize)
         {
-            CorePartition_StopThread ();
-            
             if (stackOverflowHandler != NULL) stackOverflowHandler ();
-            
+
+            CorePartition_StopThread ();
+
             longjmp(jmpJoinPointer, 1);
         }
         
@@ -426,10 +413,22 @@ void CorePartition_Yield ()
         RestoreStack();        
         
         pCoreThread [nCurrentThread]->nLastBackup = pCoreThread [nCurrentThread]->nLastMomentun;
-    }
-
 }
 
+uint8_t CorePartition_Yield ()
+{
+    if (nRunningThreads != 0)
+    {
+        pCoreThread [nCurrentThread]->nExecTime = getCTime() - pCoreThread [nCurrentThread]->nLastMomentun;
+        nNextThread = Scheduler ();
+    
+        CorePartition_Yield_IntoVoid ();
+
+        return 1;
+    }
+
+    return 0;
+}
 
 void CorePartition_Sleep (uint32_t nDelayTickTime)
 {

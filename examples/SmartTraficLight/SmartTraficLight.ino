@@ -689,14 +689,14 @@ void  TraficLightKernel (void* pValue)
 
 
 
-static uint32_t getTimeTick()
+uint32_t getTimeTick()
 {
    return (uint32_t) millis();
 }
 
-static void sleepTick (const uint32_t nSleepTime)
+void sleepTick (const uint32_t nSleepTime)
 {
-    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 500);
+    delay  (nSleepTime);
 }
 
 void StackOverflowHandler ()
@@ -733,7 +733,7 @@ void setup()
     
     CorePartition_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500);
 
-    CorePartition_CreateSecureThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250);
+    CorePartition_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250);
     
     CorePartition_CreateThread (Terminal, NULL, 42 * sizeof (size_t), 50);
 }

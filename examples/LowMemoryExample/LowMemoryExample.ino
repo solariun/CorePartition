@@ -206,7 +206,7 @@ void Thread (void* pValue)
         
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
-            CorePartition_CreateThread (eventualThread, NULL, 25 * sizeof (size_t), 1000);
+            CorePartition_CreateThread (eventualThread, NULL, 30 * sizeof (size_t), 1000);
         }
             
     }
@@ -265,8 +265,7 @@ static uint32_t getTimeTick()
 
 static void sleepTick (const uint32_t nSleepTime)
 {
-    //delay (nSleepTime);
-    delay  (nSleepTime > 0 ? nSleepTime : 0);
+    delay  (nSleepTime);
 }
 
 
@@ -279,6 +278,8 @@ void StackOverflowHandler ()
     Serial.println (F("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
+    
+    while (true) delay (1000);
 }
 
 
@@ -306,18 +307,18 @@ void setup()
     
     CorePartition_Start (5);
     
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
+    CorePartition_SetCurrentTimeInterface (getTimeTick);
+    CorePartition_SetSleepTimeInterface (sleepTick);
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
     
 
-    CorePartition_CreateThread (CounterThread, &nValues [0], 25 * sizeof (size_t), 0);
+    CorePartition_CreateThread (CounterThread, &nValues [0], 30 * sizeof (size_t), 0);
     
-    CorePartition_CreateThread (CounterThread, &nValues [1], 25 * sizeof (size_t), 200);
+    CorePartition_CreateThread (CounterThread, &nValues [1], 30 * sizeof (size_t), 200);
 
-    CorePartition_CreateThread (CounterThread, &nValues [2], 25 * sizeof (size_t), 1000);
+    CorePartition_CreateThread (CounterThread, &nValues [2], 30 * sizeof (size_t), 1000);
 
-    CorePartition_CreateThread (Thread, nValues, 28 * sizeof (size_t), 250);
+    CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 250);
 }
 
 
