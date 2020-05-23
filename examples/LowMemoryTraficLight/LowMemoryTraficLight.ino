@@ -206,7 +206,7 @@ static uint32_t getTimeTick()
    return (uint32_t) millis();
 }
 
-static void sleepTick (uint32_t nSleepTime)
+static void sleepTick (const uint32_t nSleepTime)
 {
     delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 500);
 }

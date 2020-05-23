@@ -757,7 +757,7 @@ uint32_t getTimeTick()
 
 /// Specializing CorePartition Idle time
 /// @param nSleepTime How log the sleep will lest
-void sleepTick (uint32_t nSleepTime)
+void sleepTick (const uint32_t nSleepTime)
 {
     delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 500);
 }

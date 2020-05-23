@@ -263,10 +263,10 @@ static uint32_t getTimeTick()
 }
 
 
-static void sleepTick (uint32_t nSleepTime)
+static void sleepTick (const uint32_t nSleepTime)
 {
     //delay (nSleepTime);
-    delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 500);
+    delay  (nSleepTime > 0 ? nSleepTime : 0);
 }
 
 
@@ -293,7 +293,7 @@ void setup()
     while (!Serial);
 
     ResetColor ();
-    ClearConsole ();
+    //ClearConsole ();
     HideCursor ();
     SetLocation (1,1);
 

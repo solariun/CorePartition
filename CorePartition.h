@@ -124,7 +124,7 @@ extern "C"{
      *          ALWAYS override tick process is always a good procedure and will 
      *          make your processor will work better and on-time.
      */
-    bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface)(uint32_t nSleepTime));
+    bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface)(const uint32_t nSleepTime));
     
 
     /**

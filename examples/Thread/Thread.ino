@@ -395,12 +395,12 @@ void Thread4 (void* pValue)
     }
 }
 
-extern "C" uint32_t getTimeTick()
+uint32_t getTimeTick()
 {
    return (uint32_t) millis();
 }
 
-extern "C"  void sleepTick (uint32_t nSleepTime)
+void sleepTick (const uint32_t nSleepTime)
 {
     delayMicroseconds  (nSleepTime > 0 ? nSleepTime * 1000 : 500);
 }
