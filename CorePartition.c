@@ -92,10 +92,10 @@ bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler)(void))
 
 
 static uint32_t (*getCTime)(void) = NULL;
-static uint32_t getTime()
-{
-    return getCTime ();
-}
+// static uint32_t getTime()
+// {
+//     return getCTime ();
+// }
 
 
 bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface)(void))
@@ -271,7 +271,7 @@ static size_t Scheduler (void)
     size_t nThread;
     size_t nCount;
 
-    nCurTime = getTime();
+    nCurTime = getCTime ();
     nCThread = nCurrentThread+1;
     nThread = nCurrentThread;
     
@@ -291,7 +291,7 @@ static size_t Scheduler (void)
         {
             continue;
         }
-        else if (pCoreThread [nCThread] == 0 || __NEXTIME (nCThread) <= nCurTime || pCoreThread [nCThread]->nStatus == THREADL_START)
+        else if (pCoreThread [nCThread]->nNice == 0 || nCurTime >__NEXTIME (nCThread) || pCoreThread [nCThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
             nMin = 0;
@@ -302,13 +302,15 @@ static size_t Scheduler (void)
             nThread = nCThread;
             nMin = __CALC (nCThread);
         }
+
+        //nCurTime = getCTime ();
     }        /* code */
     
     if (pCoreThread [nThread] != NULL)
     {
         sleepCTime (nMin);
         nCurTime += nMin;
-        pCoreThread [nThread]->nLastMomentun = nCurTime;
+        pCoreThread [nThread]->nLastMomentun = getCTime ();
     }
 
     return nThread;
