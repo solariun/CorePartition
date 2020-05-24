@@ -28,57 +28,56 @@ This lib can, also, perform as Preemptive, but since the intent is a universal l
 
 Now we are adding EXPERIMENTAL support for FreeRTOS, which means you can run cooperative and highly manageable threads over your existing FreeRTOS. To use it run it on the main after initializing all the threads. Do not mix CorePartition over different threads, it must stay confined in a single one.
 
-Arduino official documentation for adding libraries: https://www.arduino.cc/en/guide/libraries
-
-Please note: Processors and Microcontroller or System that relays os Watchdog. it is necessary to give it at least a 100 nano seconds of free time once a while, otherwise it will trigger and reboot the system for supposedly infinity loop. so having thread with zero priority can be problematic, to fix it, always implement time and sleep interface to let the kernel call for sleep on appropriate time and be sure to execute at least 500 nano seconds for the sleep interface, even on zero sleep request (That is why it request zero...). For examples, look at any example provided by the lib
+Please note: Processors and Microcontroller or System that relays os Watchdog. it is necessary to give it at least a 100 nano seconds of free time once a while, otherwise it will trigger and reboot the system for supposedly infinity loop. so having thread with zero priority can be problematic, to fix it, always implement time and sleep interface to let the kernel call for sleep on appropriate time and be sure to execute at least 100 nano seconds for the sleep interface, even on zero sleep request (That is why it request zero...). For examples, look at any example provided by the lib
 
 # Arduino
 
-As always reported, it is fully compatible with Arduino, any one, to use it download it the zip file (https://github.com/solariun/CorePartition/archive/master.zip) and import it at arduino -> Sketch -> Include Library -> Add ZIP Library... and you are good to go.
+As always reported, it is fully compatible with Arduino, any one, to use it download the zip file from my master branch (https://github.com/solariun/CorePartition/archive/master.zip) and import it in at arduino -> Sketch -> Include Library -> Add ZIP Library... and you are good to go.
 
-    
+Arduino official documentation for adding libraries: https://www.arduino.cc/en/guide/libraries
 
 # Important information
 
-Core partition was design for single cores processors and micro controllers, since it will have a unique thread-context. But it i will also works as a lib for a  softwares, enabling it to be able to use Threads without compromising whole system.
+Core partition was design for single cores processors and micro controllers, since it will not try to swtich betten different cores and will the currebt thread/core to create an full thread environment and control it. Note that it will also create cooperative thread for softwares, enabling it to be able to use Threads without compromising the whole system.
 
-By default it will use Cooperative thread, which mean the developer will need to call CorePartition_Yield() for changing context. But, by using a timer you will be able to make it preemptive. An example of perceptiveness is also provided for a micro controller Atmel 328P. Use Arduino IDE and a NANO for better results.
+By default it will use Cooperative thread, which mean the developer will need to call CorePartition_Yield() to trigger context changing. But, by using a timer you will be able to make it preemptive. An example of prenptivess is also provided for a micro controller Atmel 328Pm, run it at Arduino IDE and a NANO boards.
 
-All the resources examples are done using Arduino, why? First because it will abstract the who hardware interface, so, doesn't mater the processor or microcontroller, this Thread will deploy the same results, since this is its philosophy (ready fir any hardware interaction, timer, interruption and architecture)
+All the examples are done using Arduino, why? First because it will act as a HAL (Hardware Abstraction Layer) interface, so, doesn't mater the processor or microcontroller, this Thread will deploy the same results, and will be ready for any hardware interaction: timer, interruption and architecture.
 
 CorePartition really deploys threads, it is not proto-thread, task lib or any re-entrant thing, it is a fully thread implementation with memory page to isolate the thread context and even with a secure context (just introduced)
 
 
 # Minimal Resources 
 
-To compile this lib make sure your toolchain or software compiler works with standard C and provide  
+This lib uses NO ASSEMBLER, it will benefit from standard C (minimo of C99) principles, proving it is capable to create threads to any environment.
 
-memaloc
+To compile this lib make sure your toolchain or software compiler works with standard C and provide
+
+malloc
 free
 setjmp
 longjmp
 srand
 rand
 
-for 8bits processor it will approximately consume 41 bytes for thread controller and 47 bytes for each context + the memory page you choose to save your thread stack.  
+for 8bits processor it will approximately consume 41 bytes for thread controller and 57 bytes for each context + the memory page you choose to save your thread stack.  
 
 
 
 # Preemption Ready 
-NOW! CorePartition is Preemption ready a example of full preemption is already provided, including a full Thermal camera with Led Display example also with Preemption. NOTE that since it relays on Timer, it will not be part of the lib, you will have to implement the timer yourself, but a full example of how to do it is provided.
+CorePartition is Preemption ready, two examples of full preemption is already provided, including a full Thermal camera with Led Display example also with Preemption (Both example was done using Arduino NANO (AVR Atmel328P). NOTE that since it relays on Timer, it will not be part of the lib, you will have to implement the timer yourself, but a full example of how to do it is provided.
 
 
 # Introducing Thread Isolation 
 
-Now, CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on back and restore of the memory page, it does not intend to be the best security, but one more barrier against digital threats. Every thread with Secure Memory Page, will be encrypted using a key with the same size of the context and dynamically changed on every context switch. The developer will have no power or awareness of the procedure and the whole memory page will encrypted on memory.
+CorePartition will introduce Thread Isolation, it will dynamically encrypt stack on the backup and restore of the thread stack memory page, it does not intend to be the best security, but one more barrier against digital threats since it will create noice to the power fluctuation. Every thread with Secure Memory Page, will be encrypted using a key with the same size of the context and dynamically changed on every context switch. The developer will have no power or awareness of the procedure and the whole memory page will encrypted on memory with fully dynamic key that changes on every context switch.
 
 Note that it will ONLY encrypt the stack, heap will remain original.
-
 This feature will remain on Experimental for certain time.
 
 # Momentum Scheduler
 
-*The Momentum Scheduler* is optimise to only allow thread to come back to work only upon its "nice" time or later that, with means it will work on real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialized nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exempla for keeping it simple).
+*The Momentum Scheduler* is optimised to only allow thread to come back to work only upon its "nice" time or later than that, it means it will work on soft real time as long as the developer keep all the functions clean. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialized nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exempla for keeping it simple).
 
 HIGHLY suitable for Arduino (All official models included) as well, a .ino project is also provided with an example.
 
@@ -91,11 +90,13 @@ Be AWARE comes with no warrant or guarantees, since I still have a limited numbe
 
 ## Important
     
-If possible it is  HIGHLY RECOMMEND to implement the momentum with a proper time function. It will ensure stability and the developer will be able to use time to control thread process
+If possible it is  HIGHLY RECOMMEND to implement the momentum with a proper time function. It will ensure stability and the developer will be able to use time to control thread process, examples of it is provided here and in every example.
    
 Tested at:
 
 ESP8266 8 different boars including ESP-01
+
+ESP32 - No OS and with FreeRTO - Note that ESP32 uses a lot of stack, so, if a example fails with stack over flow (it will appear on the terminal), read the error, it will say how muck stack it was needing, incrise the CreateThread to somerhing between the needed stack or higher)
 
 Arduino Nano (avr 328p)
 Arduino Nano (avr 168) -> Thread.ino must have 2 threads due to memory
@@ -131,8 +132,12 @@ tested at Linux
 tested at Linux PI Zero, 1, 3 
 tested on Windows 
 
+tested on BeOS
+tested on HPUX
+tested on Solaris
 
-If you want to start, what about you dust off a old arduino, like a nano, and open the thread.ino example that comes with resource and have a look at it?
+
+If you want to start, what about you dust off a old arduino, like a nano, and open the thread.ino or LowMememryExame example that comes with examples and have a look at it?
 
 
 # A Simple example
@@ -214,9 +219,7 @@ int main ()
 }
 ```
 
-inside your partitioned program (function) use the directive yield() to let the nano microkernel process next thread.
-
-Please note it is not a regular thread, even though it behaves like one, it is a cooperative thread, once it will  let the programmer choose when to yield control control to other threads. 
+inside your partitioned program (function) use the directive CorePartition_Yield() to let the nano microkernel process next thread, so do not forget to call CorePartition_Yield() or use CorePartition_Sleep() regularly.
 
 # Arduino Boards
 
