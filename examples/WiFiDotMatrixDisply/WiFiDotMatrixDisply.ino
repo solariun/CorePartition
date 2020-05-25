@@ -820,7 +820,11 @@ void setup()
     }
 
     //Max threads on system.
-    CorePartition_Start (25); 
+    if (CorePartition_Start (25) == false)
+    {
+        Serial.println ("Error staring up Threads.");
+        exit (1);
+    }
     
 
     CorePartition_SetCurrentTimeInterface(getTimeTick);
