@@ -305,7 +305,11 @@ void setup()
     Serial.println ("Starting up Thread...."); Serial.flush();Serial.flush();
 
     
-    CorePartition_Start (5);
+    if (CorePartition_Start (5) == false)
+    {
+        Serial.println ("Fail to start CorePartition.");
+        exit (0);
+    }
     
     CorePartition_SetCurrentTimeInterface (getTimeTick);
     CorePartition_SetSleepTimeInterface (sleepTick);
