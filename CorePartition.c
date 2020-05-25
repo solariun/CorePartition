@@ -291,7 +291,7 @@ static size_t Scheduler (void)
         {
             continue;
         }
-        else if (pCoreThread [nCThread]->nNice == 0 || nCurTime >__NEXTIME (nCThread) || pCoreThread [nCThread]->nStatus == THREADL_START)
+        else if (pCoreThread [nCThread]->nNice == 0 || nCurTime >= __NEXTIME (nCThread) || pCoreThread [nCThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
             nMin = 0;
