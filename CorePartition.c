@@ -154,7 +154,7 @@ bool CorePartition_Start (size_t nThreadPartitions)
         
 
     if (CorePartition_SetCurrentTimeInterface (GetTicks) == false ||
-        CorePartition_SetSleepTimeInterface (SleepTicks))
+        CorePartition_SetSleepTimeInterface (SleepTicks) == false)
     {
         return false;
     }
