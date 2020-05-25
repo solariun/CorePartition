@@ -143,7 +143,10 @@ setPreemptionOn ();
     //Serial.begin(115200);
     //while (!Serial);
     
-    CorePartition_Start (4);
+    if (CorePartition_Start (4) == false) 
+    {
+        exit (1);
+    }
 
     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
 

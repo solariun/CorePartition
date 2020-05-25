@@ -131,7 +131,6 @@ static uint32_t GetTicks()
 static void SleepTicks(const uint32_t nSleepValue)
 {
     uint32_t nSleepTicks = nSleepValue;
-    uint32_t nCTime;
 
     while (nSleepTicks--) nCTime=GetTicks ();
 }
