@@ -111,7 +111,11 @@ static void StackOverflowHandler ()
 int main(int argc, const char * argv[])
 {    
 
-    CorePartition_Start(4);
+    if (CorePartition_Start(4) == false)
+    {
+        printf ("Error starting up Thread.");
+        return (1);
+    }
     
     CorePartition_SetCurrentTimeInterface(getMsTicks);
     CorePartition_SetSleepTimeInterface (sleepMSTicks);

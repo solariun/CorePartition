@@ -131,8 +131,9 @@ static uint32_t GetTicks()
 static void SleepTicks(const uint32_t nSleepValue)
 {
     uint32_t nSleepTicks = nSleepValue;
+    uint32_t nCTime=1;
 
-    while (nSleepTicks--) nCTime=GetTicks ();
+    while (nSleepTicks-- && nCTime) nCTime=GetTicks ();
 }
 
 bool CorePartition_Start (size_t nThreadPartitions)
