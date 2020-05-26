@@ -53,7 +53,7 @@ extern "C"{
 #define THREADL_STOPPED     4
 
     
-    static const char CorePartition_version[] = "V2.5.1 stable Compiled at " __TIMESTAMP__;
+    static const char CorePartition_version[] = "V2.6.0 develop Compiled at " __TIMESTAMP__;
     
     /**
      * @brief Start CorePartition thread provisioning
