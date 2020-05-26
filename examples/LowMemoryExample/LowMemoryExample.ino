@@ -36,8 +36,8 @@
 
 
 #include "CorePartition.h"
-
 #include "Arduino.h"
+#include <assert.h>
 
 
 void SetLocation (uint16_t nY, uint16_t nX)
@@ -311,18 +311,18 @@ void setup()
         exit (0);
     }
     
-    CorePartition_SetCurrentTimeInterface (getTimeTick);
-    CorePartition_SetSleepTimeInterface (sleepTick);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface (getTimeTick));
+    assert (CorePartition_SetSleepTimeInterface (sleepTick));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
     
 
-    CorePartition_CreateThread (CounterThread, &nValues [0], 30 * sizeof (size_t), 0);
+    assert (CorePartition_CreateThread (CounterThread, &nValues [0], 30 * sizeof (size_t), 0));
     
-    CorePartition_CreateThread (CounterThread, &nValues [1], 30 * sizeof (size_t), 200);
+    assert (CorePartition_CreateThread (CounterThread, &nValues [1], 30 * sizeof (size_t), 200));
 
-    CorePartition_CreateThread (CounterThread, &nValues [2], 30 * sizeof (size_t), 1000);
+    assert (CorePartition_CreateThread (CounterThread, &nValues [2], 30 * sizeof (size_t), 1000));
 
-    CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 250);
+    assert (CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 250));
 }
 
 

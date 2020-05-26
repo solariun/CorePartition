@@ -39,7 +39,7 @@
 
 #include "Arduino.h"
 
-
+#include <assert.h>
 
 volatile bool bLocked = false;
 
@@ -148,15 +148,15 @@ setPreemptionOn ();
         exit (1);
     }
 
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    CorePartition_CreateThread (Thread1, NULL, 80, 10);
+    assert (CorePartition_CreateThread (Thread1, NULL, 80, 10));
     
-    CorePartition_CreateThread (Thread1, NULL, 80, 20);
+    assert (CorePartition_CreateThread (Thread1, NULL, 80, 20));
 
-    CorePartition_CreateThread (Thread1, NULL, 80, 440);
+    assert (CorePartition_CreateThread (Thread1, NULL, 80, 440));
 
-    CorePartition_CreateThread (Thread1, NULL, 80, 50);
+    assert (CorePartition_CreateThread (Thread1, NULL, 80, 50));
 
 }
 

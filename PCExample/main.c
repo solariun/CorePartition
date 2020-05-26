@@ -34,6 +34,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <assert.h>
 
 
 uint32_t getMiliseconds()
@@ -117,14 +118,14 @@ int main(int argc, const char * argv[])
         return (1);
     }
     
-    CorePartition_SetCurrentTimeInterface(getMsTicks);
-    CorePartition_SetSleepTimeInterface (sleepMSTicks);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface(getMsTicks));
+    assert (CorePartition_SetSleepTimeInterface (sleepMSTicks));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
     
-    CorePartition_CreateThread (Thread1, NULL, 256, 500);
-    CorePartition_CreateThread (Thread1, NULL, 256, 600);
-    CorePartition_CreateThread (Thread1, NULL, 256, 1000);
-    CorePartition_CreateThread (Thread1, NULL, 256, 1500);
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 500));
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 600));
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 1000));
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 1500));
     
     CorePartition_Join();
     

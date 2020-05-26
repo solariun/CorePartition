@@ -46,18 +46,16 @@
 // CLK            -> D5  (Same Pin for WEMOS)
 
 
-
+#include "Terminal.hpp"
 #include "CorePartition.h"
 
-#include "user_interface.h"
-
 #include "Arduino.h"
+#include "user_interface.h"
 
 #include <Wire.h>
 #include <LedControl.h>
 #include <string>
-
-#include "Terminal.hpp"
+#include <assert.h>
 
 #define MAX(x, y) (x > y ? x : y)
 #define MIN(x, y) (x < y ? x : y)
@@ -827,13 +825,13 @@ void setup()
     }
     
 
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface(getTimeTick));
+    assert (CorePartition_SetSleepTimeInterface(sleepTick));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    CorePartition_CreateSecureThread  (SerialTerminalHandler, NULL, 500, 200);
-    CorePartition_CreateThread (LedDisplayShow, NULL, 300, 50);
-    CorePartition_CreateThread (TelnetListener, NULL, 300, 500);
+    assert (CorePartition_CreateSecureThread  (SerialTerminalHandler, NULL, 500, 200));
+    assert (CorePartition_CreateThread (LedDisplayShow, NULL, 300, 50));
+    assert (CorePartition_CreateThread (TelnetListener, NULL, 300, 500));
 }
 
 

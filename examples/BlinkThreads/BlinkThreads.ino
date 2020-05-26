@@ -38,6 +38,7 @@
 
 #include "Arduino.h"
 
+#include <assert.h>
 
 void Delay (uint64_t nSleep)
 {
@@ -172,25 +173,25 @@ void setup()
     
 
 #ifdef _DEBUG
-    CorePartition_Start (5);
+    assert (CorePartition_Start (5));
 #else
-    CorePartition_Start (4);
+    assert (CorePartition_Start (4));
 #endif
 
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface(getTimeTick));
+    assert (CorePartition_SetSleepTimeInterface(sleepTick));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    CorePartition_CreateThread (Thread1, NULL, 25, 50);
+    assert (CorePartition_CreateThread (Thread1, NULL, 25, 50));
     
-    CorePartition_CreateThread (Thread1, NULL, 25, 1000);
+    assert (CorePartition_CreateThread (Thread1, NULL, 25, 1000));
 
-    CorePartition_CreateThread (Thread1, NULL, 25, 812);
+    assert (CorePartition_CreateThread (Thread1, NULL, 25, 812));
 
-    CorePartition_CreateThread (Thread1, NULL, 25, 200);
+    assert (CorePartition_CreateThread (Thread1, NULL, 25, 200));
 
 #ifdef _DEBUG
-    CorePartition_CreateThread (WhachDog, 20, 200);
+    assert (CorePartition_CreateThread (WhachDog, 20, 200));
 #endif
     
 }

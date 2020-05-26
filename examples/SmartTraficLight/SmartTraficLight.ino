@@ -38,7 +38,7 @@
 #include "CorePartition.h"
 
 #include "Arduino.h"
-
+#include <assert.h>
 
 struct 
 {
@@ -722,20 +722,20 @@ void setup()
     
     pinMode (13, OUTPUT);
     
-    CorePartition_Start (4);
+    assert (CorePartition_Start (4));
 
 
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface(getTimeTick));
+    assert (CorePartition_SetSleepTimeInterface(sleepTick));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    CorePartition_CreateThread (TraficLight, NULL, 30 * sizeof (size_t), 500);
+    assert (CorePartition_CreateThread (TraficLight, NULL, 30 * sizeof (size_t), 500));
     
-    CorePartition_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500);
+    assert (CorePartition_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500));
 
-    CorePartition_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250);
+    assert (CorePartition_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250));
     
-    CorePartition_CreateThread (Terminal, NULL, 42 * sizeof (size_t), 50);
+    assert (CorePartition_CreateThread (Terminal, NULL, 42 * sizeof (size_t), 50));
 }
 
 

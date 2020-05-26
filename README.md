@@ -146,6 +146,7 @@ This is how to use it
 
 ```
 #include "CorePartition.h"
+#include <assert.h>
 
 void Thread1(void* pValue)
 {
@@ -202,20 +203,22 @@ static void StackOverflowHandler ()
 int main ()
 {
 
-     CorePartition_Start (2);
+     assert (CorePartition_Start (3));
 
-     CorePartition_SetCurrentTimeInterface(getMsTicks);
-     CorePartition_SetSleepTimeInterface (sleepMSTicks);
-     CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+     assert (CorePartition_SetCurrentTimeInterface(getMsTicks));
+     assert (CorePartition_SetSleepTimeInterface (sleepMSTicks));
+     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
      //Every 1000 cycles with a Stack page of 210 bytes
-     CorePartition_CreateThread (Thread1, NULL,  210, 1000);
+     assert (CorePartition_CreateThread (Thread1, NULL,  210, 1000));
 
      //All the time with a Stack page of 150 bytes and
      //thread isolation
-     CorePartition_CreateSecureThread (Thread2, NULL, 150, 0);
+     assert (CorePartition_CreateSecureThread (Thread2, NULL, 150, 0));
 
-     join();
+     assert (CorePartition_CreateSecureThread (Thread2, NULL, 150, 500));
+
+     CorePartition_Join();
 }
 ```
 

@@ -37,6 +37,8 @@
 
 #include "Arduino.h"
 #include "CorePartition.h"
+#include <assert.h>
+
 
 void SetLocation (uint16_t nY, uint16_t nX)
 {
@@ -461,24 +463,23 @@ void setup()
     //Thread1 ();
 
 
-    CorePartition_Start(5);
+    assert (CorePartition_Start(5));
     
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface(getTimeTick));
+    assert (CorePartition_SetSleepTimeInterface(sleepTick));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
     
     
     
-    CorePartition_CreateThread (Thread1, NULL, 30 * sizeof (size_t), 100);
+    assert (CorePartition_CreateThread (Thread1, NULL, 30 * sizeof (size_t), 100));
 
-    CorePartition_CreateSecureThread (ThreadTOP, NULL, 20 * sizeof (size_t), 0);
+    assert (CorePartition_CreateSecureThread (ThreadTOP, NULL, 20 * sizeof (size_t), 0));
     
-    CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 500);
+    assert (CorePartition_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 500));
     
-    CorePartition_CreateSecureThread (Thread3, NULL, 30 * sizeof (size_t), 900);
+    assert (CorePartition_CreateSecureThread (Thread3, NULL, 30 * sizeof (size_t), 900));
     
-    CorePartition_CreateThread (Thread4, NULL, 30 * sizeof (size_t), 2000);
-
+    assert (CorePartition_CreateThread (Thread4, NULL, 30 * sizeof (size_t), 2000));
 
 }
 

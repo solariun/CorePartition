@@ -38,6 +38,9 @@
 
 #include "Arduino.h"
 
+#include <assert.h>
+
+
 //#include "U8glib.h"
 #include <Wire.h>
 #include <LedControl.h>
@@ -573,21 +576,21 @@ void setup()
     //pinMode(nPinInput, INPUT_PULLUP);
     //attachInterrupt(digitalPinToInterrupt(nPinInput), CorePartition_YieldPreemptive, CHANGE);
 
-    CorePartition_Start (5);
+    assert (CorePartition_Start (5));
     
-    CorePartition_SetCurrentTimeInterface(getTimeTick);
-    CorePartition_SetSleepTimeInterface(sleepTick);
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetCurrentTimeInterface(getTimeTick));
+    assert (CorePartition_SetSleepTimeInterface(sleepTick));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    CorePartition_CreateThread (Thread1, NULL, 60, 0);
+    assert (CorePartition_CreateThread (Thread1, NULL, 60, 0));
     
-    CorePartition_CreateThread (Thread2, NULL, 20, 0);
+    assert (CorePartition_CreateThread (Thread2, NULL, 20, 0));
 
-    CorePartition_CreateThread (Thread3, NULL, 25, 0);
+    assert (CorePartition_CreateThread (Thread3, NULL, 25, 0));
 
-    CorePartition_CreateThread (Thread4, NULL, 15, 0);
+    assert (CorePartition_CreateThread (Thread4, NULL, 15, 0));
     
-    //CorePartition_CreateThread (Thread5, NULL, 11, 0);
+    //assert (CorePartition_CreateThread (Thread5, NULL, 11, 0));
 }
 
 

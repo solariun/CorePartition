@@ -37,12 +37,12 @@
 #include "CorePartition.h"
 
 #include "Arduino.h"
-
 //#include "U8glib.h"
 #include <Wire.h>
 #include <Adafruit_AMG88xx.h>
 #include <LedControl.h>
 
+#include <assert.h>
 
 #define MAX(x, y) (x > y ? x : y)
 #define MIN(x, y) (x < y ? x : y)
@@ -498,23 +498,21 @@ void setup()
         lc.clearDisplay(nCount);         // and clear the display
     }
 
-    CorePartition_Start (3);
+    assert (CorePartition_Start (3));
     
-    CorePartition_SetStackOverflowHandler (StackOverflowHandler);
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    CorePartition_CreateThread (Thread1, NULL, 150, 0);
+    assert (CorePartition_CreateThread (Thread1, NULL, 150, 0));
     
-    CorePartition_CreateThread (Thread3, NULL, 150, 10);
+    assert (CorePartition_CreateThread (Thread3, NULL, 150, 10));
 
-    CorePartition_CreateThread (Thread2, NULL, 150, 10);
+    assert (CorePartition_CreateThread (Thread2, NULL, 150, 10));
 }
 
 
 
 void loop()
-{
-    delay (1000);
-    
+{    
     setPreemptionOn ();
     
     CorePartition_Join();
