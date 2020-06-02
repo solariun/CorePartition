@@ -316,6 +316,11 @@ static size_t Classic_Scheduler (void)
         nCThread++;
     }
 
+    if (NULL != pCoreThread[nThread])
+    {
+        pCoreThread[nThread]->nLastMomentun = getCTime ();
+    }
+
     return nThread;
 }
 
@@ -469,8 +474,6 @@ uint8_t CorePartition_Yield ()
         nNextThread = Scheduler ();
 
         CorePartition_Yield_IntoVoid ();
-
-        pCoreThread[nCurrentThread]->nLastMomentun = getCTime ();
 
         return 1;
     }
