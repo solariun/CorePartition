@@ -30,7 +30,6 @@
 */
 
 #include "CorePartition.h"
-
 #include <stdlib.h>
 
 
@@ -130,32 +129,6 @@ static void SleepTicks (const uint32_t nSleepValue)
     uint32_t nCTime = 1;
 
     while (nSleepTicks-- && nCTime) nCTime = GetTicks ();
-}
-
-
-bool CorePartition_Start (size_t nThreadPartitions)
-{
-    if (NULL != pCoreThread || 0 == nThreadPartitions) return false;
-
-    nMaxThreads = nThreadPartitions;
-
-    if (NULL == (pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)))
-    {
-        return false;
-    }
-
-    if (memset ((void*)pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
-    {
-        return false;
-    }
-
-
-    if (false == CorePartition_SetCurrentTimeInterface (GetTicks) || false == CorePartition_SetSleepTimeInterface (SleepTicks))
-    {
-        return false;
-    }
-
-    return true;
 }
 
 
@@ -310,44 +283,37 @@ static size_t Momentum_Scheduler (void)
 }
 
 
-static size_t Classic_Scheduller (void)
+static size_t Classic_Scheduler (void)
 {
-    static size_t nCounter = 0;
+    static uint32_t nTimeTick = 0;
 
-    uint32_t nCurTime;
     uint32_t nMin;
     size_t nCThread;
     size_t nThread;
-    size_t nCount;
 
-    nCurTime = getCTime ();
+    nMin = ~((uint32_t)0);
     nCThread = nCurrentThread + 1;
     nThread = nCurrentThread;
 
-    srand (nCurTime);
-
-    nMin = ~((uint32_t)0);
-
-    for (nCount = 0; nCount < nMaxThreads; nCount++, nCThread++)
+    while (nRunningThreads)
     {
-        nCThread = nCThread >= nMaxThreads ? 0 : nCThread;
-
-        if (pCoreThread[nCThread] == NULL)
+        if (nCThread >= nMaxThreads)
         {
-            continue;
+            nTimeTick++;
+            nCThread = 0;
         }
-        else if ((GetTicks() % pCoreThread[nCurrentThread]->nNice) == 0 || THREADL_START == pCoreThread[nCThread]->nStatus)
-        {
-            nThread = nCThread;
-            nMin = 0;
-            break;
-        }
-    } /* code */
 
-    if (NULL != pCoreThread[nThread])
-    {
-        sleepCTime (10);
-        pCoreThread[nThread]->nLastMomentun = getCTime ();
+        if (pCoreThread[nCThread] != NULL)
+        {
+            if ((nTimeTick % pCoreThread[nCThread]->nNice) == 0 || THREADL_START == pCoreThread[nCThread]->nStatus)
+            {
+                nThread = nCThread;
+                nMin = 0;
+                break;
+            }
+        }
+
+        nCThread++;
     }
 
     return nThread;
@@ -355,6 +321,47 @@ static size_t Classic_Scheduller (void)
 
 
 static size_t (*Scheduler) (void) = Momentum_Scheduler;
+
+
+bool CorePartition_Classic_Start (size_t nThreadPartitions)
+{
+    if (CorePartition_Start (nThreadPartitions))
+    {
+        Scheduler = Classic_Scheduler;
+
+        return true;
+    }
+
+    return false;
+}
+
+
+bool CorePartition_Start (size_t nThreadPartitions)
+{
+    if (NULL != pCoreThread || 0 == nThreadPartitions) return false;
+
+    nMaxThreads = nThreadPartitions;
+
+    if (NULL == (pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)))
+    {
+        return false;
+    }
+
+    if (memset ((void*)pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
+    {
+        return false;
+    }
+
+
+    if (false == CorePartition_SetCurrentTimeInterface (GetTicks) || false == CorePartition_SetSleepTimeInterface (SleepTicks))
+    {
+        return false;
+    }
+
+    Scheduler = Momentum_Scheduler;
+
+    return true;
+}
 
 static void CorePartition_StopThread ()
 {
@@ -458,9 +465,12 @@ uint8_t CorePartition_Yield ()
     if (nRunningThreads != 0)
     {
         pCoreThread[nCurrentThread]->nExecTime = getCTime () - pCoreThread[nCurrentThread]->nLastMomentun;
+        
         nNextThread = Scheduler ();
 
         CorePartition_Yield_IntoVoid ();
+
+        pCoreThread[nCurrentThread]->nLastMomentun = getCTime ();
 
         return 1;
     }

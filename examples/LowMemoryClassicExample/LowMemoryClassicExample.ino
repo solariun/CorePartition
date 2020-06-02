@@ -34,8 +34,9 @@
 
 
 #include <assert.h>
-#include "Arduino.h"
+
 #include "CorePartition.h"
+#include "Arduino.h"
 
 
 void SetLocation (uint16_t nY, uint16_t nX)
@@ -204,7 +205,7 @@ void Thread (void* pValue)
 
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
-            CorePartition_CreateSecureThread (eventualThread, NULL, 30 * sizeof (size_t), 1000);
+            CorePartition_CreateSecureThread (eventualThread, NULL, 30 * sizeof (size_t), 2000);
         }
     }
 }
@@ -213,7 +214,7 @@ void Thread (void* pValue)
 void eventualThread (void* pValue)
 {
     uint32_t nValue = 0;
-    uint32_t nLast = getTimeTick ();
+    uint32_t nLast  = getTimeTick ();
 
     CorePartition_SetThreadName ("Eventual", 8);
 
@@ -305,7 +306,7 @@ void setup ()
     Serial.flush ();
 
 
-    if (CorePartition_Start (5) == false)
+    if (CorePartition_Classic_Start (5) == false)
     {
         Serial.println ("Fail to start CorePartition.");
         exit (0);
@@ -316,13 +317,13 @@ void setup ()
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[0], 30 * sizeof (size_t), 0));
+    assert (CorePartition_CreateThread (CounterThread, &nValues[0], 30 * sizeof (size_t), 1));
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[1], 30 * sizeof (size_t), 200));
+    assert (CorePartition_CreateThread (CounterThread, &nValues[1], 30 * sizeof (size_t), 10));
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[2], 30 * sizeof (size_t), 1000));
+    assert (CorePartition_CreateThread (CounterThread, &nValues[2], 30 * sizeof (size_t), 20));
 
-    assert (CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 250));
+    assert (CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 1000));
 }
 
 

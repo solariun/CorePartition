@@ -59,9 +59,24 @@ extern "C"
      * @brief Start CorePartition thread provisioning
      *
      * @param nThreadPartitions
+     * 
      * @return true  true if successfully created all provisioned threads
      */
     bool CorePartition_Start (size_t nThreadPartitions);
+
+
+    /**
+     * @brief Start CorePartition thread provisioning and set Classic_Scheduler
+     *
+     * @param nThreadPartitions
+     * 
+     * @return true  true if successfully created all provisioned threads
+     * 
+     * @note  This one will force CorePartition to use classic scheduler
+     *        that will not be time deterministic 
+     */
+    bool CorePartition_Classic_Start (size_t nThreadPartitions);
+
 
     /**
      * @brief  Create a non-Isolated context Thread
@@ -341,10 +356,6 @@ extern "C"
 
 #ifdef __cplusplus
 }  // extern "C"
-#endif
-
-#ifdef __cplusplus
-
 #endif
 
 #endif /* CorePartition_hpp */
