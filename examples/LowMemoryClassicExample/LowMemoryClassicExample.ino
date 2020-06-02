@@ -35,8 +35,8 @@
 
 #include <assert.h>
 
-#include "CorePartition.h"
 #include "Arduino.h"
+#include "CorePartition.h"
 
 
 void SetLocation (uint16_t nY, uint16_t nX)
@@ -214,7 +214,7 @@ void Thread (void* pValue)
 void eventualThread (void* pValue)
 {
     uint32_t nValue = 0;
-    uint32_t nLast  = getTimeTick ();
+    uint32_t nLast = getTimeTick ();
 
     CorePartition_SetThreadName ("Eventual", 8);
 
@@ -268,8 +268,7 @@ static void sleepTick (const uint32_t nSleepTime)
 
 void StackOverflowHandler ()
 {
-    while (!Serial)
-        ;
+    while (!Serial);
 
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
     Serial.println (CorePartition_GetID ());
