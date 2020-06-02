@@ -33,7 +33,7 @@
 CC = gcc
 
 # define any compile-time flags
-CFLAGS = -Wall -g --std=c99
+CFLAGS = -Wall -g --std=c89
 
 # define any directories containing header files other than /usr/include
 #
