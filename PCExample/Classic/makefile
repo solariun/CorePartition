@@ -37,7 +37,7 @@ CFLAGS = -Wall -g --std=c89
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I../
+INCLUDES = -I../../
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -50,7 +50,7 @@ INCLUDES = -I../
 #LIBS = -lmylib -lm
 
 # define the C source files
-SRCS = $(wildcard *.c) $(wildcard ../*.c)
+SRCS = $(wildcard *.c) $(wildcard ../../*.c)
 
 # define the C object files 
 #
@@ -63,7 +63,7 @@ SRCS = $(wildcard *.c) $(wildcard ../*.c)
 OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
-MAIN = CorePartition.bin
+MAIN = CorePartition_Classic.bin
 
 #
 # The following part of the makefile is generic; it can be used to 
