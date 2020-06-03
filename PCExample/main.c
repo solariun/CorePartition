@@ -101,6 +101,7 @@ void Thread1 (void* pValue)
                 nValue,
                 CorePartition_GetNice (),
                 nReturnedSleep - nSleepTime);
+
         nValue = nValue + 1;
 
         nSleepTime = getMsTicks ();
@@ -127,9 +128,9 @@ int main (int argc, const char* argv[])
     assert (CorePartition_SetSleepTimeInterface (sleepMSTicks));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 500));
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 600));
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 1000));
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 0));
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 323));
+    assert (CorePartition_CreateThread (Thread1, NULL, 256, 764));
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 1500));
 
     CorePartition_Join ();
