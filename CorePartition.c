@@ -30,10 +30,11 @@
 */
 
 #include "CorePartition.h"
+
 #include <stdlib.h>
 
 
-#define THREADL_ER_STACKOVFLW 1
+#define THREADL_ER_STACKOVFLW 1 /* Stack Overflow */
 #define THREAD_FACTOR_MAXBYTES 8
 
 #define THREAD_NAME_MAX 8
@@ -82,7 +83,7 @@ static void (*stackOverflowHandler) (void) = NULL;
 
 bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler) (void))
 {
-    if (NULL == pStackOverflowHandler || NULL != stackOverflowHandler) return false;
+    if (pStackOverflowHandler == NULL || stackOverflowHandler != NULL) return false;
 
     stackOverflowHandler = pStackOverflowHandler;
 
@@ -95,7 +96,7 @@ static uint32_t (*getCTime) (void) = NULL;
 
 bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface) (void))
 {
-    if (NULL == pTimeInterface) return false;
+    if (pTimeInterface == NULL) return false;
 
     getCTime = (uint32_t (*) (void))pTimeInterface;
 
@@ -106,7 +107,7 @@ bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface) (void))
 void (*sleepCTime) (const uint32_t nSleepTime) = NULL;
 bool CorePartition_SetSleepTimeInterface (void (*pSleepTime) (const uint32_t nSleepTime))
 {
-    if (NULL == pSleepTime) return false;
+    if (pSleepTime == NULL) return false;
 
     sleepCTime = (void (*) (const uint32_t))pSleepTime;
 
@@ -115,6 +116,7 @@ bool CorePartition_SetSleepTimeInterface (void (*pSleepTime) (const uint32_t nSl
 
 
 static uint32_t nTimeTick = 0;
+
 static uint32_t GetTicks ()
 {
     nTimeTick++;
@@ -122,13 +124,37 @@ static uint32_t GetTicks ()
     return nTimeTick;
 }
 
-
 static void SleepTicks (const uint32_t nSleepValue)
 {
     uint32_t nSleepTicks = nSleepValue;
     uint32_t nCTime = 1;
 
     while (nSleepTicks-- && nCTime) nCTime = GetTicks ();
+}
+
+bool CorePartition_Start (size_t nThreadPartitions)
+{
+    if (pCoreThread != NULL || nThreadPartitions == 0) return false;
+
+    nMaxThreads = nThreadPartitions;
+
+    if ((pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)) == NULL)
+    {
+        return false;
+    }
+
+    if (memset ((void*)pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
+    {
+        return false;
+    }
+
+
+    if (CorePartition_SetCurrentTimeInterface (GetTicks) == false || CorePartition_SetSleepTimeInterface (SleepTicks) == false)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -141,7 +167,7 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
     /* Determine free threads */
     for (nThread = 0; nThread < nMaxThreads; nThread++)
     {
-        if (NULL == pCoreThread[nThread]) break;
+        if (pCoreThread[nThread] == NULL) break;
     }
 
     /* If it leaves here it means a serious bug */
@@ -197,14 +223,14 @@ bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t
 
 static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
 {
-    if (0 == pCoreThread[nCurrentThread]->nIsolation)
+    const uint8_t* nTop = (const uint8_t*)pSource + nSize;
+
+    if (pCoreThread[nCurrentThread]->nIsolation == 0)
     {
         memcpy ((void*)pDestine, (const void*)pSource, nSize);
     }
     else
     {
-        const uint8_t* nTop = (const uint8_t*)pSource + nSize;
-        
         srand (pCoreThread[nCurrentThread]->nLastBackup);
 
         for (; pSource <= nTop;)
@@ -232,10 +258,8 @@ static void RestoreStack (void)
                 pCoreThread[nCurrentThread]->nStackSize);
 }
 
-#define __NEXTIME(TH) ((uint32_t) (pCoreThread[TH]->nLastMomentun + pCoreThread[TH]->nNice))
-#define __CALC(TH) (uint32_t) (__NEXTIME (TH) - nCurTime)
 
-static size_t Momentum_Scheduler (void)
+static size_t Scheduler (void)
 {
     uint32_t nCurTime;
     uint32_t nMin;
@@ -249,7 +273,11 @@ static size_t Momentum_Scheduler (void)
 
     srand (nCurTime);
 
-    nMin = ~((uint32_t)0);
+#define __NEXTIME(TH) ((uint32_t) (pCoreThread[TH]->nLastMomentun + pCoreThread[TH]->nNice))
+#define __CALC(TH) (uint32_t) (__NEXTIME (TH) - nCurTime)
+
+    nMin = 0xFFFFFFFF;
+
     for (nCount = 0; nCount < nMaxThreads; nCount++, nCThread++)
     {
         nCThread = nCThread >= nMaxThreads ? 0 : nCThread;
@@ -258,7 +286,7 @@ static size_t Momentum_Scheduler (void)
         {
             continue;
         }
-        else if (0 == pCoreThread[nCThread]->nNice || nCurTime >= __NEXTIME (nCThread) || THREADL_START == pCoreThread[nCThread]->nStatus)
+        else if (pCoreThread[nCThread]->nNice == 0 || nCurTime >= __NEXTIME (nCThread) || pCoreThread[nCThread]->nStatus == THREADL_START)
         {
             nThread = nCThread;
             nMin = 0;
@@ -271,86 +299,18 @@ static size_t Momentum_Scheduler (void)
         }
     } /* code */
 
-    if (NULL != pCoreThread[nThread])
+    if (pCoreThread[nThread] != NULL)
     {
-        sleepCTime (nMin == 1 ? 1 : nMin / 2);
+        sleepCTime (nMin);
     }
 
     return nThread;
 }
 
-/*
-static size_t Classic_Scheduler (void)
-{
-    static uint32_t nTimeTick = 0;
-
-    uint32_t nMin;
-    size_t nCThread;
-    size_t nThread;
-
-    nMin = ~((uint32_t)0);
-    nCThread = nCurrentThread + 1;
-    nThread = nCurrentThread;
-
-    while (nRunningThreads)
-    {
-        if (nCThread >= nMaxThreads)
-        {
-            nTimeTick++;
-            nCThread = 0;
-        }
-
-        if (pCoreThread[nCThread] != NULL)
-        {
-            if (pCoreThread[nCThread]->nNice == 0 || (nTimeTick % pCoreThread[nCThread]->nNice) == 0 ||
-                THREADL_START == pCoreThread[nCThread]->nStatus)
-            {
-                nThread = nCThread;
-                nMin = 0;
-                break;
-            }
-        }
-
-        nCThread++;
-    }
-
-    if (NULL != pCoreThread[nThread])
-    {
-        pCoreThread[nThread]->nLastMomentun = getCTime ();
-    }
-
-    return nThread;
-}
-*/
-
-bool CorePartition_Start (size_t nThreadPartitions)
-{
-    if (NULL != pCoreThread || 0 == nThreadPartitions) return false;
-
-    nMaxThreads = nThreadPartitions;
-
-    if (NULL == (pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)))
-    {
-        return false;
-    }
-
-    if (memset ((void*)pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
-    {
-        return false;
-    }
-
-
-    if (false == CorePartition_SetCurrentTimeInterface (GetTicks) || false == CorePartition_SetSleepTimeInterface (SleepTicks))
-    {
-        return false;
-    }
-
-    return true;
-}
 
 static void CorePartition_StopThread ()
 {
-    if (NULL != pCoreThread[nCurrentThread])
+    if (pCoreThread[nCurrentThread] != NULL)
     {
         free (pCoreThread[nCurrentThread]);
         pCoreThread[nCurrentThread] = NULL;
@@ -363,13 +323,13 @@ static void CorePartition_StopThread ()
 size_t nNextThread = 0;
 void CorePartition_Join ()
 {
-    volatile uint8_t nValue = 0xAA;
-
-    if (0 == nThreadCount || NULL == getCTime || NULL == sleepCTime) return;
+    if (nThreadCount == 0 || getCTime == NULL || sleepCTime == NULL) return;
 
     do
     {
-        if (NULL != pCoreThread[nCurrentThread])
+        volatile uint8_t nValue = 0xAA;
+
+        if (pCoreThread[nCurrentThread] != NULL)
         {
             pStartStck = (void*)&nValue;
 
@@ -383,7 +343,7 @@ void CorePartition_Join ()
 
                         pCoreThread[nCurrentThread]->mem.func.pFunction (pCoreThread[nCurrentThread]->mem.func.pValue);
 
-                        nNextThread = Momentum_Scheduler ();
+                        nNextThread = Scheduler ();
 
                         CorePartition_StopThread ();
 
@@ -408,6 +368,7 @@ void CorePartition_Join ()
         }
 
         nCurrentThread = nNextThread;
+        /*(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1); */
 
     } while (pCoreThread[nCurrentThread] != NULL);
 }
@@ -416,13 +377,12 @@ void CorePartition_Join ()
 static void CorePartition_Yield_IntoVoid ()
 {
     volatile uint8_t nValue = 0xBB;
-
     pCoreThread[nCurrentThread]->pLastStack = (void*)&nValue;
     pCoreThread[nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread[nCurrentThread]->pLastStack;
 
     if (pCoreThread[nCurrentThread]->nStackSize > pCoreThread[nCurrentThread]->nStackMaxSize)
     {
-        if (NULL != stackOverflowHandler) stackOverflowHandler ();
+        if (stackOverflowHandler != NULL) stackOverflowHandler ();
 
         CorePartition_StopThread ();
 
@@ -436,7 +396,6 @@ static void CorePartition_Yield_IntoVoid ()
         longjmp (jmpJoinPointer, 1);
     }
 
-    /* This exists to re-align after jump alignment optimizations */
     pCoreThread[nCurrentThread]->pLastStack = (void*)&nValue;
     pCoreThread[nCurrentThread]->nStackSize = (size_t)pStartStck - (size_t)pCoreThread[nCurrentThread]->pLastStack;
 
@@ -449,22 +408,10 @@ uint8_t CorePartition_Yield ()
 {
     if (nRunningThreads != 0)
     {
-        uint32_t nCurTime = 0;
-
         pCoreThread[nCurrentThread]->nExecTime = getCTime () - pCoreThread[nCurrentThread]->nLastMomentun;
-
-        nNextThread = Momentum_Scheduler ();
+        nNextThread = Scheduler ();
 
         CorePartition_Yield_IntoVoid ();
-
-
-        nCurTime = getCTime ();
-
-        while (__NEXTIME (nCurrentThread) > nCurTime)
-        {
-            sleepCTime ((__CALC (nCurrentThread) / 2));
-            nCurTime = getCTime ();
-        }
 
         pCoreThread[nCurrentThread]->nLastMomentun = getCTime ();
 
@@ -474,24 +421,21 @@ uint8_t CorePartition_Yield ()
     return 0;
 }
 
-
 void CorePartition_Sleep (uint32_t nDelayTickTime)
 {
     uint32_t nBkpNice = 0;
 
-    if (THREADL_RUNNING != pCoreThread[nCurrentThread]->nStatus) return;
+    if (pCoreThread[nCurrentThread]->nStatus != THREADL_RUNNING) return;
 
-    nBkpNice = CorePartition_GetNiceByID (nCurrentThread);
+    nBkpNice = pCoreThread[nCurrentThread]->nNice;
 
     pCoreThread[nCurrentThread]->nStatus = THREADL_SLEEP;
-
-    CorePartition_SetNice (nDelayTickTime);
+    pCoreThread[nCurrentThread]->nNice = nDelayTickTime;
 
     CorePartition_Yield ();
 
     pCoreThread[nCurrentThread]->nStatus = THREADL_RUNNING;
-
-    CorePartition_SetNice (nBkpNice);
+    pCoreThread[nCurrentThread]->nNice = nBkpNice;
 }
 
 

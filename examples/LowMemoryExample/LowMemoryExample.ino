@@ -291,8 +291,10 @@ void setup ()
     while (!Serial)
         ;
 
+    delay (1000),
+
     ResetColor ();
-    // ClearConsole ();
+    ClearConsole ();
     HideCursor ();
     SetLocation (1, 1);
 
@@ -318,11 +320,11 @@ void setup ()
 
     assert (CorePartition_CreateThread (CounterThread, &nValues[0], 30 * sizeof (size_t), 0));
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[1], 30 * sizeof (size_t), 200));
+    assert (CorePartition_CreateThread (CounterThread, &nValues[1], 30 * sizeof (size_t), 500));
 
     assert (CorePartition_CreateThread (CounterThread, &nValues[2], 30 * sizeof (size_t), 1000));
 
-    assert (CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 250));
+    assert (CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 500));
 }
 
 

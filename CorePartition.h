@@ -1,5 +1,4 @@
 /*
-//
 //  CorePartition.hpp
 //  CorePartition
 //
@@ -9,29 +8,30 @@
 //               GNU GENERAL PUBLIC LICENSE
 //                Version 3, 29 June 2007
 //
-// Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
-// Everyone is permitted to copy and distribute verbatim copies
-// of this license document, but changing it is not allowed.
+//Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+//Everyone is permitted to copy and distribute verbatim copies
+//of this license document, but changing it is not allowed.
 //
-// Preamble
+//Preamble
 //
-// The GNU General Public License is a free, copyleft license for
-// software and other kinds of works.
+//The GNU General Public License is a free, copyleft license for
+//software and other kinds of works.
 //
-// The licenses for most software and other practical works are designed
-// to take away your freedom to share and change the works.  By contrast,
-// the GNU General Public License is intended to guarantee your freedom to
-// share and change all versions of a program--to make sure it remains free
-// software for all its users.  We, the Free Software Foundation, use the
-// GNU General Public License for most of our software; it applies also to
-// any other work released this way by its authors.  You can apply it to
-// your programs, too.
+//The licenses for most software and other practical works are designed
+//to take away your freedom to share and change the works.  By contrast,
+//the GNU General Public License is intended to guarantee your freedom to
+//share and change all versions of a program--to make sure it remains free
+//software for all its users.  We, the Free Software Foundation, use the
+//GNU General Public License for most of our software; it applies also to
+//any other work released this way by its authors.  You can apply it to
+//your programs, too.
 //
 // See LICENSE file for the complete information
 */
 
 #ifndef CorePartition_hpp
 #define CorePartition_hpp
+
 
 #ifdef __cplusplus
 extern "C"
@@ -53,30 +53,16 @@ extern "C"
 #define THREADL_SLEEP 3
 #define THREADL_STOPPED 4
 
-    static const char CorePartition_version[] = "V2.6.0 develop Compiled at " __TIMESTAMP__;
+
+    static const char CorePartition_version[] = "V2.5.1 stable Compiled at " __TIMESTAMP__;
 
     /**
      * @brief Start CorePartition thread provisioning
      *
      * @param nThreadPartitions
-     * 
      * @return true  true if successfully created all provisioned threads
      */
     bool CorePartition_Start (size_t nThreadPartitions);
-
-
-    /**
-     * @brief Start CorePartition thread provisioning and set Classic_Scheduler
-     *
-     * @param nThreadPartitions
-     * 
-     * @return true  true if successfully created all provisioned threads
-     * 
-     * @note  This one will force CorePartition to use classic scheduler
-     *        that will not be time deterministic 
-     */
-    bool CorePartition_Classic_Start (size_t nThreadPartitions);
-
 
     /**
      * @brief  Create a non-Isolated context Thread
@@ -91,6 +77,7 @@ extern "C"
      * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
      */
     bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
+
 
     /**
      * @brief  Create a Isolated context Thread
@@ -108,6 +95,7 @@ extern "C"
      */
     bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
+
     /**
      * @brief  Override current +1 cycle on to specialize it
      *
@@ -123,6 +111,7 @@ extern "C"
      */
     bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface) (void));
 
+
     /**
      * @brief Override current +1 cycle count and sleep
      *
@@ -137,6 +126,7 @@ extern "C"
      *          make your processor will work better and on-time.
      */
     bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface) (const uint32_t nSleepTime));
+
 
     /**
      * @brief  Callback for informing Stack Overflow Thread destruction and actions
@@ -154,12 +144,14 @@ extern "C"
      */
     void CorePartition_Join (void);
 
+
     /**
      * @brief   Function to be called inside a thread to change context
      *
      * @return true  always return true while the thread is valid
      */
     uint8_t CorePartition_Yield (void);
+
 
     /**
      * @brief  Will set the thread to a special sleep state
@@ -171,12 +163,14 @@ extern "C"
      */
     void CorePartition_Sleep (uint32_t nDelayTickTime);
 
+
     /**
      * @brief Get Current Thread ID
      *
      * @return size_t   Thread ID
      */
     size_t CorePartition_GetID (void);
+
 
     /**
      * @brief Get Current Thread ID
@@ -194,6 +188,7 @@ extern "C"
  */
 #define CorePartition_GetStackSize() CorePartition_GetStackSizeByID (CorePartition_GetID ())
 
+
     /**
      * @brief  Get total size of stack context page for a Thread ID
      *
@@ -208,12 +203,14 @@ extern "C"
  */
 #define CorePartition_GetMaxStackSize() CorePartition_GetMaxStackSizeByID (CorePartition_GetID ())
 
+
     /**
      * @brief Get Thread context size
      *
      * @return size_t total size of the thread context
      */
     size_t CorePartition_GetThreadContextSize (void);
+
 
     /**
      * @brief  Get a thread status for a thread ID
@@ -228,6 +225,7 @@ extern "C"
  * @brief Get current Thread Status
  */
 #define CorePartition_GetStatus() CorePartition_GetStatusByID (CorePartition_GetID ())
+
 
     /**
      * @brief Current Thread Nice
@@ -246,12 +244,14 @@ extern "C"
  */
 #define CorePartition_GetNice() CorePartition_GetNiceByID (CorePartition_GetID ())
 
+
     /**
      * @brief Set Current Thread Nice
      *
      * @param nNice  Nice to be used
      */
     void CorePartition_SetNice (uint32_t nNice);
+
 
     /**
      * @brief Get Current Thread last momentum on swtich back
@@ -270,6 +270,7 @@ extern "C"
  */
 #define CorePartition_GetLastMomentum() CorePartition_GetLastMomentumByID (CorePartition_GetID ())
 
+
     /**
      * @brief  Last Duty Cycle of the current Thread
      *
@@ -287,12 +288,14 @@ extern "C"
  */
 #define CorePartition_GetLastDutyCycle() CorePartition_GetLastDutyCycleByID (CorePartition_GetID ())
 
+
     /**
      * @brief  Get Number of total active Threads
      *
      * @return size_t numver of threads
      */
     size_t CorePartition_GetNumberOfActiveThreads (void);
+
 
     /**
      * @brief  Get Max Number of total active Threads
@@ -354,8 +357,14 @@ extern "C"
  */
 #define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
 
+
 #ifdef __cplusplus
-}  // extern "C"
+}
+#endif
+
+
+#ifdef __cplusplus
+
 #endif
 
 #endif /* CorePartition_hpp */
