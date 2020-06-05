@@ -259,6 +259,9 @@ static void RestoreStack (void)
 }
 
 
+#define __NEXTIME(TH) ((uint32_t) (pCoreThread[TH]->nLastMomentun + pCoreThread[TH]->nNice))
+#define __CALC(TH, nCurTime) (uint32_t) (__NEXTIME (TH) - nCurTime)
+
 static size_t Scheduler (void)
 {
     uint32_t nCurTime;
@@ -272,9 +275,6 @@ static size_t Scheduler (void)
     nThread = nCurrentThread;
 
     srand (nCurTime);
-
-#define __NEXTIME(TH) ((uint32_t) (pCoreThread[TH]->nLastMomentun + pCoreThread[TH]->nNice))
-#define __CALC(TH) (uint32_t) (__NEXTIME (TH) - nCurTime)
 
     nMin = 0xFFFFFFFF;
 
@@ -292,16 +292,16 @@ static size_t Scheduler (void)
             nMin = 0;
             break;
         }
-        else if (nMin > __CALC (nCThread))
+        else if (nMin > __CALC (nCThread, nCurTime))
         {
             nThread = nCThread;
-            nMin = __CALC (nCThread);
+            nMin = __CALC (nCThread, nCurTime);
         }
     } /* code */
 
     if (pCoreThread[nThread] != NULL)
     {
-        sleepCTime (nMin);
+        sleepCTime (nMin > 2 ? (nMin/1.2): nMin);
     }
 
     return nThread;
@@ -412,6 +412,12 @@ uint8_t CorePartition_Yield ()
         nNextThread = Scheduler ();
 
         CorePartition_Yield_IntoVoid ();
+
+        while (getCTime () < __NEXTIME (nCurrentThread))
+        {
+            sleepCTime ((__CALC (nCurrentThread, getCTime ())) / 1.5);
+        }
+
 
         pCoreThread[nCurrentThread]->nLastMomentun = getCTime ();
 
