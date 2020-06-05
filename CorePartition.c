@@ -351,9 +351,9 @@ uint8_t CorePartition_Yield ()
             uint32_t nCurTime = CorePartition_GetCurrentTick ();
 
             if (CorePartition_GetNextTime (nCurrentThread) > nCurTime)
-            {        
-                CorePartition_SleepTicks (CorePartition_GetNiceByID (nCurrentThread)  > 1  ? CorePartition_GetNextTime (nCurrentThread) - nCurTime : 1);
-            }          
+            {
+                CorePartition_SleepTicks (CorePartition_GetNiceByID (nCurrentThread) > 1 ? CorePartition_GetNextTime (nCurrentThread) - nCurTime : 1);
+            }
         }
 
         pCoreThread[nCurrentThread]->nLastMomentun = CorePartition_GetCurrentTick ();
