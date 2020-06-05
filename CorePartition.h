@@ -57,7 +57,7 @@ extern "C"
     extern uint32_t CorePartition_GetCurrentTick ();
     extern void CorePartition_SleepTicks (uint32_t);
 
-    static const char CorePartition_version[] = "V2.5.1 stable Compiled at " __TIMESTAMP__;
+    static const char CorePartition_version[] = "V2.6.0 develop Compiled at " __TIMESTAMP__;
 
     /**
      * @brief Start CorePartition thread provisioning
