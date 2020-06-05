@@ -74,12 +74,12 @@ void Thread1 (void* pValue)
 
 
 
-static uint32_t getTimeTick()
+static uint32_t CorePartition_GetCurrentTick()
 {
    return (uint32_t) millis();
 }
 
-static void sleepTick (const uint32_t nSleepTime)
+void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -178,8 +178,6 @@ void setup()
     assert (CorePartition_Start (4));
 #endif
 
-    assert (CorePartition_SetCurrentTimeInterface(getTimeTick));
-    assert (CorePartition_SetSleepTimeInterface(sleepTick));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (CorePartition_CreateThread (Thread1, NULL, 25, 50));

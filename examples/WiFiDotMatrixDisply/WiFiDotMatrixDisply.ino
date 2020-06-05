@@ -65,7 +65,7 @@
 #endif
 
 int DIN = D4;  // MISO - NodeMCU - D4 (TXD1)
-int CS  = D7;  // MOSI  - NodeMCU - D7 (HMOSI)
+int CS = D7;   // MOSI  - NodeMCU - D7 (HMOSI)
 int CLK = D5;  // SS    - NodeMCU - D5 (HSCLK)
 
 
@@ -266,8 +266,8 @@ class TextScroller
 {
 private:
     int nNumberDigits = 15;
-    uint8_t nOffset   = 0;
-    int nIndex        = nNumberDigits * (-1);
+    uint8_t nOffset = 0;
+    int nIndex = nNumberDigits * (-1);
     uint8_t nSpeed;
 
     uint64_t getLetter (int nIndex, const char* pszMessage, uint16_t nMessageLen)
@@ -305,7 +305,7 @@ protected:
     virtual void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
     {
         static char nLine[9] = "        ";
-        int8_t nOffset       = 8;
+        int8_t nOffset = 8;
 
         // Serial.print (nRow, BIN);
 
@@ -348,7 +348,7 @@ public:
             {
                 if (nOffset >= 7)
                 {
-                    nIndex  = nIndex + 1 > (int)nMessageLen ? (int)nNumberDigits * (-1) : nIndex + 1;
+                    nIndex = nIndex + 1 > (int)nMessageLen ? (int)nNumberDigits * (-1) : nIndex + 1;
                     nOffset = 0;
 
                     if ((int)nNumberDigits * (-1) == nIndex) return false;
@@ -361,18 +361,17 @@ public:
         else
         {
             nOffset = 0;
-            nIndex  = 0;
+            nIndex = 0;
         }
 
         for (nCount = 0; nCount < nNumberDigits; nCount++)
         {
-            printScrollBytes (
-                    nLocY,
-                    nLocX,
-                    nCount,
-                    getLetter (nIndex + 1, pszMessage, nMessageLen),
-                    getLetter (nIndex, pszMessage, nMessageLen),
-                    (uint8_t)nOffset);
+            printScrollBytes (nLocY,
+                              nLocX,
+                              nCount,
+                              getLetter (nIndex + 1, pszMessage, nMessageLen),
+                              getLetter (nIndex, pszMessage, nMessageLen),
+                              (uint8_t)nOffset);
 
             nIndex = (int)nIndex + 1;
         }
@@ -407,13 +406,13 @@ MatrixTextScroller matrixTextScroller (4, 2);
 void LedDisplayShow (void* pValue)
 {
     unsigned long start = millis ();
-    size_t nValue       = 0;
+    size_t nValue = 0;
 
     CorePartition_SetThreadNameByID (CorePartition_GetID (), "Display", 7);
 
-    uint8_t a             = 0;
-    uint8_t b             = 0;
-    uint8_t nOffset       = 0;
+    uint8_t a = 0;
+    uint8_t b = 0;
+    uint8_t nOffset = 0;
     uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
     // setCoreNice (100);
 
@@ -428,7 +427,7 @@ void LedDisplayShow (void* pValue)
 
 
 #define MAX_SRV_CLIENTS 5
-const char* ssid     = STASSID;
+const char* ssid = STASSID;
 const char* password = STAPSK;
 
 const int port = 23;
@@ -491,7 +490,7 @@ class CommandShow : public Terminal::Command
 public:
     CommandShow ()
     {
-        m_commandName        = "show";
+        m_commandName = "show";
         m_commandDescription = "use show [threads|display|memory] to display information";
     }
 
@@ -567,7 +566,7 @@ class CommandDisplay : public Terminal::Command
 public:
     CommandDisplay ()
     {
-        m_commandName        = "display";
+        m_commandName = "display";
         m_commandDescription = "use show 'message to display' to display on Led display";
     }
 
@@ -645,7 +644,7 @@ void TelnetListener (void* pValue)
 
     std::string strValue;
     uint8_t nOffset = 0;
-    bool bRev       = false;
+    bool bRev = false;
 
     uint8_t nSpeed = matrixTextScroller.getSpeed ();
     matrixTextScroller.setSpeed (0);
@@ -729,7 +728,7 @@ void SerialTerminalHandler (void* injection)
 
 
 /// Espcializing CorePartition Tick as Milleseconds
-uint32_t getTimeTick ()
+uint32_t CorePartition_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
@@ -737,7 +736,7 @@ uint32_t getTimeTick ()
 
 /// Specializing CorePartition Idle time
 /// @param nSleepTime How log the sleep will lest
-void sleepTick (const uint32_t nSleepTime)
+void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -808,9 +807,6 @@ void setup ()
         exit (1);
     }
 
-
-    assert (CorePartition_SetCurrentTimeInterface (getTimeTick));
-    assert (CorePartition_SetSleepTimeInterface (sleepTick));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (CorePartition_CreateSecureThread (SerialTerminalHandler, NULL, 500, 200));

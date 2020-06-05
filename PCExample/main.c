@@ -64,12 +64,12 @@ void Sleep (uint32_t nSleep)
     } while ((getMiliseconds () - nMomentum) < nSleep);
 }
 
-static void sleepMSTicks (uint32_t nSleepTime)
+void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     usleep ((useconds_t)nSleepTime * 1000);
 }
 
-static uint32_t getMsTicks (void)
+uint32_t CorePartition_GetCurrentTick (void)
 {
     struct timeval tp;
     gettimeofday (&tp, NULL);
@@ -91,22 +91,25 @@ unsigned int addOne (unsigned int nValue)
 void Thread1 (void* pValue)
 {
     uint32_t nValue = 0;
-    uint32_t nSleepTime = getMsTicks ();
-    uint32_t nReturnedSleep = getMsTicks ();
+    uint32_t nSleepTime = CorePartition_GetCurrentTick ();
+    uint32_t nReturnedSleep = CorePartition_GetCurrentTick ();
+    int32_t nFactor = 0;
 
     while (1)
     {
-        printf (">> %lu:  Value: [%u], Nice: [%u] Sleep Time: [%u ms]\n",
+         nFactor = ((nReturnedSleep - nSleepTime) - CorePartition_GetNice ());
+        printf (">> %lu:  Value: [%u], Nice: [%u] Sleep Time: [%u ms]: Precision:[%d]\n",
                 CorePartition_GetID (),
                 nValue,
                 CorePartition_GetNice (),
-                nReturnedSleep - nSleepTime);
+                nReturnedSleep - nSleepTime,
+                nFactor);
 
         nValue = nValue + 1;
 
-        nSleepTime = getMsTicks ();
+        nSleepTime = CorePartition_GetCurrentTick ();
         CorePartition_Yield ();
-        nReturnedSleep = getMsTicks ();
+        nReturnedSleep = CorePartition_GetCurrentTick ();
     }
 }
 
@@ -124,8 +127,6 @@ int main (int argc, const char* argv[])
         return (1);
     }
 
-    assert (CorePartition_SetCurrentTimeInterface (getMsTicks));
-    assert (CorePartition_SetSleepTimeInterface (sleepMSTicks));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 150));

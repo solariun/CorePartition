@@ -85,7 +85,7 @@ void setPreemptionOn ()
 
     TCCR1A = 0;  // set entire TCCR1A register to 0
     TCCR1B = 0;  // same for TCCR1B
-    TCNT1  = 0;  // initialize counter value to 0
+    TCNT1 = 0;   // initialize counter value to 0
     // set compare match register for 1hz increments
     OCR1A = 156;  // = (16*10^6) / (1*1024) - 1 (must be <65536)
     // turn on CTC mode
@@ -100,7 +100,7 @@ void setPreemptionOn ()
 
 
 int DIN = 12;  // MISO
-int CS  = 11;  // MOSI
+int CS = 11;   // MOSI
 int CLK = 10;  // SS
 
 // Utilities
@@ -230,8 +230,8 @@ class TextScroller
 {
 private:
     int nNumberDigits = 15;
-    uint8_t nOffset   = 0;
-    int nIndex        = nNumberDigits * (-1);
+    uint8_t nOffset = 0;
+    int nIndex = nNumberDigits * (-1);
     uint8_t nSpeed;
 
     uint64_t GetLetter (int nIndex, const char* pszMessage, uint16_t nMessageLen)
@@ -269,7 +269,7 @@ protected:
     virtual void PrintRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
     {
         static char nLine[9] = "        ";
-        int8_t nOffset       = 8;
+        int8_t nOffset = 8;
 
         // Serial.print (nRow, BIN);
 
@@ -315,13 +315,12 @@ public:
 
         for (nCount = 0; nCount < nNumberDigits; nCount++)
         {
-            PrintScrollBytes (
-                    nLocY,
-                    nLocX,
-                    nCount,
-                    GetLetter (nIndex + 1, pszMessage, nMessageLen),
-                    GetLetter (nIndex, pszMessage, nMessageLen),
-                    (uint8_t)nOffset);
+            PrintScrollBytes (nLocY,
+                              nLocX,
+                              nCount,
+                              GetLetter (nIndex + 1, pszMessage, nMessageLen),
+                              GetLetter (nIndex, pszMessage, nMessageLen),
+                              (uint8_t)nOffset);
 
             nIndex = (int)nIndex + 1;
         }
@@ -354,8 +353,8 @@ void Thread1 (void* pValue)
     MatrixTextScroller matrixTextScroller (4, 3);
 
     char szMessage[50] = "";
-    uint8_t nStep      = 0;
-    int nSize          = 0;
+    uint8_t nStep = 0;
+    int nSize = 0;
 
     while (1)
     {
@@ -378,8 +377,8 @@ void Thread1 (void* pValue)
 void Thread2 (void* pValue)
 {
     unsigned long start = millis ();
-    size_t nValue       = 0;
-    bool boolCls        = false;
+    size_t nValue = 0;
+    bool boolCls = false;
 
     // setCoreNice (500);
 
@@ -430,6 +429,16 @@ void Thread3 (void* pValue)
 }
 
 
+static uint32_t CorePartition_GetCurrentTick ()
+{
+    return (uint32_t)millis ();
+}
+
+void CorePartition_SleepTicks (uint32_t nSleepTime)
+{
+    delay (nSleepTime);
+}
+
 void StackOverflowHandler ()
 {
     while (!Serial)
@@ -472,7 +481,6 @@ void setup ()
         while (1)
             ;
     }
-
 
     // Initializing displays 1 and 2
 

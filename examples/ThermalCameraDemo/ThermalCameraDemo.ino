@@ -488,12 +488,12 @@ void Thread5 (void* pValue)
 }
 
 
-static uint32_t getTimeTick ()
+uint32_t CorePartition_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
 
-static void sleepTick (const uint32_t nSleepTime)
+void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -508,6 +508,7 @@ void StackOverflowHandler ()
     Serial.println (F ("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
+    abort ();
 }
 
 
@@ -569,17 +570,15 @@ void setup ()
 
     assert (CorePartition_Start (5));
 
-    assert (CorePartition_SetCurrentTimeInterface (getTimeTick));
-    assert (CorePartition_SetSleepTimeInterface (sleepTick));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 60, 0));
+    assert (CorePartition_CreateThread (Thread1, NULL, sizeof (size_t) * 30, 0));
 
-    assert (CorePartition_CreateThread (Thread2, NULL, 20, 0));
+    assert (CorePartition_CreateThread (Thread2, NULL, sizeof (size_t) * 15, 0));
 
-    assert (CorePartition_CreateThread (Thread3, NULL, 25, 0));
+    assert (CorePartition_CreateThread (Thread3, NULL, sizeof (size_t) * 15, 0));
 
-    assert (CorePartition_CreateThread (Thread4, NULL, 15, 0));
+    assert (CorePartition_CreateThread (Thread4, NULL, sizeof (size_t) * 10, 0));
 
     // assert (CorePartition_CreateThread (Thread5, NULL, 11, 0));
 }

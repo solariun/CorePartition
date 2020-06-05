@@ -213,7 +213,7 @@ void Thread (void* pValue)
 void eventualThread (void* pValue)
 {
     uint32_t nValue = 0;
-    uint32_t nLast = getTimeTick ();
+    uint32_t nLast = CorePartition_GetCurrentTick ();
 
     CorePartition_SetThreadName ("Eventual", 8);
 
@@ -253,14 +253,14 @@ void eventualThread (void* pValue)
 }
 
 
-static uint32_t getTimeTick ()
+uint32_t CorePartition_GetCurrentTick ()
 {
-    return (uint32_t)millis ();
+    return (uint32_t) millis ();
 }
 
 
-static void sleepTick (const uint32_t nSleepTime)
-{
+void CorePartition_SleepTicks (uint32_t nSleepTime)
+{    
     delay (nSleepTime);
 }
 
@@ -313,18 +313,16 @@ void setup ()
         exit (0);
     }
 
-    assert (CorePartition_SetCurrentTimeInterface (getTimeTick));
-    assert (CorePartition_SetSleepTimeInterface (sleepTick));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[0], 30 * sizeof (size_t), 0));
+    assert (CorePartition_CreateThread (CounterThread, &nValues[0], 30 * sizeof (size_t), 1));
 
     assert (CorePartition_CreateThread (CounterThread, &nValues[1], 30 * sizeof (size_t), 500));
 
     assert (CorePartition_CreateThread (CounterThread, &nValues[2], 30 * sizeof (size_t), 1000));
 
-    assert (CorePartition_CreateThread (Thread, nValues, 35 * sizeof (size_t), 500));
+    assert (CorePartition_CreateSecureThread (Thread, nValues, 35 * sizeof (size_t), 500));
 }
 
 

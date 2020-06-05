@@ -73,7 +73,7 @@ void setPreemptionOn ()
 
     TCCR1A = 0;  // set entire TCCR1A register to 0
     TCCR1B = 0;  // same for TCCR1B
-    TCNT1  = 0;  // initialize counter value to 0
+    TCNT1 = 0;   // initialize counter value to 0
     // set compare match register for 1hz increments
     OCR1A = 156;  // = (16*10^6) / (1*1024) - 1 (must be <65536)
     // turn on CTC mode
@@ -89,7 +89,7 @@ void setPreemptionOn ()
 
 void Thread1 (void* pValue)
 {
-    uint8_t nPin   = CorePartition_GetID () + 2;
+    uint8_t nPin = CorePartition_GetID () + 2;
     bool boolTogle = true;
 
     pinMode (nPin, OUTPUT);
@@ -128,6 +128,15 @@ void StackOverflowHandler ()
     }
 }
 
+static uint32_t CorePartition_GetCurrentTick()
+{
+   return (uint32_t) millis();
+}
+
+void CorePartition_SleepTicks (uint32_t nSleepTime)
+{
+    delay (nSleepTime);
+}
 
 void setup ()
 {

@@ -683,12 +683,12 @@ void TraficLightKernel (void* pValue)
 }
 
 
-uint32_t getTimeTick ()
+uint32_t CorePartition_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
 
-void sleepTick (const uint32_t nSleepTime)
+void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -719,9 +719,6 @@ void setup ()
 
     assert (CorePartition_Start (4));
 
-
-    assert (CorePartition_SetCurrentTimeInterface (getTimeTick));
-    assert (CorePartition_SetSleepTimeInterface (sleepTick));
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (CorePartition_CreateThread (TraficLight, NULL, 30 * sizeof (size_t), 500));

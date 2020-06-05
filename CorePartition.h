@@ -54,6 +54,9 @@ extern "C"
 #define THREADL_STOPPED 4
 
 
+    extern uint32_t CorePartition_GetCurrentTick ();
+    extern void CorePartition_SleepTicks (uint32_t);
+
     static const char CorePartition_version[] = "V2.5.1 stable Compiled at " __TIMESTAMP__;
 
     /**
@@ -125,7 +128,7 @@ extern "C"
      *          ALWAYS override tick process is always a good procedure and will
      *          make your processor will work better and on-time.
      */
-    bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface) (const uint32_t nSleepTime));
+    bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface) (uint32_t nSleepTime));
 
 
     /**
