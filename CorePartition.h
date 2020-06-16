@@ -32,7 +32,6 @@
 #ifndef CorePartition_hpp
 #define CorePartition_hpp
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -54,7 +53,7 @@ extern "C"
 #define THREADL_STOPPED 4
 
 
-    extern uint32_t CorePartition_GetCurrentTick ();
+    extern uint32_t CorePartition_GetCurrentTick (void);
     extern void CorePartition_SleepTicks (uint32_t);
 
     static const char CorePartition_version[] = "V2.6.0 develop Compiled at " __TIMESTAMP__;
