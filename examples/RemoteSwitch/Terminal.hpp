@@ -45,10 +45,14 @@ public:
     class Command
     {
     public:
-        std::string m_commandName;
-        std::string m_commandDescription;
+        Command (const std::string& strCommandName);
 
         virtual void Run (Terminal& terminal, Stream& client, const std::string commandLine) = 0;
+
+        const std::string& GetCommandName ();
+
+    private:
+        std::string m_commandName;
     };
 
     /**
@@ -111,8 +115,8 @@ public:
      * @param countOnly         will only count and return the total itens
      *
      * @return uint8_t  return the index number, otherwise return
-     *                  0 for the error.
-     *                  if you ask 5 it will return
+     *                  0 for the error or does not exist.
+     *                  if you ask 5 it will return 5
      */
     uint8_t ParseOption (const std::string& commandLine, uint8_t nCommandIndex, std::string& returnText, bool countOnly = false);
 

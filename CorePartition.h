@@ -52,7 +52,6 @@ extern "C"
 #define THREADL_SLEEP 3
 #define THREADL_STOPPED 4
 
-
     extern uint32_t CorePartition_GetCurrentTick (void);
     extern void CorePartition_SleepTicks (uint32_t);
 
@@ -80,7 +79,6 @@ extern "C"
      */
     bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
-
     /**
      * @brief  Create a Isolated context Thread
      *
@@ -97,7 +95,6 @@ extern "C"
      */
     bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
-
     /**
      * @brief  Override current +1 cycle on to specialize it
      *
@@ -113,7 +110,6 @@ extern "C"
      */
     bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface) (void));
 
-
     /**
      * @brief Override current +1 cycle count and sleep
      *
@@ -128,7 +124,6 @@ extern "C"
      *          make your processor will work better and on-time.
      */
     bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface) (uint32_t nSleepTime));
-
 
     /**
      * @brief  Callback for informing Stack Overflow Thread destruction and actions
@@ -146,14 +141,12 @@ extern "C"
      */
     void CorePartition_Join (void);
 
-
     /**
      * @brief   Function to be called inside a thread to change context
      *
      * @return true  always return true while the thread is valid
      */
     uint8_t CorePartition_Yield (void);
-
 
     /**
      * @brief  Will set the thread to a special sleep state
@@ -165,14 +158,12 @@ extern "C"
      */
     void CorePartition_Sleep (uint32_t nDelayTickTime);
 
-
     /**
      * @brief Get Current Thread ID
      *
      * @return size_t   Thread ID
      */
     size_t CorePartition_GetID (void);
-
 
     /**
      * @brief Get Current Thread ID
@@ -190,7 +181,6 @@ extern "C"
  */
 #define CorePartition_GetStackSize() CorePartition_GetStackSizeByID (CorePartition_GetID ())
 
-
     /**
      * @brief  Get total size of stack context page for a Thread ID
      *
@@ -205,14 +195,12 @@ extern "C"
  */
 #define CorePartition_GetMaxStackSize() CorePartition_GetMaxStackSizeByID (CorePartition_GetID ())
 
-
     /**
      * @brief Get Thread context size
      *
      * @return size_t total size of the thread context
      */
     size_t CorePartition_GetThreadContextSize (void);
-
 
     /**
      * @brief  Get a thread status for a thread ID
@@ -227,7 +215,6 @@ extern "C"
  * @brief Get current Thread Status
  */
 #define CorePartition_GetStatus() CorePartition_GetStatusByID (CorePartition_GetID ())
-
 
     /**
      * @brief Current Thread Nice
@@ -246,14 +233,12 @@ extern "C"
  */
 #define CorePartition_GetNice() CorePartition_GetNiceByID (CorePartition_GetID ())
 
-
     /**
      * @brief Set Current Thread Nice
      *
      * @param nNice  Nice to be used
      */
     void CorePartition_SetNice (uint32_t nNice);
-
 
     /**
      * @brief Get Current Thread last momentum on swtich back
@@ -272,7 +257,6 @@ extern "C"
  */
 #define CorePartition_GetLastMomentum() CorePartition_GetLastMomentumByID (CorePartition_GetID ())
 
-
     /**
      * @brief  Last Duty Cycle of the current Thread
      *
@@ -290,14 +274,12 @@ extern "C"
  */
 #define CorePartition_GetLastDutyCycle() CorePartition_GetLastDutyCycleByID (CorePartition_GetID ())
 
-
     /**
      * @brief  Get Number of total active Threads
      *
      * @return size_t numver of threads
      */
     size_t CorePartition_GetNumberOfActiveThreads (void);
-
 
     /**
      * @brief  Get Max Number of total active Threads
@@ -359,11 +341,9 @@ extern "C"
  */
 #define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
 
-
 #ifdef __cplusplus
 }
 #endif
-
 
 #ifdef __cplusplus
 

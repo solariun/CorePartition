@@ -34,25 +34,12 @@
 
 #include <ESP8266WiFi.h>
 
-
-// Designed for NodeMCU ESP8266
-//################# DISPLAY CONNECTIONS ################
-// LED Matrix Pin -> ESP8266 Pin
-// Vcc            -> 3v  (3V on NodeMCU 3V3 on WEMOS)
-// Gnd            -> Gnd (G on NodeMCU)
-// DIN            -> D7  (Same Pin for WEMOS)
-// CS             -> D4  (Same Pin for WEMOS)
-// CLK            -> D5  (Same Pin for WEMOS)
-
-
 #include "CorePartition.h"
 #include "Terminal.hpp"
 
 #include "Arduino.h"
 #include "user_interface.h"
 
-#include <LedControl.h>
-#include <Wire.h>
 #include <assert.h>
 #include <string>
 
@@ -68,15 +55,9 @@ int DIN = D4;  // MISO - NodeMCU - D4 (TXD1)
 int CS = D7;   // MOSI  - NodeMCU - D7 (HMOSI)
 int CLK = D5;  // SS    - NodeMCU - D5 (HSCLK)
 
-
 // Utilities
 
-
 // Functions
-
-#define MAX_LED_MATRIX 8
-LedControl lc = LedControl (DIN, CLK, CS, MAX_LED_MATRIX);
-
 
 void SetLocation (Stream& device, uint16_t nY, uint16_t nX)
 {
@@ -86,7 +67,6 @@ void SetLocation (Stream& device, uint16_t nY, uint16_t nX)
     device.write (szTemp, nLen);
 }
 
-
 // workis with 256 colors
 void SetColor (Stream& device, const uint8_t nFgColor, const uint8_t nBgColor)
 {
@@ -95,7 +75,6 @@ void SetColor (Stream& device, const uint8_t nFgColor, const uint8_t nBgColor)
 
     device.write (szTemp, nLen);
 }
-
 
 void LocalEcho (Stream& device, bool state)
 {
@@ -110,30 +89,25 @@ void ResetColor (Stream& device)
     device.print ("\033[0m");
 }
 
-
 void HideCursor (Stream& device)
 {
     device.print ("\033[?25l");
 }
-
 
 void ShowCursor (Stream& device)
 {
     device.print ("\033[?25h");
 }
 
-
 void ClearConsole (Stream& device)
 {
     device.print ("\033c\033[2J");
 }
 
-
 void ReverseColor (Stream& device)
 {
     device.print ("\033[7m");
 }
-
 
 void Delay (uint64_t nSleep)
 {
@@ -146,7 +120,6 @@ void Delay (uint64_t nSleep)
         CorePartition_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
-
 
 void ShowRunningThreads (Stream& client)
 {
@@ -186,246 +159,6 @@ void ShowRunningThreads (Stream& client)
     }
 }
 
-
-enum GRAPH_CHAR
-{
-    CHAR_FULL_SIGNAL = 127,
-    CHAR_EMPTY_BAT,        // 128
-    CHAR_BAT_1,            // 129
-    CHAR_BAT_2,            // 130
-    CHAR_BAT_3,            // 131
-    CHAR_BAT_CHARG_1,      // 132
-    CHAR_BAT_CHARG_2,      // 133
-    CHAR_OK,               // 134
-    CHAR_ARROW_DOWN,       // 135
-    CHAR_ARROW_LEFT,       // 136
-    CHAR_ARROW_UP,         // 137
-    CHAR_ARROW_RIGHT,      // 138
-    CHAR_ATTENTION,        // 139
-    CHAR_WIFI,             // 140
-    CHAR_WIFI_REV,         // 141
-    CHAR_BELL,             // 142
-    CHAR_CLOCK,            // 143
-    CHAR_SUN,              // 144
-    CHAR_CLOUD,            // 145
-    CHAR_RAINING,          // 146
-    CHAR_PARTIALLY_CLOUD,  // 147
-    CHAR_UMBRELLA,         // 148
-    CHAR_PIN,              // 149
-    CHAR_SIGNAL_0,         // 150
-    CHAR_SIGNAL_1,         // 151
-    CHAR_SIGNAL_2,         // 152
-    CHAR_SIGNAL_3,         // 153
-    CHAR_SIGNAL_OK,        // 154
-    CHAR_INFO,             // 155
-    CHAR_NO,               // 156
-    CHAR_NO_2,             // 157
-    CHAR_NO_3,             // 158
-    CHAR_OPEN_ENVELOP,     // 159
-    CHAR_PAW,              // 160
-    CHAR_CLOSE_ENVELOPE,   // 161
-    CHAR_POWER,            // 162
-    CHAR_ANIME_1,          // 163
-    CHAR_ANIME_2,          // 164
-    CHAR_ANIME_3,          // 165
-    CHAR_ANIME_4,          // 166
-    CHAR_ANIME_5,          // 167
-    CHAR_ANIME_6,          // 168
-    CHAR_ANIME_7,          // 169
-    CHAR_ANIME_8,          // 170
-    CHAR_ANIME_9,          // 171
-};
-
-
-const uint64_t byteImages[] PROGMEM = {
-        0x0000000000000000, 0x00180018183c3c18, 0x0000000012246c6c, 0x0036367f367f3636, 0x000c1f301e033e0c, 0x0063660c18336300, 0x006e333b6e1c361c,
-        0x0000000000030606, 0x00180c0606060c18, 0x00060c1818180c06, 0x0000663cff3c6600, 0x00000c0c3f0c0c00, 0x060c0c0000000000, 0x000000003f000000,
-        0x000c0c0000000000, 0x000103060c183060, 0x003e676f7b73633e, 0x003f0c0c0c0c0e0c, 0x003f33061c30331e, 0x001e33301c30331e, 0x0078307f33363c38,
-        0x001e3330301f033f, 0x001e33331f03061c, 0x000c0c0c1830333f, 0x001e33331e33331e, 0x000e18303e33331e, 0x000c0c00000c0c00, 0x060c0c00000c0c00,
-        0x00180c0603060c18, 0x00003f00003f0000, 0x00060c1830180c06, 0x000c000c1830331e, 0x001e037b7b7b633e, 0x6666667e66663c00, 0x3e66663e66663e00,
-        0x3c66060606663c00, 0x3e66666666663e00, 0x7e06063e06067e00, 0x0606063e06067e00, 0x3c66760606663c00, 0x6666667e66666600, 0x3c18181818183c00,
-        0x1c36363030307800, 0x66361e0e1e366600, 0x7e06060606060600, 0xc6c6c6d6feeec600, 0xc6c6e6f6decec600, 0x3c66666666663c00, 0x06063e6666663e00,
-        0x603c766666663c00, 0x66361e3e66663e00, 0x3c66603c06663c00, 0x18181818185a7e00, 0x7c66666666666600, 0x183c666666666600, 0xc6eefed6c6c6c600,
-        0xc6c66c386cc6c600, 0x1818183c66666600, 0x7e060c1830607e00, 0x001e06060606061e, 0x00406030180c0603, 0x001e18181818181e, 0x0000000063361c08,
-        0x003f000000000000, 0x0000000000180c06, 0x7c667c603c000000, 0x3e66663e06060600, 0x3c6606663c000000, 0x7c66667c60606000, 0x3c067e663c000000,
-        0x0c0c3e0c0c6c3800, 0x3c607c66667c0000, 0x6666663e06060600, 0x3c18181800180000, 0x1c36363030003000, 0x66361e3666060600, 0x1818181818181800,
-        0xd6d6feeec6000000, 0x6666667e3e000000, 0x3c6666663c000000, 0x06063e66663e0000, 0xf0b03c36363c0000, 0x060666663e000000, 0x3e603c067c000000,
-        0x1818187e18180000, 0x7c66666666000000, 0x183c666600000000, 0x7cd6d6d6c6000000, 0x663c183c66000000, 0x3c607c6666000000, 0x3c0c18303c000000,
-        0x00380c0c070c0c38, 0x0c0c0c0c0c0c0c0c, 0x00070c0c380c0c07, 0x0000000000003b6e, 0x5554545050404000, 0x3f21212121212121, 0x3f212d2121212121,
-        0x3f212d212d212121, 0x3f212d212d212d21, 0x3f212d2d2d212121, 0x3f212d2d2d2d2d2d, 0x00040a1120408000, 0x081c3e7f1c1c1c1c, 0x0010307fff7f3010,
-        0x1c1c1c1c7f3e1c08, 0x00080cfefffe0c08, 0x40e040181e0f0f07, 0x939398cc6730180f, 0xffa9a9b7d9eff1ff, 0x1800ff7a3a3a3c18, 0x3c428199b985423c,
-        0x18423ca5a53c4218, 0x0000ff81864c3800, 0x1428ff81864c3800, 0x0000ff81864f3e05, 0x0000ff81864f3e05, 0x18141010fe7c3800, 0x08081c1c3e363e1c,
-        0x00aa000000000000, 0x000a080000000000, 0x002a282000000000, 0x00aaa8a0840a1000, 0x3c46e7e7e3ff663c, 0x0082442810284482, 0x003844aa92aa4438,
-        0x003864f2ba9e4c38, 0xff8199a5c3422418, 0x7e3cdbc383343624, 0xff8199a5c3ff0000, 0x3c66c39999db5a18, 0xff000001010000ff, 0xff000003030000ff,
-        0xff000006060000ff, 0xff00000c0c0000ff, 0xff000018180000ff, 0xff000030300000ff, 0xff000060600000ff, 0xff0000c0c00000ff, 0xff000080800000ff};
-
-const int byteImagesLen = sizeof (byteImages) / 8;
-
-
-class TextScroller
-{
-private:
-    int nNumberDigits = 15;
-    uint8_t nOffset = 0;
-    int nIndex = nNumberDigits * (-1);
-    uint8_t nSpeed;
-
-    uint64_t getLetter (int nIndex, const char* pszMessage, uint16_t nMessageLen)
-    {
-        int nCharacter = nIndex > nMessageLen || nIndex < 0 ? ' ' : pszMessage[nIndex];
-
-        return getImage (nCharacter - ' ');
-    }
-
-    uint64_t getImage (int nIndex)
-    {
-        uint64_t nBuffer = 0xAA;
-
-        nIndex = nIndex > byteImagesLen || nIndex < 0 ? 0 : nIndex;
-
-        memcpy_P (&nBuffer, byteImages + nIndex, sizeof (uint64_t));
-
-        return nBuffer;
-    }
-
-    void printScrollBytes (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, const uint64_t charLeft, const uint64_t charRight, uint8_t nOffset)
-    {
-        int i = 0;
-
-        for (i = 0; i < 8; i++)
-        {
-            printRow (nLocY, nLocX, nDigit, i, (((uint8_t*)&charLeft)[i] << (8 - nOffset) | ((uint8_t*)&charRight)[i] >> nOffset));
-        }
-
-        // CorePartition_Sleep (1);
-    }
-
-
-protected:
-    virtual void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
-    {
-        static char nLine[9] = "        ";
-        int8_t nOffset = 8;
-
-        // Serial.print (nRow, BIN);
-
-        while (--nOffset >= 0)
-        {
-            nLine[7 - nOffset] = nRow & 1 != 0 ? '#' : ' ';
-            nRow >>= 1;
-        }
-
-        SetLocation (Serial, nLocY + nRowIndex, nLocX + (nDigit * 8));
-        Serial.print (nLine);
-    }
-
-public:
-    TextScroller (int nNumberDigits, uint8_t nSpeed) : nNumberDigits (nNumberDigits), nOffset (0), nSpeed (nSpeed)
-    {
-        nIndex = nSpeed == 0 ? 0 : nNumberDigits * (-1);
-    }
-
-
-    void setSpeed (uint8_t nSpeed)
-    {
-        this->nSpeed = nSpeed;
-    }
-
-
-    uint8_t getSpeed ()
-    {
-        return this->nSpeed;
-    }
-
-
-    bool show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
-    {
-        uint8_t nCount;
-
-        if (nSpeed > 0 && nSpeed % 8 == 0) nSpeed++;
-
-        if (nSpeed > 0) do
-            {
-                if (nOffset >= 7)
-                {
-                    nIndex = nIndex + 1 > (int)nMessageLen ? (int)nNumberDigits * (-1) : nIndex + 1;
-                    nOffset = 0;
-
-                    if ((int)nNumberDigits * (-1) == nIndex) return false;
-                }
-                else
-                {
-                    nOffset = (int)nOffset + (nSpeed % 8);
-                }
-            } while (nOffset >= 8);
-        else
-        {
-            nOffset = 0;
-            nIndex = 0;
-        }
-
-        for (nCount = 0; nCount < nNumberDigits; nCount++)
-        {
-            printScrollBytes (nLocY,
-                              nLocX,
-                              nCount,
-                              getLetter (nIndex + 1, pszMessage, nMessageLen),
-                              getLetter (nIndex, pszMessage, nMessageLen),
-                              (uint8_t)nOffset);
-
-            nIndex = (int)nIndex + 1;
-        }
-
-        nIndex = (int)nIndex - (nCount - (nSpeed / 8));
-
-        return true;
-    }
-};
-
-
-class MatrixTextScroller : public TextScroller
-{
-protected:
-    void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow) override
-    {
-        lc.setRow (nDigit, 7 - nRowIndex, nRow);
-    }
-
-public:
-    using TextScroller::TextScroller;
-};
-
-
-std::string strDisplay = "CorePartition Works!";
-
-
-MatrixTextScroller matrixTextScroller (MAX_LED_MATRIX, 2);
-
-/// LedDisplayShow - Will update information o Display
-/// @param pValue  Information injected from CorePartition on startup
-void LedDisplayShow (void* pValue)
-{
-    unsigned long start = millis ();
-    size_t nValue = 0;
-
-    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Display", 7);
-
-    uint8_t a = 0;
-    uint8_t b = 0;
-    uint8_t nOffset = 0;
-    uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
-    // setCoreNice (100);
-
-    uint8_t nStep = 0;
-
-    while (1)
-    {
-        matrixTextScroller.show (0, 0, strDisplay.c_str (), strDisplay.length ());
-        CorePartition_Yield ();
-    }
-}
-
-
 #define MAX_SRV_CLIENTS 5
 const char* ssid = STASSID;
 const char* password = STAPSK;
@@ -443,7 +176,6 @@ public:
     }
 };
 
-
 WiFiServer server (port);
 WiFiClient serverClients[MAX_SRV_CLIENTS];
 
@@ -457,7 +189,6 @@ public:
         return ((WiFiClient&)GetStream ()).connected ();
     }
 };
-
 
 const char* GetWiFiStatus ()
 {
@@ -484,14 +215,11 @@ const char* GetWiFiStatus ()
     return "Unknown";
 }
 
-
 class CommandShow : public Terminal::Command
 {
 public:
-    CommandShow ()
+    CommandShow () : Terminal::Command ("show")
     {
-        m_commandName = "show";
-        m_commandDescription = "use show [threads|display|memory] to display information";
     }
 
     void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
@@ -504,7 +232,6 @@ public:
             if (nNumCommands > 2)
             {
                 client.printf ("Warning: detected more options (%u) than necessary, aborting. \n", nNumCommands);
-                client.println (m_commandDescription.c_str ());
 
                 return;
             }
@@ -512,12 +239,6 @@ public:
             if (strOption == "threads")
             {
                 ShowRunningThreads (client);
-            }
-            else if (strOption == "display")
-            {
-                client.print ("Message: [");
-                client.print (strDisplay.c_str ());
-                client.println ("]");
             }
             else if (strOption == "memory")
             {
@@ -554,43 +275,33 @@ public:
             else
             {
                 client.println ("Error, invalid option");
-                client.println (m_commandDescription.c_str ());
             }
         }
     }
 };
 
-
 class CommandDisplay : public Terminal::Command
 {
 public:
-    CommandDisplay ()
+    CommandDisplay () : Terminal::Command ("display")
     {
-        m_commandName = "display";
-        m_commandDescription = "use show 'message to display' to display on Led display";
     }
 
     void Run (Terminal& terminal, Stream& client, const std::string commandLine) override
     {
         uint8_t nNumCommands;
+        std::string strDisplay;
 
-        if ((nNumCommands = terminal.ParseOption (commandLine, 1, strDisplay)) > 0)
+        int nItens;
+
+        client.printf ("Value: %d\n", nItens);
+
+        for (int nCount = 1; (nItens = terminal.ParseOption (commandLine, nCount, strDisplay)) > 0; nCount++)
         {
-            if (nNumCommands > 2)
-            {
-                client.printf ("Warning: detected more options (%u) than necessary, aborting. \n\r", nNumCommands);
-                client.println (m_commandDescription.c_str ());
-
-                return;
-            }
-
-            client.print ("Showing message: [");
-            client.print (strDisplay.c_str ());
-            client.println ("]");
+            client.printf ("%d:  ret: %d - value: [%s]\n\r", nCount, nItens, strDisplay.c_str ());
         }
     }
 };
-
 
 void ClientHandler (void* pSrvClient)
 {
@@ -617,7 +328,6 @@ void ClientHandler (void* pSrvClient)
     CommandShow commandShow;
     terminal.AssignCommand (commandShow);
 
-
     while (terminal.WaitForACommand () && client.connected ()) CorePartition_Yield ();
 
     if (client.connected () == true)
@@ -625,7 +335,6 @@ void ClientHandler (void* pSrvClient)
         client.stop ();
     }
 }
-
 
 /// Will Listen for New Clients coming in
 /// @param pValue Information injected from CorePartition on startup
@@ -639,37 +348,15 @@ void TelnetListener (void* pValue)
     Serial.print ("\nConnecting to ");
     Serial.println (ssid);
 
-    strDisplay = "Connecting to ";
-    strDisplay += ssid;
-
     std::string strValue;
     uint8_t nOffset = 0;
     bool bRev = false;
 
-    uint8_t nSpeed = matrixTextScroller.getSpeed ();
-    matrixTextScroller.setSpeed (0);
-
     while (WiFi.status () != WL_CONNECTED)
     {
-        strDisplay = ((char)bRev ? CHAR_WIFI_REV : CHAR_WIFI);
-        if (nOffset % 3 == 0) bRev = !bRev;
-
-        strDisplay.push_back ((char)' ');
-
-        strDisplay.push_back ((char)CHAR_ANIME_1 + nOffset);
-        nOffset = nOffset < 8 ? nOffset + 1 : 0;
-
+        Serial.println ("Connecing...");
         CorePartition_Sleep (100);
     }
-
-    matrixTextScroller.setSpeed (nSpeed);
-
-    strDisplay = (char)CHAR_OK;
-    strDisplay += ': ';
-    strDisplay += (char)CHAR_WIFI;
-    strDisplay += ':';
-    strDisplay += WiFi.localIP ().toString ().c_str ();
-
 
     // start server
     server.begin ();
@@ -678,7 +365,6 @@ void TelnetListener (void* pValue)
     Serial.print ("Ready! Use 'telnet ");
     Serial.print (WiFi.localIP ());
     Serial.printf (" %d' to connect\n", port);
-
 
     while (true)
     {
@@ -705,7 +391,6 @@ void TelnetListener (void* pValue)
     }
 }
 
-
 void SerialTerminalHandler (void* injection)
 {
     CorePartition_SetThreadNameByID (CorePartition_GetID (), "Terminal", 8);
@@ -726,13 +411,11 @@ void SerialTerminalHandler (void* injection)
     }
 }
 
-
 /// Espcializing CorePartition Tick as Milleseconds
 uint32_t CorePartition_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
-
 
 /// Specializing CorePartition Idle time
 /// @param nSleepTime How log the sleep will lest
@@ -740,7 +423,6 @@ void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
-
 
 /// Stack overflow Handler
 void StackOverflowHandler ()
@@ -755,7 +437,6 @@ void StackOverflowHandler ()
     Serial.flush ();
     exit (0);
 }
-
 
 /// setup function from Arduino Standards
 void setup ()
@@ -772,7 +453,6 @@ void setup ()
 
     LocalEcho (Serial, false);
 
-
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
     Serial.println ("");
@@ -781,24 +461,9 @@ void setup ()
     Serial.flush ();
     Serial.flush ();
 
-
     // Initializing displays 1 and 2
 
     uint8_t nCount;
-
-    for (nCount = 0; nCount < MAX_LED_MATRIX; nCount++)
-    {
-        lc.shutdown (nCount, false);  // The MAX72XX is in power-saving mode on startup
-        lc.setIntensity (nCount, 4);  // Set the brightness to maximum value
-        lc.clearDisplay (nCount);     // and clear the display
-    }
-
-    for (nCount = 0; nCount < MAX_LED_MATRIX; nCount++)
-    {
-        lc.shutdown (nCount, false);  // The MAX72XX is in power-saving mode on startup
-        lc.setIntensity (nCount, 4);  // Set the brightness to maximum value
-        lc.clearDisplay (nCount);     // and clear the display
-    }
 
     // Max threads on system.
     if (CorePartition_Start (25) == false)
@@ -810,10 +475,8 @@ void setup ()
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (CorePartition_CreateSecureThread (SerialTerminalHandler, NULL, 500, 200));
-    assert (CorePartition_CreateThread (LedDisplayShow, NULL, 300, 80));
     assert (CorePartition_CreateThread (TelnetListener, NULL, 300, 500));
 }
-
 
 /// Main Loop for Arduino Standards
 void loop ()

@@ -66,7 +66,6 @@ typedef struct
     uint8_t stackPage;
 } CoreThread;
 
-
 static volatile size_t nMaxThreads = 0;
 static volatile size_t nThreadCount = 0;
 static volatile size_t nRunningThreads = 0;
@@ -76,7 +75,6 @@ static CoreThread** pCoreThread = NULL;
 static void* pStartStck = NULL;
 
 jmp_buf jmpJoinPointer;
-
 
 static void (*stackOverflowHandler) (void) = NULL;
 
@@ -108,7 +106,6 @@ bool CorePartition_Start (size_t nThreadPartitions)
     return true;
 }
 
-
 bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nTaskIsolation)
 {
     size_t nThread;
@@ -123,7 +120,6 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
 
     /* If it leaves here it means a serious bug */
     if (nThread == nMaxThreads) return false;
-
 
     if ((pCoreThread[nThread] = (CoreThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CoreThread))) == NULL)
     {
@@ -159,18 +155,15 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
     return true;
 }
 
-
 bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
     return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 1);
 }
 
-
 bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
     return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 0);
 }
-
 
 static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
 {
@@ -193,14 +186,12 @@ static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
     }
 }
 
-
 static void BackupStack (void)
 {
     fastmemcpy ((uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
                 (const uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
                 pCoreThread[nCurrentThread]->nStackSize);
 }
-
 
 static void RestoreStack (void)
 {
@@ -209,12 +200,10 @@ static void RestoreStack (void)
                 pCoreThread[nCurrentThread]->nStackSize);
 }
 
-
 static uint32_t CorePartition_GetNextTime (size_t nThreadID)
 {
     return (*pCoreThread[nThreadID]).nLastMomentun + (*pCoreThread[nThreadID]).nNice;
 }
-
 
 static size_t Momentum_Scheduler (void)
 {
@@ -266,7 +255,6 @@ static void CorePartition_StopThread ()
     }
 }
 
-
 size_t nNextThread = 0;
 void CorePartition_Join ()
 {
@@ -310,7 +298,6 @@ void CorePartition_Join ()
 
     } while (nRunningThreads);
 }
-
 
 uint8_t CorePartition_Yield ()
 {
@@ -381,12 +368,10 @@ void CorePartition_Sleep (uint32_t nDelayTickTime)
     pCoreThread[nCurrentThread]->nNice = nBkpNice;
 }
 
-
 size_t CorePartition_GetID ()
 {
     return nCurrentThread;
 }
-
 
 size_t CorePartition_GetStackSizeByID (size_t nID)
 {
@@ -395,72 +380,60 @@ size_t CorePartition_GetStackSizeByID (size_t nID)
     return pCoreThread[nID]->nStackSize;
 }
 
-
 size_t CorePartition_GetMaxStackSizeByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStackMaxSize;
 }
-
 
 uint32_t CorePartition_GetNiceByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nNice;
 }
 
-
 uint8_t CorePartition_GetStatusByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStatus;
 }
-
 
 char CorePartition_IsSecureByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : (pCoreThread[nID]->nIsolation != 0 ? 'S' : 'N');
 }
 
-
 uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nExecTime;
 }
-
 
 uint32_t CorePartition_GetLastMomentumByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nLastMomentun;
 }
 
-
 size_t CorePartition_GetNumberOfActiveThreads (void)
 {
     return nRunningThreads;
 }
-
 
 size_t CorePartition_GetMaxNumberOfThreads (void)
 {
     return nMaxThreads;
 }
 
-
 size_t CorePartition_GetThreadContextSize (void)
 {
     return sizeof (CoreThread);
 }
-
 
 bool CorePartition_IsCoreRunning (void)
 {
     return nRunningThreads > 0 ? true : false;
 }
 
-
 void CorePartition_SetNice (uint32_t nNice)
 {
     pCoreThread[nCurrentThread]->nNice = nNice == 0 ? 1 : nNice;
 }
-
 
 bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize)
 {
@@ -477,7 +450,6 @@ bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t n
 
     return false;
 }
-
 
 const char* CorePartition_GetThreadNameByID (size_t nID)
 {

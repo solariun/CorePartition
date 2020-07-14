@@ -36,6 +36,15 @@
 
 #include "Terminal.hpp"
 
+Terminal::Command::Command (const std::string& strCommandName) : m_commandName (strCommandName)
+{
+}
+
+const std::string& Terminal::Command::GetCommandName ()
+{
+    return static_cast<const std::string&> (m_commandName);
+}
+
 Terminal::Terminal (Stream& streamClient) : m_client (streamClient), m_promptString{}
 {
     m_promptString = "Terminal";
@@ -189,8 +198,13 @@ uint8_t Terminal::ParseOption (const std::string& commandLine, uint8_t nCommandI
     if (nCommandIndex != nCommandOffSet)
     {
         returnText.clear ();
+        nCommandOffSet = 0;
     }
-
+    else
+    {
+        nCommandOffSet--;
+    }
+    
     return nCommandOffSet;
 }
 
@@ -247,7 +261,7 @@ void Terminal::ExecCommand (const std::string readCommand)
 
     for (Terminal::Command* command : m_listAssignedCommands)
     {
-        if (command->m_commandName == strCommand)
+        if (command->GetCommandName () == strCommand)
         {
             command->Run (*this, static_cast<Stream&> (m_client), readCommand);
 
