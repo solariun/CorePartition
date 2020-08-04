@@ -37,7 +37,6 @@
 #include <unistd.h>
 #include "CorePartition.h"
 
-
 uint32_t getMiliseconds ()
 {
     struct timeval tp;
@@ -51,7 +50,6 @@ void sleepUseconds (uint32_t nTime)
 {
     usleep ((useconds_t)nTime);
 }
-
 
 void Sleep (uint32_t nSleep)
 {
@@ -78,7 +76,6 @@ uint32_t CorePartition_GetCurrentTick (void)
     return (uint32_t)tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
-
 unsigned int addOne (unsigned int nValue)
 {
     nValue = nValue + 1;
@@ -97,7 +94,7 @@ void Thread1 (void* pValue)
 
     while (1)
     {
-         nFactor = ((nReturnedSleep - nSleepTime) - CorePartition_GetNice ());
+        nFactor = ((nReturnedSleep - nSleepTime) - CorePartition_GetNice ());
         printf (">> %lu:  Value: [%u], Nice: [%u] Sleep Time: [%u ms]: Precision:[%d]\n",
                 CorePartition_GetID (),
                 nValue,
@@ -113,14 +110,43 @@ void Thread1 (void* pValue)
     }
 }
 
+void PrintBinary (const uint8_t* pBuffer, size_t nSize)
+{
+    size_t nCount = 0; 
+    uint8_t nCountb = 0; 
+    uint8_t nValue = 0;
+
+    for (nCount = 0; nCount < nSize; nCount++)
+    {
+        nValue = pBuffer[nCount];
+
+        nCountb = 0;
+
+        do 
+        {
+            /*printf (" nCountb: [%u] - [%u]\n", nCountb, (1 << nCountb));*/
+            if ((nValue & (1 << nCountb)) != 0)
+                printf("1");
+            else
+                printf("0");
+        } while (++nCountb < 8);
+    }
+    
+    printf("\n");
+}
+
 
 static void StackOverflowHandler ()
 {
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", CorePartition_GetID (), CorePartition_GetStackSize (), CorePartition_GetMaxStackSize ());
 }
 
-int main (int argc, const char* argv[])
+int main (int nArgs, const char* pszArg[])
 {
+    uint32_t nValue = CorePartition_GetTopicID (pszArg[1], strlen (pszArg[1]));
+
+    PrintBinary ((const uint8_t*) &nValue, sizeof (uint32_t));
+
     if (CorePartition_Start (4) == false)
     {
         printf ("Error starting up Thread.");
@@ -135,7 +161,6 @@ int main (int argc, const char* argv[])
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 1500));
 
     CorePartition_Join ();
-
 
     return 0;
 }

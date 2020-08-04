@@ -39,13 +39,14 @@
 #define THREAD_NAME_MAX 8
 
 typedef struct Subscription Subscription;
+
 struct Subscription
 {
-    uint32_t    nTopic;
-    uint8_t     nType;
-    size_t      nData;
-    bool        nReady;
-    Subscription pNext;
+    uint32_t nTopic;
+    uint8_t nType;
+    size_t nData;
+    bool nReady;
+    Subscription* pNext;
 };
 
 typedef struct
@@ -90,51 +91,41 @@ jmp_buf jmpJoinPointer;
 
 static void (*stackOverflowHandler) (void) = NULL;
 
+#define POLY 0x8408
+/*
+//                                      16   12   5
+// this is the CCITT CRC 16 polynomial X  + X  + X  + 1.
+// This works out to be 0x1021, but the way the algorithm works
+// lets us use 0x8408 (the reverse of the bit pattern).  The high
+// bit is always assumed to be set, thus we only use 16 bits to
+// represent the 17 bit value.
+*/
 
-/* chksum_crc() -- to a given block, this one calculates the
- *				crc32-checksum until the length is
- *				reached. the crc32-checksum will be
- *				the result.
- */
-uint32_t CorePartition_CRC32v2 (unsigned char *block, unsigned int length, uint32_t crc_start)
+uint16_t CorePartition_CRC16 (const uint8_t* pData, size_t nSize, uint16_t nCRC)
 {
-	uint32_t crc;
-	uint32_t i;
-	static bool bTable = false;
-	static uint32_t crc_tab[256];
+    unsigned char nCount;
+    unsigned int data;
 
-	if (bTable == false)
-	{
-		uint32_t crc, poly;
-		int i, j;
-		
-		poly = 0xEDB88320L;
-		for (i = 0; i < 256; i++)
-		{
-			crc = i;
-			for (j = 8; j > 0; j--)
-			{
-				if (crc & 1)
-				{
-					crc = (crc >> 1) ^ poly;
-				}
-				else
-				{
-					crc >>= 1;
-				}
-			}
-			crc_tab[i] = crc;
-		}		
-	}
-	
-	
-	crc = crc_start == 0 ? 0xFFFFFFFF : crc_start;
-	
-	for (i = 0; i < length; i++)
-	{
-		crc = ((crc >> 8) & 0x00FFFFFF) ^ crc_tab[(crc ^ *block++) & 0xFF];
-	}
-	return (crc ^ 0xFFFFFFFF);
+    nCRC = ~nCRC;
+
+    if (nSize == 0) return (~nCRC);
+
+    do
+    {
+        for (nCount = 0, data = (unsigned int)0xff & *pData++; nCount < 8; nCount++, data >>= 1)
+        {
+            if ((nCRC & 0x0001) ^ (data & 0x0001))
+                nCRC = (nCRC >> 1) ^ POLY;
+            else
+                nCRC >>= 1;
+        }
+    } while (--nSize);
+
+    nCRC = ~nCRC;
+    data = nCRC;
+    nCRC = (nCRC << 8) | (data >> 8 & 0xff);
+
+    return (nCRC);
 }
 
 bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler) (void))
@@ -216,9 +207,27 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
     return true;
 }
 
-bool CorePartition_SubscribeTopic (const char* pszTopic)
+uint32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
 {
-    
+    return ((CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0) << 16) | CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0x8408));
+}
+
+bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
+{
+    /* Look for the end of the local list */
+    Subscription* pSubList = pCoreThread[nCurrentThread]->pSubscriptions;
+
+    /* Look for the null pointer */
+    while (pSubList->pNext) pSubList = pSubList->pNext;
+
+    pSubList = pSubList->pNext = malloc (sizeof (Subscription));
+
+    pSubList->nTopic = CorePartition_GetTopicID (pszTopic, length);
+    pSubList->nData = 0;
+    pSubList->nType = 0;
+    pSubList->pNext = NULL;
+
+    return true;
 }
 
 bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)

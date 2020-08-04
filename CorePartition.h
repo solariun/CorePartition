@@ -341,6 +341,13 @@ extern "C"
  */
 #define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
 
+
+uint32_t CorePartition_GetTopicID (const char* pszTopic, size_t length);
+
+
+bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length);
+
+
 #ifdef __cplusplus
 }
 #endif
