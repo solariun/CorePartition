@@ -279,7 +279,7 @@ bool Terminal::WaitForACommand ()
     do
     {
         std::string commandItem = "";
-        uint8_t nNumCommands;
+        uint8_t nNumCommands;   
 
         if (readCommand.length () > 0)
         {

@@ -8,3 +8,5 @@
 .DS_Store
 ._.DS_Store
 .jlink
+.vscode
+.vscode/*

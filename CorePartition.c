@@ -38,6 +38,16 @@
 
 #define THREAD_NAME_MAX 8
 
+typedef struct Subscription Subscription;
+struct Subscription
+{
+    uint32_t    nTopic;
+    uint8_t     nType;
+    size_t      nData;
+    bool        nReady;
+    Subscription pNext;
+};
+
 typedef struct
 {
     size_t nStackMaxSize;
@@ -55,6 +65,8 @@ typedef struct
     } mem;
 
     char pszThreadName[THREAD_NAME_MAX + 1];
+
+    Subscription* pSubscriptions;
 
     void* pLastStack;
     uint32_t nNice;
@@ -77,6 +89,53 @@ static void* pStartStck = NULL;
 jmp_buf jmpJoinPointer;
 
 static void (*stackOverflowHandler) (void) = NULL;
+
+
+/* chksum_crc() -- to a given block, this one calculates the
+ *				crc32-checksum until the length is
+ *				reached. the crc32-checksum will be
+ *				the result.
+ */
+uint32_t CorePartition_CRC32v2 (unsigned char *block, unsigned int length, uint32_t crc_start)
+{
+	uint32_t crc;
+	uint32_t i;
+	static bool bTable = false;
+	static uint32_t crc_tab[256];
+
+	if (bTable == false)
+	{
+		uint32_t crc, poly;
+		int i, j;
+		
+		poly = 0xEDB88320L;
+		for (i = 0; i < 256; i++)
+		{
+			crc = i;
+			for (j = 8; j > 0; j--)
+			{
+				if (crc & 1)
+				{
+					crc = (crc >> 1) ^ poly;
+				}
+				else
+				{
+					crc >>= 1;
+				}
+			}
+			crc_tab[i] = crc;
+		}		
+	}
+	
+	
+	crc = crc_start == 0 ? 0xFFFFFFFF : crc_start;
+	
+	for (i = 0; i < length; i++)
+	{
+		crc = ((crc >> 8) & 0x00FFFFFF) ^ crc_tab[(crc ^ *block++) & 0xFF];
+	}
+	return (crc ^ 0xFFFFFFFF);
+}
 
 bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler) (void))
 {
@@ -150,9 +209,16 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
 
     pCoreThread[nThread]->nLastMomentun = CorePartition_GetCurrentTick ();
 
+    pCoreThread[nThread]->pSubscriptions = NULL;
+
     nThreadCount++;
 
     return true;
+}
+
+bool CorePartition_SubscribeTopic (const char* pszTopic)
+{
+    
 }
 
 bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)

@@ -60,7 +60,7 @@
 #define MIN(x, y) (x < y ? x : y)
 
 #ifndef STASSID
-#define STASSID "WhiteKingdom2.4Ghz"
+#define STASSID "WhiteKingdom4G"
 #define STAPSK "Creative01000"
 #endif
 
@@ -74,7 +74,7 @@ int CLK = D5;  // SS    - NodeMCU - D5 (HSCLK)
 
 // Functions
 
-#define MAX_LED_MATRIX 8
+#define MAX_LED_MATRIX 4
 LedControl lc = LedControl (DIN, CLK, CS, MAX_LED_MATRIX);
 
 
