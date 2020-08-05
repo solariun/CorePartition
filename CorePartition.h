@@ -341,12 +341,19 @@ extern "C"
  */
 #define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
 
-
-uint32_t CorePartition_GetTopicID (const char* pszTopic, size_t length);
-
+/**
+ * @brief   Enable Broker for the current thread
+ * 
+ * @param   nMaxTopics  Max topics to be handled by the current thread 
+ * @param   callback    Call back to be used to process thread Synchronously
+ *  
+ * @return  false       failed to create the broker context for the current thread
+ */
+bool CorePartition_EnableBroker (uint8_t nMaxTopics, void (*callback) (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue));
 
 bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length);
 
+bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, size_t nValue);
 
 #ifdef __cplusplus
 }

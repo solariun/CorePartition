@@ -62,6 +62,120 @@ void Sleep (uint32_t nSleep)
     } while ((getMiliseconds () - nMomentum) < nSleep);
 }
 
+unsigned int addOne (unsigned int nValue)
+{
+    nValue = nValue + 1;
+
+    CorePartition_Yield ();
+
+    return nValue;
+}
+
+uint32_t nThreadValues[5];
+uint32_t nThreadExecTimes[5];
+
+const char topicValues[] = "thread/values";
+const char topicExecTime[] = "thread/execTime";
+
+void KernelBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue)
+{
+    if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
+    {
+        nThreadValues[nAttribute] = *((uint32_t*)nValue);
+    }
+    else if (strncmp (pszTopic, topicExecTime, sizeof (topicExecTime) - 1) == 0)
+    {
+        /* please note that it works for 32bits or 64bits, otherwise use memory pointer */
+        nThreadExecTimes[nAttribute] = (uint32_t)nValue;
+    }
+}
+
+void kernel (void* pValue)
+{
+    CorePartition_EnableBroker (2, KernelBrokerHandler);
+
+    CorePartition_SubscribeTopic (topicValues, strlen (topicValues));
+    CorePartition_SubscribeTopic (topicExecTime, strlen (topicExecTime));
+
+    while (1)
+    {
+        printf ("Kernel: [%zu], ID(execTime)[value]: ", CorePartition_GetID ());
+
+        {
+            int nCount = 0;
+
+            for (nCount = 0; nCount < 4; nCount++)
+            {
+                printf (" %u:(%u ms)[%u]", nCount, nThreadExecTimes[nCount], nThreadValues[nCount]);
+            }
+        }
+
+        printf ("\n");
+
+        CorePartition_Yield ();
+    }
+}
+
+void Thread1 (void* pValue)
+{
+    uint32_t nValue = 0;
+    uint32_t nSleepTime = CorePartition_GetCurrentTick ();
+    uint32_t nReturnedSleep = CorePartition_GetCurrentTick ();
+    int32_t nFactor = 0;
+
+    while (1)
+    {
+        nFactor = ((nReturnedSleep - nSleepTime) - CorePartition_GetNice ());
+        printf (">> %lu:  Value: [%u], Nice: [%u] : Precision:[%d]\n",
+                CorePartition_GetID (),
+                nValue,
+                CorePartition_GetNice (),
+                nFactor);
+
+        nValue = nValue + 1;
+
+        CorePartition_PublishTopic (topicValues, sizeof (topicValues) - 1, (size_t)CorePartition_GetID (), (size_t)&nValue);
+
+        nSleepTime = CorePartition_GetCurrentTick ();
+        CorePartition_Yield ();
+        nReturnedSleep = CorePartition_GetCurrentTick ();
+
+        CorePartition_PublishTopic (topicExecTime, sizeof (topicExecTime)-1, (size_t)CorePartition_GetID (), (size_t)(nReturnedSleep - nSleepTime));
+    }
+}
+
+void PrintBinary (const uint8_t* pBuffer, size_t nSize)
+{
+    size_t nCount = 0;
+    uint8_t nCountb = 0;
+    uint8_t nValue = 0;
+
+    for (nCount = 0; nCount < nSize; nCount++)
+    {
+        nValue = pBuffer[nCount];
+
+        nCountb = 0;
+
+        do
+        {
+            /*printf (" nCountb: [%u] - [%u]\n", nCountb, (1 << nCountb));*/
+            if ((nValue & (1 << nCountb)) != 0)
+                printf ("1");
+            else
+                printf ("0");
+        } while (++nCountb < 8);
+    }
+
+    printf ("\n");
+}
+
+
+/*
+ * Minimal CorePartition infra-structure
+ * 
+ *    ** REQUIRED **
+ */
+
 void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     usleep ((useconds_t)nSleepTime * 1000);
@@ -76,78 +190,16 @@ uint32_t CorePartition_GetCurrentTick (void)
     return (uint32_t)tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
-unsigned int addOne (unsigned int nValue)
-{
-    nValue = nValue + 1;
-
-    CorePartition_Yield ();
-
-    return nValue;
-}
-
-void Thread1 (void* pValue)
-{
-    uint32_t nValue = 0;
-    uint32_t nSleepTime = CorePartition_GetCurrentTick ();
-    uint32_t nReturnedSleep = CorePartition_GetCurrentTick ();
-    int32_t nFactor = 0;
-
-    while (1)
-    {
-        nFactor = ((nReturnedSleep - nSleepTime) - CorePartition_GetNice ());
-        printf (">> %lu:  Value: [%u], Nice: [%u] Sleep Time: [%u ms]: Precision:[%d]\n",
-                CorePartition_GetID (),
-                nValue,
-                CorePartition_GetNice (),
-                nReturnedSleep - nSleepTime,
-                nFactor);
-
-        nValue = nValue + 1;
-
-        nSleepTime = CorePartition_GetCurrentTick ();
-        CorePartition_Yield ();
-        nReturnedSleep = CorePartition_GetCurrentTick ();
-    }
-}
-
-void PrintBinary (const uint8_t* pBuffer, size_t nSize)
-{
-    size_t nCount = 0; 
-    uint8_t nCountb = 0; 
-    uint8_t nValue = 0;
-
-    for (nCount = 0; nCount < nSize; nCount++)
-    {
-        nValue = pBuffer[nCount];
-
-        nCountb = 0;
-
-        do 
-        {
-            /*printf (" nCountb: [%u] - [%u]\n", nCountb, (1 << nCountb));*/
-            if ((nValue & (1 << nCountb)) != 0)
-                printf("1");
-            else
-                printf("0");
-        } while (++nCountb < 8);
-    }
-    
-    printf("\n");
-}
-
-
 static void StackOverflowHandler ()
 {
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", CorePartition_GetID (), CorePartition_GetStackSize (), CorePartition_GetMaxStackSize ());
 }
 
+/* ------------------------------------ */
+
 int main (int nArgs, const char* pszArg[])
 {
-    uint32_t nValue = CorePartition_GetTopicID (pszArg[1], strlen (pszArg[1]));
-
-    PrintBinary ((const uint8_t*) &nValue, sizeof (uint32_t));
-
-    if (CorePartition_Start (4) == false)
+    if (CorePartition_Start (10) == false)
     {
         printf ("Error starting up Thread.");
         return (1);
@@ -159,6 +211,7 @@ int main (int nArgs, const char* pszArg[])
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 323));
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 764));
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 1500));
+    assert (CorePartition_CreateThread (kernel, NULL, 256, 250));
 
     CorePartition_Join ();
 

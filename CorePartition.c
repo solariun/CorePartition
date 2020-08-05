@@ -42,11 +42,10 @@ typedef struct Subscription Subscription;
 
 struct Subscription
 {
-    uint32_t nTopic;
-    uint8_t nType;
-    size_t nData;
-    bool nReady;
-    Subscription* pNext;
+    void (*callback) (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue);
+    uint8_t nMaxTopics;
+    uint8_t nTopicCount;
+    uint32_t nTopicList;
 };
 
 typedef struct
@@ -207,27 +206,70 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
     return true;
 }
 
-uint32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
+bool CorePartition_EnableBroker (uint8_t nMaxTopics, void (*callback) (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue))
+{
+    if (pCoreThread[nCurrentThread]->pSubscriptions == NULL)
+    {
+        Subscription* pSub = NULL;
+        size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
+        
+        if ((pSub = malloc (nMemorySize)) != NULL)
+        {
+            pSub->nTopicCount = 0;
+            pSub->callback = callback;
+            pSub->nMaxTopics = nMaxTopics;
+
+            pCoreThread [nCurrentThread]->pSubscriptions = pSub;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static int32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
 {
     return ((CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0) << 16) | CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0x8408));
 }
 
 bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
 {
-    /* Look for the end of the local list */
-    Subscription* pSubList = pCoreThread[nCurrentThread]->pSubscriptions;
+    Subscription* pSub = pCoreThread[nCurrentThread]->pSubscriptions;
+    
+    if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
+    {
+        (&pSub->nTopicList) [pSub->nTopicCount++] = CorePartition_GetTopicID (pszTopic, length);
+        return true;
+    }
 
-    /* Look for the null pointer */
-    while (pSubList->pNext) pSubList = pSubList->pNext;
+    return false;
+}
 
-    pSubList = pSubList->pNext = malloc (sizeof (Subscription));
+bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, size_t nValue)
+{
+    uint32_t nTopicID = CorePartition_GetTopicID (pszTopic, length);
+    int nThreadID = 0;
+    bool bReturn = false;
+    /* Go through thread lists */
 
-    pSubList->nTopic = CorePartition_GetTopicID (pszTopic, length);
-    pSubList->nData = 0;
-    pSubList->nType = 0;
-    pSubList->pNext = NULL;
+    for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+    {
+        if (pCoreThread [nThreadID] != NULL && pCoreThread [nThreadID]->pSubscriptions != NULL)
+        {
+            int nSubID = 0;
+            for (nSubID = 0; nSubID < pCoreThread [nThreadID]->pSubscriptions->nTopicCount; nSubID++)
+            {
+                if ((&pCoreThread [nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
+                {
+                    pCoreThread [nThreadID]->pSubscriptions->callback (pszTopic, length, nAttribute, nValue);
+                    bReturn = true;
+                }
+            }
+        }
+    }
 
-    return true;
+    return bReturn;
 }
 
 bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
@@ -240,7 +282,7 @@ bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t
     return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 0);
 }
 
-static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
+static void StackHandler (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
 {
     const uint8_t* nTop = (const uint8_t*)pSource + nSize;
 
@@ -263,14 +305,14 @@ static void fastmemcpy (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
 
 static void BackupStack (void)
 {
-    fastmemcpy ((uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
+    StackHandler ((uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
                 (const uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
                 pCoreThread[nCurrentThread]->nStackSize);
 }
 
 static void RestoreStack (void)
 {
-    fastmemcpy ((uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
+    StackHandler ((uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
                 (const uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
                 pCoreThread[nCurrentThread]->nStackSize);
 }
@@ -323,6 +365,11 @@ static void CorePartition_StopThread ()
 {
     if (pCoreThread[nCurrentThread] != NULL)
     {
+        if (pCoreThread[nCurrentThread]->pSubscriptions != NULL)
+        {
+            free (pCoreThread[nCurrentThread]->pSubscriptions);
+        }
+
         free (pCoreThread[nCurrentThread]);
         pCoreThread[nCurrentThread] = NULL;
 
