@@ -34,7 +34,6 @@
 
 #include <ESP8266WiFi.h>
 
-
 // Designed for NodeMCU ESP8266
 //################# DISPLAY CONNECTIONS ################
 // LED Matrix Pin -> ESP8266 Pin
@@ -43,7 +42,6 @@
 // DIN            -> D7  (Same Pin for WEMOS)
 // CS             -> D4  (Same Pin for WEMOS)
 // CLK            -> D5  (Same Pin for WEMOS)
-
 
 #include "CorePartition.h"
 #include "Terminal.hpp"
@@ -55,6 +53,8 @@
 #include <Wire.h>
 #include <assert.h>
 #include <string>
+
+#include "LedMatrix.cpp"
 
 #define MAX(x, y) (x > y ? x : y)
 #define MIN(x, y) (x < y ? x : y)
@@ -68,15 +68,12 @@ int DIN = D4;  // MISO - NodeMCU - D4 (TXD1)
 int CS = D7;   // MOSI  - NodeMCU - D7 (HMOSI)
 int CLK = D5;  // SS    - NodeMCU - D5 (HSCLK)
 
-
 // Utilities
-
 
 // Functions
 
 #define MAX_LED_MATRIX 4
 LedControl lc = LedControl (DIN, CLK, CS, MAX_LED_MATRIX);
-
 
 void SetLocation (Stream& device, uint16_t nY, uint16_t nX)
 {
@@ -86,7 +83,6 @@ void SetLocation (Stream& device, uint16_t nY, uint16_t nX)
     device.write (szTemp, nLen);
 }
 
-
 // workis with 256 colors
 void SetColor (Stream& device, const uint8_t nFgColor, const uint8_t nBgColor)
 {
@@ -95,7 +91,6 @@ void SetColor (Stream& device, const uint8_t nFgColor, const uint8_t nBgColor)
 
     device.write (szTemp, nLen);
 }
-
 
 void LocalEcho (Stream& device, bool state)
 {
@@ -110,30 +105,25 @@ void ResetColor (Stream& device)
     device.print ("\033[0m");
 }
 
-
 void HideCursor (Stream& device)
 {
     device.print ("\033[?25l");
 }
-
 
 void ShowCursor (Stream& device)
 {
     device.print ("\033[?25h");
 }
 
-
 void ClearConsole (Stream& device)
 {
     device.print ("\033c\033[2J");
 }
 
-
 void ReverseColor (Stream& device)
 {
     device.print ("\033[7m");
 }
-
 
 void Delay (uint64_t nSleep)
 {
@@ -146,7 +136,6 @@ void Delay (uint64_t nSleep)
         CorePartition_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
-
 
 void ShowRunningThreads (Stream& client)
 {
@@ -185,7 +174,6 @@ void ShowRunningThreads (Stream& client)
         }
     }
 }
-
 
 enum GRAPH_CHAR
 {
@@ -236,7 +224,6 @@ enum GRAPH_CHAR
     CHAR_ANIME_9,          // 171
 };
 
-
 const uint64_t byteImages[] PROGMEM = {
         0x0000000000000000, 0x00180018183c3c18, 0x0000000012246c6c, 0x0036367f367f3636, 0x000c1f301e033e0c, 0x0063660c18336300, 0x006e333b6e1c361c,
         0x0000000000030606, 0x00180c0606060c18, 0x00060c1818180c06, 0x0000663cff3c6600, 0x00000c0c3f0c0c00, 0x060c0c0000000000, 0x000000003f000000,
@@ -260,7 +247,6 @@ const uint64_t byteImages[] PROGMEM = {
         0xff000006060000ff, 0xff00000c0c0000ff, 0xff000018180000ff, 0xff000030300000ff, 0xff000060600000ff, 0xff0000c0c00000ff, 0xff000080800000ff};
 
 const int byteImagesLen = sizeof (byteImages) / 8;
-
 
 class TextScroller
 {
@@ -300,7 +286,6 @@ private:
         // CorePartition_Sleep (1);
     }
 
-
 protected:
     virtual void printRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
     {
@@ -325,18 +310,15 @@ public:
         nIndex = nSpeed == 0 ? 0 : nNumberDigits * (-1);
     }
 
-
     void setSpeed (uint8_t nSpeed)
     {
         this->nSpeed = nSpeed;
     }
 
-
     uint8_t getSpeed ()
     {
         return this->nSpeed;
     }
-
 
     bool show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
     {
@@ -380,8 +362,13 @@ public:
 
         return true;
     }
-};
 
+    void Reset ()
+    {
+        nOffset = 0;
+        nIndex = 0;
+    }
+};
 
 class MatrixTextScroller : public TextScroller
 {
@@ -395,11 +382,30 @@ public:
     using TextScroller::TextScroller;
 };
 
-
 std::string strDisplay = "CorePartition Works!";
 
-
 MatrixTextScroller matrixTextScroller (MAX_LED_MATRIX, 2);
+
+const char* topicDisplay = "display";
+
+#define MATRIX_DISPLAY_CHANGE 1
+
+void LedDisplayBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue)
+{
+    if (strncmp (pszTopic, topicDisplay, sizeof (topicDisplay)-1) == 0)
+    {
+        switch (nAttribute)
+        {
+            case MATRIX_DISPLAY_CHANGE:
+                strDisplay = (const char*) nValue;
+                matrixTextScroller.Reset();
+                break;
+            
+            default:
+                break;
+        }
+    }
+}
 
 /// LedDisplayShow - Will update information o Display
 /// @param pValue  Information injected from CorePartition on startup
@@ -408,13 +414,16 @@ void LedDisplayShow (void* pValue)
     unsigned long start = millis ();
     size_t nValue = 0;
 
+    CorePartition_EnableBroker (1, LedDisplayBrokerHandler);
+
+    CorePartition_SubscribeTopic (topicDisplay, sizeof (topicDisplay)-1);
+
     CorePartition_SetThreadNameByID (CorePartition_GetID (), "Display", 7);
 
     uint8_t a = 0;
     uint8_t b = 0;
     uint8_t nOffset = 0;
     uint16_t nImagesItens = sizeof (byteImages) / sizeof (byteImages[0]);
-    // setCoreNice (100);
 
     uint8_t nStep = 0;
 
@@ -424,7 +433,6 @@ void LedDisplayShow (void* pValue)
         CorePartition_Yield ();
     }
 }
-
 
 #define MAX_SRV_CLIENTS 5
 const char* ssid = STASSID;
@@ -443,7 +451,6 @@ public:
     }
 };
 
-
 WiFiServer server (port);
 WiFiClient serverClients[MAX_SRV_CLIENTS];
 
@@ -457,7 +464,6 @@ public:
         return ((WiFiClient&)GetStream ()).connected ();
     }
 };
-
 
 const char* GetWiFiStatus ()
 {
@@ -483,7 +489,6 @@ const char* GetWiFiStatus ()
 
     return "Unknown";
 }
-
 
 class CommandShow : public Terminal::Command
 {
@@ -560,7 +565,6 @@ public:
     }
 };
 
-
 class CommandDisplay : public Terminal::Command
 {
 public:
@@ -587,10 +591,11 @@ public:
             client.print ("Showing message: [");
             client.print (strDisplay.c_str ());
             client.println ("]");
+
+            CorePartition_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
         }
     }
 };
-
 
 void ClientHandler (void* pSrvClient)
 {
@@ -617,7 +622,6 @@ void ClientHandler (void* pSrvClient)
     CommandShow commandShow;
     terminal.AssignCommand (commandShow);
 
-
     while (terminal.WaitForACommand () && client.connected ()) CorePartition_Yield ();
 
     if (client.connected () == true)
@@ -625,7 +629,6 @@ void ClientHandler (void* pSrvClient)
         client.stop ();
     }
 }
-
 
 /// Will Listen for New Clients coming in
 /// @param pValue Information injected from CorePartition on startup
@@ -641,6 +644,7 @@ void TelnetListener (void* pValue)
 
     strDisplay = "Connecting to ";
     strDisplay += ssid;
+    CorePartition_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
 
     std::string strValue;
     uint8_t nOffset = 0;
@@ -669,7 +673,7 @@ void TelnetListener (void* pValue)
     strDisplay += (char)CHAR_WIFI;
     strDisplay += ':';
     strDisplay += WiFi.localIP ().toString ().c_str ();
-
+    CorePartition_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
 
     // start server
     server.begin ();
@@ -678,7 +682,6 @@ void TelnetListener (void* pValue)
     Serial.print ("Ready! Use 'telnet ");
     Serial.print (WiFi.localIP ());
     Serial.printf (" %d' to connect\n", port);
-
 
     while (true)
     {
@@ -705,7 +708,6 @@ void TelnetListener (void* pValue)
     }
 }
 
-
 void SerialTerminalHandler (void* injection)
 {
     CorePartition_SetThreadNameByID (CorePartition_GetID (), "Terminal", 8);
@@ -726,13 +728,11 @@ void SerialTerminalHandler (void* injection)
     }
 }
 
-
 /// Espcializing CorePartition Tick as Milleseconds
 uint32_t CorePartition_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
-
 
 /// Specializing CorePartition Idle time
 /// @param nSleepTime How log the sleep will lest
@@ -740,7 +740,6 @@ void CorePartition_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
-
 
 /// Stack overflow Handler
 void StackOverflowHandler ()
@@ -755,7 +754,6 @@ void StackOverflowHandler ()
     Serial.flush ();
     exit (0);
 }
-
 
 /// setup function from Arduino Standards
 void setup ()
@@ -772,7 +770,6 @@ void setup ()
 
     LocalEcho (Serial, false);
 
-
     Serial.print ("CoreThread ");
     Serial.println (CorePartition_version);
     Serial.println ("");
@@ -780,7 +777,6 @@ void setup ()
     Serial.println ("Starting up Thread....");
     Serial.flush ();
     Serial.flush ();
-
 
     // Initializing displays 1 and 2
 
@@ -813,7 +809,6 @@ void setup ()
     assert (CorePartition_CreateThread (LedDisplayShow, NULL, 300, 80));
     assert (CorePartition_CreateThread (TelnetListener, NULL, 300, 500));
 }
-
 
 /// Main Loop for Arduino Standards
 void loop ()
