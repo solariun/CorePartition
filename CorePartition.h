@@ -380,6 +380,15 @@ extern "C"
      */
     bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, size_t nValue);
 
+    /**
+     * @brief   Check if the current thread already subscribe to a topic
+     *
+     * @param   pszTopic    The topic for information
+     * @param   length      The size of the topic string
+     *
+     * @return  false       if it was not subscribed
+     */
+    bool CorePartition_IsSubscribed (const char* pszTopic, size_t length);
 #ifdef __cplusplus
 }
 #endif

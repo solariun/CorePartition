@@ -234,14 +234,37 @@ static int32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
     return ((CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0) << 16) | CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0x8408));
 }
 
+bool CorePartition_IsSubscribed (const char* pszTopic, size_t length)
+{
+    if (pCoreThread[nCurrentThread] != NULL && pCoreThread[nCurrentThread]->pSubscriptions != NULL)
+    {
+        Subscription* pSub = pCoreThread[nCurrentThread]->pSubscriptions;
+        int nCount = 0;
+        uint32_t nTopicID = CorePartition_GetTopicID (pszTopic, length);
+
+        for (nCount = 0; nCount < pSub->nTopicCount; nCount++)
+        {
+            if ((&pSub->nTopicList)[nCount] == nTopicID)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
 {
     Subscription* pSub = pCoreThread[nCurrentThread]->pSubscriptions;
 
-    if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
+    if (CorePartition_IsSubscribed (pszTopic, length) == false)
     {
-        (&pSub->nTopicList)[pSub->nTopicCount++] = CorePartition_GetTopicID (pszTopic, length);
-        return true;
+        if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
+        {
+            (&pSub->nTopicList)[pSub->nTopicCount++] = CorePartition_GetTopicID (pszTopic, length);
+            return true;
+        }
     }
 
     return false;
