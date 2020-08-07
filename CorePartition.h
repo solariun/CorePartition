@@ -52,6 +52,8 @@ extern "C"
 #define THREADL_SLEEP 3
 #define THREADL_STOPPED 4
 
+    typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue);
+
     extern uint32_t CorePartition_GetCurrentTick (void);
     extern void CorePartition_SleepTicks (uint32_t);
 
@@ -341,37 +343,42 @@ extern "C"
  */
 #define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
 
-/**
- * @brief   Enable Broker for the current thread
- * 
- * @param   nMaxTopics  Max topics to be handled by the current thread 
- * @param   callback    Call back to be used to process thread Synchronously
- *  
- * @return  false       failed to create the broker context for the current thread
- */
-bool CorePartition_EnableBroker (uint8_t nMaxTopics, void (*callback) (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue));
+    /**
+     * @brief   Enable Broker for the current thread
+     *
+     * @param   pContext    The default context to be ejected if needed
+     * @param   nMaxTopics  Max topics to be handled by the current thread
+     * @param   callback    Call back to be used to process thread Synchronously
+     *
+     * @return  false       failed to create the broker context for the current thread
+     * 
+     * @note    The default context must not be part of the thread stack, or it will be invalid
+     *          on callback time, please use global variables or from heap (new or malloc memory)
+     */
+    bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback);
 
-/**
- * @brief   Subscribe for a specific topic
- * 
- * @param   pszTopic    The topic to listem for information
- * @param   length      The size of the topic string
- * 
- * @return  false       if there is no more room for a new subscription
- */
-bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length);
+    /**
+     * @brief   Subscribe for a specific topic
+     *
+     * @param   pszTopic    The topic to listem for information
+     * @param   length      The size of the topic string
+     *
+     * @return  false       if there is no more room for a new subscription
+     */
+    bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length);
 
-/**
- * @brief   Public a tuple Param and Value 
- * 
- * @param   pszTopic    Topic name to pubish
- * @param   length      The size of the topic string
- * @param   nAttribute  A attribute to be use to identify the value
- * @param   nValue      A value for the attribute (tuple)
- * 
- * @return  true    If at least one subscriber received the data.
- */
-bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, size_t nValue);
+    /**
+     * @brief   Public a tuple Param and Value
+     *
+     * @param   pszTopic    Topic name to pubish
+     * @param   length      The size of the topic string
+     * @param   nAttribute  A attribute to be use to identify the value
+     * @param   nValue      A value for the attribute (tuple)
+     *
+     * @return  true    If at least one subscriber received the data.
+     * 
+     */
+    bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, size_t nValue);
 
 #ifdef __cplusplus
 }

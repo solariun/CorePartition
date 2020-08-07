@@ -39,10 +39,10 @@
 #define THREAD_NAME_MAX 8
 
 typedef struct Subscription Subscription;
-
 struct Subscription
 {
-    void (*callback) (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue);
+    TopicCallback callback;
+    void* pContext;
     uint8_t nMaxTopics;
     uint8_t nTopicCount;
     uint32_t nTopicList;
@@ -206,20 +206,21 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
     return true;
 }
 
-bool CorePartition_EnableBroker (uint8_t nMaxTopics, void (*callback) (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue))
+bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback)
 {
     if (pCoreThread[nCurrentThread]->pSubscriptions == NULL)
     {
         Subscription* pSub = NULL;
         size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
-        
+
         if ((pSub = malloc (nMemorySize)) != NULL)
         {
             pSub->nTopicCount = 0;
             pSub->callback = callback;
             pSub->nMaxTopics = nMaxTopics;
+            pSub->pContext = pContext;
 
-            pCoreThread [nCurrentThread]->pSubscriptions = pSub;
+            pCoreThread[nCurrentThread]->pSubscriptions = pSub;
 
             return true;
         }
@@ -236,10 +237,10 @@ static int32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
 bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
 {
     Subscription* pSub = pCoreThread[nCurrentThread]->pSubscriptions;
-    
+
     if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
     {
-        (&pSub->nTopicList) [pSub->nTopicCount++] = CorePartition_GetTopicID (pszTopic, length);
+        (&pSub->nTopicList)[pSub->nTopicCount++] = CorePartition_GetTopicID (pszTopic, length);
         return true;
     }
 
@@ -255,14 +256,15 @@ bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAt
 
     for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
     {
-        if (pCoreThread [nThreadID] != NULL && pCoreThread [nThreadID]->pSubscriptions != NULL)
+        if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->pSubscriptions != NULL)
         {
             int nSubID = 0;
-            for (nSubID = 0; nSubID < pCoreThread [nThreadID]->pSubscriptions->nTopicCount; nSubID++)
+            for (nSubID = 0; nSubID < pCoreThread[nThreadID]->pSubscriptions->nTopicCount; nSubID++)
             {
-                if ((&pCoreThread [nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
+                if ((&pCoreThread[nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
                 {
-                    pCoreThread [nThreadID]->pSubscriptions->callback (pszTopic, length, nAttribute, nValue);
+                    pCoreThread[nThreadID]->pSubscriptions->callback (
+                            pCoreThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, nAttribute, nValue);
                     bReturn = true;
                 }
             }
@@ -306,15 +308,15 @@ static void StackHandler (uint8_t* pDestine, const uint8_t* pSource, size_t nSiz
 static void BackupStack (void)
 {
     StackHandler ((uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
-                (const uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
-                pCoreThread[nCurrentThread]->nStackSize);
+                  (const uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
+                  pCoreThread[nCurrentThread]->nStackSize);
 }
 
 static void RestoreStack (void)
 {
     StackHandler ((uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
-                (const uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
-                pCoreThread[nCurrentThread]->nStackSize);
+                  (const uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
+                  pCoreThread[nCurrentThread]->nStackSize);
 }
 
 static uint32_t CorePartition_GetNextTime (size_t nThreadID)

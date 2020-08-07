@@ -77,8 +77,10 @@ uint32_t nThreadExecTimes[5];
 const char topicValues[] = "thread/values";
 const char topicExecTime[] = "thread/execTime";
 
-void KernelBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue)
+void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue)
 {
+    printf (">>> %s: context: [%s]\n", __FUNCTION__, (const char*) pContext);
+
     if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
     {
         nThreadValues[nAttribute] = *((uint32_t*)nValue);
@@ -90,9 +92,12 @@ void KernelBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute,
     }
 }
 
+
+const char* messageTest = "Context";
+
 void kernel (void* pValue)
 {
-    CorePartition_EnableBroker (2, KernelBrokerHandler);
+    CorePartition_EnableBroker ((void*) messageTest, 2, KernelBrokerHandler);
 
     CorePartition_SubscribeTopic (topicValues, strlen (topicValues));
     CorePartition_SubscribeTopic (topicExecTime, strlen (topicExecTime));
