@@ -376,7 +376,6 @@ static size_t Momentum_Scheduler (void)
             if (pCoreThread[nCThread]->nNice == 0 || nCurTime > nNextTime ||
                 (THREADL_START <= CorePartition_GetStatusByID (nCThread) || THREADL_NOW == CorePartition_GetStatusByID (nCThread)))
             {
-                nThread = nCThread;
                 break;
             }
         }
@@ -384,7 +383,8 @@ static size_t Momentum_Scheduler (void)
         nCThread++;
     } /* code */
 
-    return nThread;
+    printf ("scheduler %zu: time: %d\n", nCThread, CorePartition_GetNextTime (nCThread) - CorePartition_GetCurrentTick ());
+    return nCThread;
 }
 
 static void CorePartition_StopThread ()
@@ -484,7 +484,8 @@ uint8_t CorePartition_Yield ()
         {
             uint32_t nCurTime = CorePartition_GetCurrentTick ();
 
-            if (CorePartition_GetNextTime (nCurrentThread) > nCurTime)
+            if ((THREADL_RUNNING == pCoreThread[nCurrentThread]->nStatus || THREADL_SLEEP == pCoreThread[nCurrentThread]->nStatus) &&
+                CorePartition_GetNextTime (nCurrentThread) > nCurTime)
             {
                 CorePartition_SleepTicks (CorePartition_GetNiceByID (nCurrentThread) > 1 ? CorePartition_GetNextTime (nCurrentThread) - nCurTime : 1);
             }

@@ -73,11 +73,15 @@ void PrintThreads ()
 
 void kernel (void* pValue)
 {
+    uint32_t nCurTime = CorePartition_GetCurrentTick ();
     CorePartition_SetThreadName ("Kernel", 6);
 
     while (1)
     {
+        nCurTime = CorePartition_GetCurrentTick ();
         CorePartition_NotifyOne (szTagName, sizeof (szTagName) - 1);
+        printf ("Kenrel Sleept for: %d", (CorePartition_GetCurrentTick () - nCurTime));
+
         PrintThreads ();
     }
 }
