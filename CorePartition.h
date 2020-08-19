@@ -51,6 +51,8 @@ extern "C"
 #define THREADL_RUNNING 2
 #define THREADL_SLEEP 3
 #define THREADL_STOPPED 4
+#define THREADL_WAITTAG 5
+#define THREADL_NOW 6
 
     typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue);
 
@@ -389,6 +391,35 @@ extern "C"
      * @return  false       if it was not subscribed
      */
     bool CorePartition_IsSubscribed (const char* pszTopic, size_t length);
+
+    /**
+     * @brief   Notify ONE TAG assigned as waiting thread
+     * 
+     * @param   pszTag      The Tag string value
+     * @param nTagLength    The length of the tag
+     *
+     * @return true         At least one thread will be notified;
+     */
+    bool CorePartition_NotifyOne(const char* pszTag, size_t nTagLength);
+
+    /**
+     * @brief   Notify ALL TAGs assigned as waiting thread
+     * 
+     * @param   pszTag      The Tag string value
+     * @param nTagLength    The length of the tag
+     *
+     * @return true         At least one thread will be notified;
+     */
+    bool CorePartition_NotifyAll(const char* pszTag, size_t nTagLength);
+
+    /**
+     * @brief   Wait for a specific notification from a given TAG
+     * 
+     * @param pszTag        The Tag string value
+     * @param nTagLength    The length of the tag
+     */
+    void CorePartition_Wait (const char* pszTag, size_t nTagLength);
+    
 #ifdef __cplusplus
 }
 #endif

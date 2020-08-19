@@ -69,9 +69,10 @@ typedef struct
     Subscription* pSubscriptions;
 
     void* pLastStack;
+
     uint32_t nNice;
     uint32_t nLastMomentun;
-    uint32_t nLastBackup;
+    uint32_t nNotifyUID;
     uint32_t nExecTime;
     uint8_t nIsolation;
     uint8_t nStatus;
@@ -195,8 +196,6 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
 
     pCoreThread[nThread]->nIsolation = nTaskIsolation;
 
-    pCoreThread[nThread]->nLastBackup = CorePartition_GetCurrentTick ();
-
     pCoreThread[nThread]->nLastMomentun = CorePartition_GetCurrentTick ();
 
     pCoreThread[nThread]->pSubscriptions = NULL;
@@ -317,7 +316,7 @@ static void StackHandler (uint8_t* pDestine, const uint8_t* pSource, size_t nSiz
     }
     else
     {
-        srand (pCoreThread[nCurrentThread]->nLastBackup);
+        srand (pCoreThread[nCurrentThread]->nLastMomentun);
 
         for (; pSource <= nTop;)
         {
@@ -347,39 +346,41 @@ static uint32_t CorePartition_GetNextTime (size_t nThreadID)
     return (*pCoreThread[nThreadID]).nLastMomentun + (*pCoreThread[nThreadID]).nNice;
 }
 
+#define _CPTHREAD(T) pCoreThread[T]
+
 static size_t Momentum_Scheduler (void)
 {
     size_t nThread = nCurrentThread;
     uint32_t nCurTime = CorePartition_GetCurrentTick ();
-    uint32_t nMin = 0xFFFFFFFF;
+    uint32_t nNextTime = 0;
     size_t nCThread = nCurrentThread + 1;
-    size_t nCount = 0;
+    static size_t nCount = 0;
 
     srand (nCurTime);
 
     nCount = 0;
 
-    while (nCount < nMaxThreads)
+    while (true)
     {
-        nCThread = (nCThread >= nMaxThreads) ? 0 : nCThread;
-
-        if (NULL != pCoreThread[nCThread])
+        if (nCThread >= nMaxThreads)
         {
-            if (CorePartition_GetNiceByID (nCThread) == 0 || nCurTime >= CorePartition_GetNextTime (nCThread) ||
-                THREADL_START == CorePartition_GetStatusByID (nCThread))
+            nCurTime = CorePartition_GetCurrentTick ();
+            nCThread = 0;
+        }
+
+        if (NULL != pCoreThread[nCThread] && THREADL_STOPPED != pCoreThread[nCThread]->nStatus &&
+            THREADL_WAITTAG != CorePartition_GetStatusByID (nCThread))
+        {
+            nNextTime = CorePartition_GetNextTime (nCThread);
+
+            if (pCoreThread[nCThread]->nNice == 0 || nCurTime > nNextTime ||
+                (THREADL_START <= CorePartition_GetStatusByID (nCThread) || THREADL_NOW == CorePartition_GetStatusByID (nCThread)))
             {
                 nThread = nCThread;
-                nMin = 0;
                 break;
-            }
-            else if (nMin > (CorePartition_GetNextTime (nCThread) - nCurTime))
-            {
-                nThread = nCThread;
-                nMin = (CorePartition_GetNextTime (nCThread) - nCurTime);
             }
         }
 
-        nCount++;
         nCThread++;
     } /* code */
 
@@ -431,6 +432,7 @@ void CorePartition_Join ()
 
                     case THREADL_RUNNING:
                     case THREADL_SLEEP:
+                    case THREADL_NOW:
 
                         longjmp (pCoreThread[nCurrentThread]->mem.jmpRegisterBuffer, 1);
                         break;
@@ -478,8 +480,6 @@ uint8_t CorePartition_Yield ()
 
         RestoreStack ();
 
-        pCoreThread[nCurrentThread]->nLastBackup = pCoreThread[nCurrentThread]->nLastMomentun;
-
         if (NULL != pCoreThread[nCurrentThread])
         {
             uint32_t nCurTime = CorePartition_GetCurrentTick ();
@@ -496,6 +496,55 @@ uint8_t CorePartition_Yield ()
     }
 
     return 0;
+}
+
+void CorePartition_Wait (const char* pszTag, size_t nTagLength)
+{
+    if (pszTag == NULL || pCoreThread[nCurrentThread]->nStatus != THREADL_RUNNING) return;
+
+    pCoreThread[nCurrentThread]->nStatus = THREADL_WAITTAG;
+    pCoreThread[nCurrentThread]->nNotifyUID = CorePartition_GetTopicID (pszTag, nTagLength);
+
+    CorePartition_Yield ();
+
+    pCoreThread[nCurrentThread]->nStatus = THREADL_RUNNING;
+    pCoreThread[nCurrentThread]->nNotifyUID = 0;
+}
+
+static bool CorePartition_Notify (const char* pszTag, size_t nTagLength, bool boolOne)
+{
+    uint32_t nTopicID = CorePartition_GetTopicID (pszTag, nTagLength);
+    int nThreadID = 0;
+    bool bReturn = false;
+    /* Go through thread lists */
+
+    if (pszTag != NULL && pCoreThread[nCurrentThread]->nStatus == THREADL_RUNNING)
+    {
+        for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+        {
+            if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->nStatus == THREADL_WAITTAG &&
+                pCoreThread[nThreadID]->nNotifyUID == nTopicID)
+            {
+                pCoreThread[nThreadID]->nStatus = THREADL_NOW;
+                bReturn = true;
+                if (boolOne == true) break;
+            }
+        }
+    }
+
+    CorePartition_Yield ();
+
+    return bReturn;
+}
+
+bool CorePartition_NotifyOne (const char* pszTag, size_t nTagLength)
+{
+    return CorePartition_Notify (pszTag, nTagLength, true);
+}
+
+bool CorePartition_NotifyAll (const char* pszTag, size_t nTagLength)
+{
+    return CorePartition_Notify (pszTag, nTagLength, false);
 }
 
 void CorePartition_Sleep (uint32_t nDelayTickTime)

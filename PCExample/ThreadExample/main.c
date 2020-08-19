@@ -216,7 +216,7 @@ int main (int nArgs, const char* pszArg[])
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 323));
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 764));
     assert (CorePartition_CreateThread (Thread1, NULL, 256, 1500));
-    assert (CorePartition_CreateThread (kernel, NULL, 256, 250));
+    assert (CorePartition_CreateSecureThread (kernel, NULL, 256, 250));
 
     CorePartition_Join ();
 
