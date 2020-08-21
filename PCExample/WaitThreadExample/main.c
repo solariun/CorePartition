@@ -79,7 +79,12 @@ void kernel (void* pValue)
     while (1)
     {
         nCurTime = CorePartition_GetCurrentTick ();
-        CorePartition_NotifyOne (szTagName, sizeof (szTagName) - 1);
+
+        if (CorePartition_NotifyOne (szTagName, sizeof (szTagName) - 1) == false)
+        {
+            printf ("\n>>> No waiting thread to notify.\n");
+        }
+
         printf ("Kenrel Sleept for: %d", (CorePartition_GetCurrentTick () - nCurTime));
 
         PrintThreads ();
