@@ -390,7 +390,7 @@ const char* topicDisplay = "display";
 
 #define MATRIX_DISPLAY_CHANGE 1
 
-void LedDisplayBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue)
+void LedDisplayBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute, uint64_t nValue )
 {
     if (strncmp (pszTopic, topicDisplay, sizeof (topicDisplay)-1) == 0)
     {

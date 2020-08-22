@@ -32,11 +32,11 @@
 //
 // See LICENSE file for the complete information
 
-
 #include <assert.h>
 #include "Arduino.h"
 #include "CorePartition.h"
 
+#define THREAD_VALUES_ATTRB 1
 
 void SetLocation (uint16_t nY, uint16_t nX)
 {
@@ -46,7 +46,6 @@ void SetLocation (uint16_t nY, uint16_t nX)
     Serial.print (nX);
     Serial.print ("H");
 }
-
 
 // works with 256 colors
 void SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
@@ -68,30 +67,25 @@ void ResetColor ()
     Serial.print (F ("\033[0m"));
 }
 
-
 void HideCursor ()
 {
     Serial.print (F ("\033[?25l"));
 }
-
 
 void ShowCursor ()
 {
     Serial.print (F ("\033[?25h"));
 }
 
-
 void ClearConsole ()
 {
     Serial.print (F ("\033[2J"));
 }
 
-
 void ReverseColor ()
 {
     Serial.print (F ("\033[7m"));
 }
-
 
 void Delay (uint64_t nSleep)
 {
@@ -104,7 +98,6 @@ void Delay (uint64_t nSleep)
         CorePartition_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
-
 
 void ShowRunningThreads ()
 {
@@ -142,24 +135,41 @@ void ShowRunningThreads ()
     }
 }
 
+char pszNotificationTag[] = "thread/proc/value";
 
 void CounterThread (void* pValue)
 {
-    uint32_t* pnValue = (uint32_t*)pValue;
+    uint32_t nValue = (uint32_t)pValue;
 
     CorePartition_SetThreadName ("Counter", 7);
 
     while (true)
     {
-        pnValue[0]++;
+        nValue++;
 
-        CorePartition_Yield ();
+        CorePartition_PublishTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1, THREAD_VALUES_ATTRB, (uint64_t)nValue);
     }
 }
 
+void ThreadCounterMessageHandler (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payload)
+{
+    uint32_t* nValues = (uint32_t*)pContext;
+
+    if (payload.nThreadID <= 2 && payload.nAttribute == THREAD_VALUES_ATTRB)
+    {
+        nValues[payload.nThreadID] = (uint32_t)payload.nValue;
+    }
+}
+
+// Global context for async access
+uint32_t nValues[3] = {0, 0, 0};
 
 void Thread (void* pValue)
 {
+    CorePartition_EnableBroker ((void*)nValues, 1, ThreadCounterMessageHandler);
+
+    CorePartition_SubscribeTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1);
+
     unsigned long nLast = millis ();
 
     uint32_t* pnValues = (uint32_t*)pValue;
@@ -195,7 +205,7 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetLastDutyCycle ());
         Serial.println ("ms\e[0k\n\n");
 
-        SetLocation (8, 1);
+        SetLocation (10, 1);
         ShowRunningThreads ();
 
         Serial.flush ();
@@ -208,7 +218,6 @@ void Thread (void* pValue)
         }
     }
 }
-
 
 void eventualThread (void* pValue)
 {
@@ -252,18 +261,15 @@ void eventualThread (void* pValue)
     CorePartition_Yield ();
 }
 
-
 uint32_t CorePartition_GetCurrentTick ()
 {
-    return (uint32_t) millis ();
+    return (uint32_t)millis ();
 }
-
 
 void CorePartition_SleepTicks (uint32_t nSleepTime)
-{    
+{
     delay (nSleepTime);
 }
-
 
 void StackOverflowHandler ()
 {
@@ -279,10 +285,6 @@ void StackOverflowHandler ()
     while (true) delay (1000);
 }
 
-
-uint32_t nValues[3] = {0, 0, 0};
-
-
 void setup ()
 {
     // Initialize serial and wait for port to open:
@@ -293,7 +295,7 @@ void setup ()
 
     delay (1000),
 
-    ResetColor ();
+            ResetColor ();
     ClearConsole ();
     HideCursor ();
     SetLocation (1, 1);
@@ -306,7 +308,6 @@ void setup ()
     Serial.flush ();
     Serial.flush ();
 
-
     if (CorePartition_Start (5) == false)
     {
         Serial.println ("Fail to start CorePartition.");
@@ -315,16 +316,14 @@ void setup ()
 
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
+    assert (CorePartition_CreateThread (CounterThread, (void*)1, 35 * sizeof (size_t), 1));
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[0], 30 * sizeof (size_t), 1));
+    assert (CorePartition_CreateThread (CounterThread, (void*)1, 35 * sizeof (size_t), 500));
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[1], 30 * sizeof (size_t), 500));
+    assert (CorePartition_CreateThread (CounterThread, (void*)1, 35 * sizeof (size_t), 1000));
 
-    assert (CorePartition_CreateThread (CounterThread, &nValues[2], 30 * sizeof (size_t), 1000));
-
-    assert (CorePartition_CreateSecureThread (Thread, nValues, 35 * sizeof (size_t), 500));
+    assert (CorePartition_CreateSecureThread (Thread, (void*)nValues, 35 * sizeof (size_t), 500));
 }
-
 
 void loop ()
 {

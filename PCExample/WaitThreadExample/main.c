@@ -83,7 +83,7 @@ void kernel (void* pValue)
     {
         nCurTime = CorePartition_GetCurrentTick ();
 
-        if (CorePartition_NotifyMessageOne (szTagName, sizeof (szTagName) - 1, nCounter++) == false)
+        if (CorePartition_NotifyMessageOne (szTagName, sizeof (szTagName) - 1, 1, nCounter++) == false)
         {
             printf ("\n>>> No waiting thread to notify.\n");
         }
@@ -96,14 +96,21 @@ void kernel (void* pValue)
 
 void Thread1 (void* pValue)
 {
-    size_t nValue;
+    CpxMsgPayload payload;
 
     while (1)
     {
-        nValue = CorePartition_WaitMessage (szTagName, sizeof (szTagName) - 1);
+        if (CorePartition_WaitMessage (szTagName, sizeof (szTagName) - 1, &payload) == false)
+        {
+            printf ("Error waiting for messages");
+        }
 
-        printf ("Thread %zu: received a notification. payload: [%zu]\n", CorePartition_GetID (), nValue);
-        
+        printf ("Thread %zu: received a notification. payload: [%zu::%zu from %s]\n",
+                CorePartition_GetID (),
+                payload.nAttribute,
+                payload.nValue,
+                CorePartition_GetThreadNameByID (payload.nThreadID));
+
         CorePartition_Sleep (1000);
     }
 }

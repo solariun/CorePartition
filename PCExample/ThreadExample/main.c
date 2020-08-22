@@ -77,18 +77,18 @@ uint32_t nThreadExecTimes[5];
 const char topicValues[] = "thread/values";
 const char topicExecTime[] = "thread/execTime";
 
-void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue)
+void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payload)
 {
-    printf (">>> %s: context: [%s]\n", __FUNCTION__, (const char*) pContext);
+    printf (">>> %s: context: [%s] Topic: [%s]\n", __FUNCTION__, (const char*) pContext, pszTopic);
 
     if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
     {
-        nThreadValues[nAttribute] = *((uint32_t*)nValue);
+        nThreadValues[payload.nAttribute] = *((uint32_t*)payload.nValue);
     }
     else if (strncmp (pszTopic, topicExecTime, sizeof (topicExecTime) - 1) == 0)
     {
         /* please note that it works for 32bits or 64bits, otherwise use memory pointer */
-        nThreadExecTimes[nAttribute] = (uint32_t)nValue;
+        nThreadExecTimes[payload.nAttribute] = (uint32_t)payload.nValue;
     }
 }
 

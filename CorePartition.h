@@ -54,7 +54,14 @@ extern "C"
 #define THREADL_WAITTAG 5
 #define THREADL_NOW 6
 
-    typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, size_t nAttribute, size_t nValue);
+    typedef struct
+    {
+        size_t nThreadID;
+        size_t nAttribute;
+        uint64_t nValue;
+    } CpxMsgPayload;
+
+    typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
 
     extern uint32_t CorePartition_GetCurrentTick (void);
     extern void CorePartition_SleepTicks (uint32_t);
@@ -382,7 +389,7 @@ extern "C"
      * @return  true    If at least one subscriber received the data.
      * 
      */
-    bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, size_t nValue);
+    bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue );
 
     /**
      * @brief   Check if the current thread already subscribe to a topic
@@ -401,6 +408,8 @@ extern "C"
      * @param   nTagLength  The length of the tag
      *
      * @return true         At least one thread will be notified;
+     * 
+     * @note    Please note that any notification triggers a context switch yield
      */
     bool CorePartition_NotifyOne(const char* pszTag, size_t nTagLength);
 
@@ -409,11 +418,14 @@ extern "C"
      * 
      * @param   pszTag      The Tag string value
      * @param   nTagLength  The length of the tag
-     * @param   nPayload    The payload to be sent
+     * @param   nAttribute  The Attribute Value to be sent
+     * @param   nValue      The Value of the Attribute to be sent
      *
      * @return true         At least one thread will be notified;
+     * 
+     * @note    Please note that any notification triggers a context switch yield
      */
-    bool CorePartition_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_t nPayload);
+    bool CorePartition_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
 
     /**
      * @brief   Notify ALL TAGs assigned as waiting thread
@@ -422,6 +434,8 @@ extern "C"
      * @param   nTagLength  The length of the tag
      *
      * @return true         At least one thread will be notified;
+     * 
+     * @note    Please note that any notification triggers a context switch yield 
      */
     bool CorePartition_NotifyAll(const char* pszTag, size_t nTagLength);
 
@@ -430,33 +444,39 @@ extern "C"
      * 
      * @param   pszTag      The TAG string value
      * @param   nTagLength  The length of the tag
-     * @param   nPayload    The payload to be sent 
+     * @param   nAttribute  The Attribute Value to be sent
+     * @param   nValue      The Value of the Attribute to be sent
      *
      * @return true         At least one thread will be notified;
+     * 
+     * @note    Please note that any notification triggers a context switch yield 
      */
-    bool CorePartition_NotifyMessageAll(const char* pszTag, size_t nTagLength, size_t nPayload);
+    bool CorePartition_NotifyMessageAll(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
 
     /**
      * @brief   Wait for a specific notification from a given TAG
      * 
-     * @param pszTag        The Tag string value
-     * @param nTagLength    The length of the tag
+     * @param   pszTag        The Tag string value
+     * @param   nTagLength    The length of the tag
+     * 
+     * @return  true    For success on receiving notification
      */
-    void CorePartition_Wait (const char* pszTag, size_t nTagLength);
+    bool CorePartition_Wait (const char* pszTag, size_t nTagLength);
 
     /**
      * @brief   Wait for a specific notification from a given TAG and payload
      * 
-     * @param pszTag        The Tag string value
-     * @param nTagLength    The length of the tag
+     * @param   pszTag        The Tag string value
+     * @param   nTagLength    The length of the tag
+     * @param   pPayload      The Payload variable to receive the message
      * 
-     * @return  A message size_t sized will be received.
+     * @return  true    For success on receiving notification and message
      * 
      * @note    if a Tag was notified using NotifyOne or NotifyAll
      *          the thread will receibe 0 otherwise will receive 
      *          the same value sent.
      */
-    size_t CorePartition_WaitMessage (const char* pszTag, size_t nTagLength);
+    bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* pPayload);
 
 #ifdef __cplusplus
 }
