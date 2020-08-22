@@ -61,11 +61,12 @@ void PrintThreads ()
 
     for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
     {
-        printf ("%-4u %-10s %-10u %u\n",
+        printf ("%-4u %-10s %-10u %-10u  %u ms\n",
                 nCount,
                 CorePartition_GetThreadNameByID (nCount),
                 CorePartition_GetNiceByID (nCount),
-                CorePartition_GetStatusByID (nCount));
+                CorePartition_GetStatusByID (nCount),
+                CorePartition_GetLastDutyCycleByID (nCount));
     }
 
     printf ("------------------------------------\n");
@@ -76,11 +77,13 @@ void kernel (void* pValue)
     uint32_t nCurTime = CorePartition_GetCurrentTick ();
     CorePartition_SetThreadName ("Kernel", 6);
 
+    size_t nCounter = 0;
+
     while (1)
     {
         nCurTime = CorePartition_GetCurrentTick ();
 
-        if (CorePartition_NotifyOne (szTagName, sizeof (szTagName) - 1) == false)
+        if (CorePartition_NotifyMessageOne (szTagName, sizeof (szTagName) - 1, nCounter++) == false)
         {
             printf ("\n>>> No waiting thread to notify.\n");
         }
@@ -93,10 +96,14 @@ void kernel (void* pValue)
 
 void Thread1 (void* pValue)
 {
+    size_t nValue;
+
     while (1)
     {
-        CorePartition_Wait (szTagName, sizeof (szTagName) - 1);
-        printf ("Thread %zu: received a notification.\n", CorePartition_GetID ());
+        nValue = CorePartition_WaitMessage (szTagName, sizeof (szTagName) - 1);
+
+        printf ("Thread %zu: received a notification. payload: [%zu]\n", CorePartition_GetID (), nValue);
+        
         CorePartition_Sleep (1000);
     }
 }

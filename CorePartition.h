@@ -355,7 +355,9 @@ extern "C"
      * @return  false       failed to create the broker context for the current thread
      * 
      * @note    The default context must not be part of the thread stack, or it will be invalid
-     *          on callback time, please use global variables or from heap (new or malloc memory)
+     *          on callback time, please use global variables or from heap (new or malloc memory),
+     *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
+     *          A MEMORY ALOCATED ONE.
      */
     bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback);
 
@@ -396,21 +398,43 @@ extern "C"
      * @brief   Notify ONE TAG assigned as waiting thread
      * 
      * @param   pszTag      The Tag string value
-     * @param nTagLength    The length of the tag
+     * @param   nTagLength  The length of the tag
      *
      * @return true         At least one thread will be notified;
      */
     bool CorePartition_NotifyOne(const char* pszTag, size_t nTagLength);
 
     /**
+     * @brief   Notify ONE TAGs assigned as waiting thread with a Message payload
+     * 
+     * @param   pszTag      The Tag string value
+     * @param   nTagLength  The length of the tag
+     * @param   nPayload    The payload to be sent
+     *
+     * @return true         At least one thread will be notified;
+     */
+    bool CorePartition_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_t nPayload);
+
+    /**
      * @brief   Notify ALL TAGs assigned as waiting thread
      * 
      * @param   pszTag      The Tag string value
-     * @param nTagLength    The length of the tag
+     * @param   nTagLength  The length of the tag
      *
      * @return true         At least one thread will be notified;
      */
     bool CorePartition_NotifyAll(const char* pszTag, size_t nTagLength);
+
+    /**
+     * @brief   Notify ALL TAGs assigned as waiting thread with a Message payload
+     * 
+     * @param   pszTag      The TAG string value
+     * @param   nTagLength  The length of the tag
+     * @param   nPayload    The payload to be sent 
+     *
+     * @return true         At least one thread will be notified;
+     */
+    bool CorePartition_NotifyMessageAll(const char* pszTag, size_t nTagLength, size_t nPayload);
 
     /**
      * @brief   Wait for a specific notification from a given TAG
@@ -419,7 +443,21 @@ extern "C"
      * @param nTagLength    The length of the tag
      */
     void CorePartition_Wait (const char* pszTag, size_t nTagLength);
-    
+
+    /**
+     * @brief   Wait for a specific notification from a given TAG and payload
+     * 
+     * @param pszTag        The Tag string value
+     * @param nTagLength    The length of the tag
+     * 
+     * @return  A message size_t sized will be received.
+     * 
+     * @note    if a Tag was notified using NotifyOne or NotifyAll
+     *          the thread will receibe 0 otherwise will receive 
+     *          the same value sent.
+     */
+    size_t CorePartition_WaitMessage (const char* pszTag, size_t nTagLength);
+
 #ifdef __cplusplus
 }
 #endif

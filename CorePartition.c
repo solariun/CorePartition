@@ -50,9 +50,6 @@ struct Subscription
 
 typedef struct
 {
-    size_t nStackMaxSize;
-    size_t nStackSize;
-
     union
     {
         jmp_buf jmpRegisterBuffer;
@@ -64,16 +61,20 @@ typedef struct
         } func;
     } mem;
 
-    char pszThreadName[THREAD_NAME_MAX + 1];
-
     Subscription* pSubscriptions;
 
     void* pLastStack;
+
+    size_t nStackMaxSize;
+    size_t nStackSize;
+    size_t nPayload;
 
     uint32_t nNice;
     uint32_t nLastMomentun;
     uint32_t nNotifyUID;
     uint32_t nExecTime;
+
+    char pszThreadName[THREAD_NAME_MAX + 1];
     uint8_t nIsolation;
     uint8_t nStatus;
     uint8_t stackPage;
@@ -513,9 +514,9 @@ uint8_t CorePartition_Yield ()
     return 0;
 }
 
-void CorePartition_Wait (const char* pszTag, size_t nTagLength)
+size_t CorePartition_WaitMessage (const char* pszTag, size_t nTagLength)
 {
-    if (pszTag == NULL || pCoreThread[nCurrentThread]->nStatus != THREADL_RUNNING) return;
+    if (pszTag == NULL || pCoreThread[nCurrentThread]->nStatus != THREADL_RUNNING) return 0;
 
     pCoreThread[nCurrentThread]->nStatus = THREADL_WAITTAG;
     pCoreThread[nCurrentThread]->nNotifyUID = CorePartition_GetTopicID (pszTag, nTagLength);
@@ -524,9 +525,16 @@ void CorePartition_Wait (const char* pszTag, size_t nTagLength)
 
     pCoreThread[nCurrentThread]->nStatus = THREADL_RUNNING;
     pCoreThread[nCurrentThread]->nNotifyUID = 0;
+
+    return pCoreThread[nCurrentThread]->nPayload;
 }
 
-static bool CorePartition_Notify (const char* pszTag, size_t nTagLength, bool boolOne)
+void CorePartition_Wait (const char* pszTag, size_t nTagLength)
+{
+    (void) CorePartition_WaitMessage (pszTag, nTagLength);
+}
+
+static bool CorePartition_Notify (const char* pszTag, size_t nTagLength, size_t nPayload, bool boolOne)
 {
     uint32_t nTopicID = CorePartition_GetTopicID (pszTag, nTagLength);
     int nThreadID = 0;
@@ -541,6 +549,8 @@ static bool CorePartition_Notify (const char* pszTag, size_t nTagLength, bool bo
                 pCoreThread[nThreadID]->nNotifyUID == nTopicID)
             {
                 pCoreThread[nThreadID]->nStatus = THREADL_NOW;
+                pCoreThread[nThreadID]->nPayload = nPayload;
+
                 bReturn = true;
                 if (boolOne == true) break;
             }
@@ -552,14 +562,25 @@ static bool CorePartition_Notify (const char* pszTag, size_t nTagLength, bool bo
     return bReturn;
 }
 
+
 bool CorePartition_NotifyOne (const char* pszTag, size_t nTagLength)
 {
-    return CorePartition_Notify (pszTag, nTagLength, true);
+    return CorePartition_Notify (pszTag, nTagLength, 0, true);
+}
+
+bool CorePartition_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nPayload)
+{
+    return CorePartition_Notify (pszTag, nTagLength, nPayload, true);
 }
 
 bool CorePartition_NotifyAll (const char* pszTag, size_t nTagLength)
 {
-    return CorePartition_Notify (pszTag, nTagLength, false);
+    return CorePartition_Notify (pszTag, nTagLength, 0, false);
+}
+
+bool CorePartition_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nPayload)
+{
+    return CorePartition_Notify (pszTag, nTagLength, nPayload, false);
 }
 
 void CorePartition_Sleep (uint32_t nDelayTickTime)
