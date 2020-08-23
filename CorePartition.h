@@ -478,6 +478,24 @@ extern "C"
      */
     bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* pPayload);
 
+    /**
+     * @brief   Return Context Switch lock state
+     * 
+     * @return  true a context swith is being performed 
+     */
+    bool CorePartition_IsLocked ();
+
+    /**
+     * @brief   Lock for Context Switch
+     */
+    void CorePartition_Lock ();
+
+    /**
+     * @brief  Unlock for Context Switch
+     * 
+     */
+    void CorePartition_Unlock ();
+
 #ifdef __cplusplus
 }
 #endif

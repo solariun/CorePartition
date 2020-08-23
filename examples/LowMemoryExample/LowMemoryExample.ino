@@ -139,7 +139,8 @@ char pszNotificationTag[] = "thread/proc/value";
 
 void CounterThread (void* pValue)
 {
-    uint32_t nValue = (uint32_t)pValue;
+    // no c++ cast added to support AVR c++ 98
+    uint32_t nValue = (uint32_t) ((size_t) (pValue));
 
     CorePartition_SetThreadName ("Counter", 7);
 
@@ -148,6 +149,8 @@ void CounterThread (void* pValue)
         nValue++;
 
         CorePartition_PublishTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1, THREAD_VALUES_ATTRB, (uint64_t)nValue);
+
+        CorePartition_Yield ();
     }
 }
 
@@ -164,6 +167,8 @@ void ThreadCounterMessageHandler (void* pContext, const char* pszTopic, size_t n
 // Global context for async access
 uint32_t nValues[3] = {0, 0, 0};
 
+char pszEventualTag[] = "eventual";
+
 void Thread (void* pValue)
 {
     CorePartition_EnableBroker ((void*)nValues, 1, ThreadCounterMessageHandler);
@@ -175,6 +180,8 @@ void Thread (void* pValue)
     uint32_t* pnValues = (uint32_t*)pValue;
 
     CorePartition_SetThreadName ("Display", 7);
+
+    int nCount = 0;
 
     while (1)
     {
@@ -214,10 +221,25 @@ void Thread (void* pValue)
 
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
-            CorePartition_CreateSecureThread (eventualThread, NULL, 30 * sizeof (size_t), 1000);
+            CorePartition_CreateSecureThread (eventualThread, NULL, 40 * sizeof (size_t), 2000);
+            nCount=1;
+        }
+
+        if (nCount)
+        {
+            if (nCount++ == 10)
+            {
+                nCount = 0;
+                CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag)-1, 0, 0);
+            }
+            else
+            {
+                CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag)-1, 0, 1);
+            }
         }
     }
 }
+
 
 void eventualThread (void* pValue)
 {
@@ -234,7 +256,9 @@ void eventualThread (void* pValue)
 
     CorePartition_Yield ();
 
-    while (nValue <= 5)
+    CpxMsgPayload payload = {0,0,1};
+
+    while (payload.nValue)
     {
         SetLocation (6, 5);
 
@@ -248,7 +272,7 @@ void eventualThread (void* pValue)
         nLast = CorePartition_GetLastMomentum ();
         Serial.println (F ("ms\e[0K\n"));
 
-        CorePartition_Yield ();
+        CorePartition_WaitMessage(pszEventualTag, sizeof (pszEventualTag)-1, &payload);
     }
 
     SetLocation (6, 5);
@@ -291,11 +315,12 @@ void setup ()
     Serial.begin (115200);
 
     while (!Serial)
-        ;
+    {
+    };
 
-    delay (1000),
+    delay (1000);
 
-            ResetColor ();
+    ResetColor ();
     ClearConsole ();
     HideCursor ();
     SetLocation (1, 1);
@@ -316,13 +341,13 @@ void setup ()
 
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (CounterThread, (void*)1, 35 * sizeof (size_t), 1));
+    assert (CorePartition_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 1));
 
-    assert (CorePartition_CreateThread (CounterThread, (void*)1, 35 * sizeof (size_t), 500));
+    assert (CorePartition_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 500));
 
-    assert (CorePartition_CreateThread (CounterThread, (void*)1, 35 * sizeof (size_t), 1000));
+    assert (CorePartition_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 1000));
 
-    assert (CorePartition_CreateSecureThread (Thread, (void*)nValues, 35 * sizeof (size_t), 500));
+    assert (CorePartition_CreateSecureThread (Thread, (void*)nValues, 50 * sizeof (size_t), 500));
 }
 
 void loop ()

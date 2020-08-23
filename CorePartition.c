@@ -92,6 +92,23 @@ jmp_buf jmpJoinPointer;
 
 static void (*stackOverflowHandler) (void) = NULL;
 
+static volatile bool lock = false;
+
+void CorePartition_Lock ()
+{
+    lock = true;
+}
+
+void CorePartition_Unlock ()
+{
+    lock = false;
+}
+
+bool CorePartition_IsLocked ()
+{
+    return lock;
+}
+
 #define POLY 0x8408
 /*
 //                                      16   12   5
@@ -273,7 +290,7 @@ bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
 bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue)
 {
     bool bReturn = false;
-    
+
     size_t nThreadID = 0;
     uint32_t nTopicID = CorePartition_GetTopicID (pszTopic, length);
     size_t nSubID = 0;
@@ -294,8 +311,6 @@ bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAt
             }
         }
     }
-
-    CorePartition_Yield ();
 
     return bReturn;
 }
@@ -333,16 +348,16 @@ static void StackHandler (uint8_t* pDestine, const uint8_t* pSource, size_t nSiz
 
 static void BackupStack (void)
 {
-    memcpy ((uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
-            (const uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
-            pCoreThread[nCurrentThread]->nStackSize);
+    StackHandler ((uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
+                  (const uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
+                  pCoreThread[nCurrentThread]->nStackSize);
 }
 
 static void RestoreStack (void)
 {
-    memcpy ((uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
-            (const uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
-            pCoreThread[nCurrentThread]->nStackSize);
+    StackHandler ((uint8_t*)pCoreThread[nCurrentThread]->pLastStack,
+                  (const uint8_t*)&pCoreThread[nCurrentThread]->stackPage,
+                  pCoreThread[nCurrentThread]->nStackSize);
 }
 
 static uint32_t CorePartition_GetNextTime (size_t nThreadID)
@@ -459,7 +474,7 @@ void CorePartition_Join ()
 
 uint8_t CorePartition_Yield ()
 {
-    if (nRunningThreads != 0)
+    if (nRunningThreads != 0 && CorePartition_IsLocked () == false)
     {
         volatile uint8_t nValue = 0xBB;
 
@@ -512,7 +527,7 @@ uint8_t CorePartition_Yield ()
 
 bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* pPayload)
 {
-    if (pszTag == NULL || nTagLength == 0 || pCoreThread[nCurrentThread]->nStatus != THREADL_RUNNING) false;
+    if (pszTag == NULL || nTagLength == 0 || pCoreThread[nCurrentThread]->nStatus != THREADL_RUNNING) return false;
 
     pCoreThread[nCurrentThread]->nStatus = THREADL_WAITTAG;
     pCoreThread[nCurrentThread]->nNotifyUID = CorePartition_GetTopicID (pszTag, nTagLength);
@@ -538,21 +553,21 @@ bool CorePartition_Wait (const char* pszTag, size_t nTagLength)
 static bool CorePartition_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue, bool boolOne)
 {
     uint32_t nTopicID = CorePartition_GetTopicID (pszTag, nTagLength);
-    int nThreadID = 0;
+    size_t nThreadID = 0;
     bool bReturn = false;
     /* Go through thread lists */
 
-    CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
-
-    if (pszTag != NULL && pCoreThread[nCurrentThread]->nStatus == THREADL_RUNNING)
+    if (pszTag != NULL && nTagLength && pCoreThread[nCurrentThread]->nStatus == THREADL_RUNNING)
     {
         for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
         {
+            printf (">> ID %zu TAG: %u Destine TAG: %u \n", nThreadID, nTopicID, pCoreThread[nThreadID]->nNotifyUID);
+
             if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->nStatus == THREADL_WAITTAG &&
                 pCoreThread[nThreadID]->nNotifyUID == nTopicID)
             {
                 pCoreThread[nThreadID]->nStatus = THREADL_NOW;
-                pCoreThread[nThreadID]->CpxMsgPayload = payload;
+                pCoreThread[nThreadID]->CpxMsgPayload = ((CpxMsgPayload){nCurrentThread, nAttribute, nValue});
 
                 bReturn = true;
                 if (boolOne == true) break;
@@ -666,7 +681,9 @@ bool CorePartition_IsCoreRunning (void)
 
 void CorePartition_SetNice (uint32_t nNice)
 {
+    CorePartition_Lock ();
     pCoreThread[nCurrentThread]->nNice = nNice == 0 ? 1 : nNice;
+    CorePartition_Unlock ();
 }
 
 bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize)
@@ -678,6 +695,8 @@ bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t n
         memcpy (pCoreThread[nID]->pszThreadName, pszName, nCopySize);
 
         pCoreThread[nID]->pszThreadName[nCopySize] = '\0';
+
+        CorePartition_Unlock ();
 
         return true;
     }

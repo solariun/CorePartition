@@ -32,7 +32,6 @@
 //
 // See LICENSE file for the complete information
 
-
 #include "CorePartition.h"
 
 #include "Arduino.h"
@@ -59,21 +58,18 @@ volatile bool bLocked = false;
 
 void lock ()
 {
-    bLocked = true;
+    CorePartition_Lock ();
 }
 
 void unlock ()
 {
-    bLocked = false;
-
-    cli ();
+    CorePartition_Unlock ();
     if (CorePartition_GetStatus () == THREADL_RUNNING) CorePartition_Sleep (0);
-    sei ();
 }
 
 ISR (TIMER1_COMPA_vect)
 {
-    if (bLocked == false && CorePartition_GetStatus () == THREADL_RUNNING)
+   // if (CorePartition_IsLocked () == false && CorePartition_GetStatus () == THREADL_RUNNING)
     {
         CorePartition_Yield ();
     }
@@ -98,19 +94,16 @@ void setPreemptionOn ()
     sei ();
 }
 
-
 int DIN = 12;  // MISO
 int CS = 11;   // MOSI
 int CLK = 10;  // SS
 
 // Utilities
 
-
 // Functions
 
 #define MAX_LED_MATRIX 4
 LedControl lc = LedControl (DIN, CLK, CS, MAX_LED_MATRIX);
-
 
 void __attribute__ ((noinline)) SetLocation (uint16_t nY, uint16_t nX)
 {
@@ -119,7 +112,6 @@ void __attribute__ ((noinline)) SetLocation (uint16_t nY, uint16_t nX)
 
     Serial.write (szTemp, nLen);
 }
-
 
 // workis with 256 colors
 void __attribute__ ((noinline)) SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
@@ -130,36 +122,30 @@ void __attribute__ ((noinline)) SetColor (const uint8_t nFgColor, const uint8_t 
     Serial.write (szTemp, nLen);
 }
 
-
 void ResetColor ()
 {
     Serial.print ("\033[0m");
 }
-
 
 void HideCursor ()
 {
     Serial.print ("\033[?25l");
 }
 
-
 void ShowCursor ()
 {
     Serial.print ("\033[?25h");
 }
-
 
 void ClearConsole ()
 {
     Serial.print ("\033[2J");
 }
 
-
 void ReverseColor ()
 {
     Serial.print ("\033[7m");
 }
-
 
 void Delay (uint64_t nSleep)
 {
@@ -172,7 +158,6 @@ void Delay (uint64_t nSleep)
         CorePartition_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
-
 
 void __attribute__ ((noinline)) ShowRunningThreads ()
 {
@@ -206,7 +191,6 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     }
 }
 
-
 const uint64_t m_byteImages[] PROGMEM = {
         0x0000000000000000, 0x00180018183c3c18, 0x0000000012246c6c, 0x0036367f367f3636, 0x000c1f301e033e0c, 0x0063660c18336300, 0x006e333b6e1c361c,
         0x0000000000030606, 0x00180c0606060c18, 0x00060c1818180c06, 0x0000663cff3c6600, 0x00000c0c3f0c0c00, 0x060c0c0000000000, 0x000000003f000000,
@@ -224,7 +208,6 @@ const uint64_t m_byteImages[] PROGMEM = {
         0x00380c0c070c0c38, 0x0c0c0c0c0c0c0c0c, 0x00070c0c380c0c07, 0x0000000000003b6e};
 
 const int m_byteImagesLen = sizeof (m_byteImages) / 8;
-
 
 class TextScroller
 {
@@ -264,7 +247,6 @@ private:
         unlock ();
     }
 
-
 protected:
     virtual void PrintRow (uint16_t nLocY, uint16_t nLocX, uint16_t nDigit, uint8_t nRowIndex, uint8_t nRow)
     {
@@ -289,7 +271,6 @@ public:
         nIndex = nSpeed == 0 ? 0 : nNumberDigits * (-1);
     }
 
-
     bool show (int nLocY, int nLocX, const char* pszMessage, const uint16_t nMessageLen)
     {
         uint8_t nCount;
@@ -312,7 +293,6 @@ public:
                 }
             } while (nOffset >= 8);
 
-
         for (nCount = 0; nCount < nNumberDigits; nCount++)
         {
             PrintScrollBytes (nLocY,
@@ -331,7 +311,6 @@ public:
     }
 };
 
-
 class MatrixTextScroller : public TextScroller
 {
 protected:
@@ -344,9 +323,7 @@ public:
     using TextScroller::TextScroller;
 };
 
-
 float fMin = 1000, fMax = 0;
-
 
 void Thread1 (void* pValue)
 {
@@ -372,7 +349,6 @@ void Thread1 (void* pValue)
         }
     }
 }
-
 
 void Thread2 (void* pValue)
 {
@@ -414,7 +390,6 @@ void Thread2 (void* pValue)
     }
 }
 
-
 void Thread3 (void* pValue)
 {
     unsigned long start = millis ();
@@ -427,7 +402,6 @@ void Thread3 (void* pValue)
         unlock ();
     }
 }
-
 
 static uint32_t CorePartition_GetCurrentTick ()
 {
@@ -451,7 +425,6 @@ void StackOverflowHandler ()
     Serial.flush ();
 }
 
-
 void setup ()
 {
     bool status;
@@ -471,7 +444,6 @@ void setup ()
     Serial.println ("Starting up Thread....");
     Serial.flush ();
     Serial.flush ();
-
 
     // default settings
     status = amg.begin ();
@@ -503,7 +475,6 @@ void setup ()
 
     assert (CorePartition_CreateThread (Thread2, NULL, 150, 10));
 }
-
 
 void loop ()
 {
