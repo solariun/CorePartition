@@ -353,12 +353,12 @@ static void StackHandler (uint8_t* pDestine, const uint8_t* pSource, size_t nSiz
 
 static void BackupStack (void)
 {
-    memcpy ((uint8_t*)&pCurrentThread->stackPage, (const uint8_t*)pCurrentThread->pLastStack, pCurrentThread->nStackSize);
+    StackHandler ((uint8_t*)&pCurrentThread->stackPage, (const uint8_t*)pCurrentThread->pLastStack, pCurrentThread->nStackSize);
 }
 
 static void RestoreStack (void)
 {
-    memcpy ((uint8_t*)pCurrentThread->pLastStack, (const uint8_t*)&pCurrentThread->stackPage, pCurrentThread->nStackSize);
+    StackHandler ((uint8_t*)pCurrentThread->pLastStack, (const uint8_t*)&pCurrentThread->stackPage, pCurrentThread->nStackSize);
 }
 
 static uint32_t CorePartition_GetNextTime (size_t nThreadID)

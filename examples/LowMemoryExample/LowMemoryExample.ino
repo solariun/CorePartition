@@ -186,7 +186,7 @@ uint32_t WaitForData ()
 void eventualThread (void* pValue)
 {
     uint32_t nValue = 0;
-    uint32_t nRemoteValue = 0;
+    uint32_t nRemoteValue = 1;
 
     uint32_t nLast = CorePartition_GetCurrentTick ();
 
@@ -200,7 +200,7 @@ void eventualThread (void* pValue)
 
     CorePartition_Yield ();
 
-    while (10 - nValue)
+    while (nRemoteValue)
     {
         SetLocation (6, 5);
 
@@ -284,14 +284,14 @@ void Thread (void* pValue)
 
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
-            CorePartition_CreateSecureThread (eventualThread, NULL, 40 * sizeof (size_t), 1000);
+            CorePartition_CreateSecureThread (eventualThread, NULL, 40 * sizeof (size_t), 100);
             nCount = 1;
             nFail = 0;
         }
 
         if (nCount)
         {
-            if (nCount == 10)
+            if (nCount == 15)
             {
                 nCount = 0;
                 if (CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag) - 1, 0, 0) == false)
