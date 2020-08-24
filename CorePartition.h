@@ -36,15 +36,16 @@
 extern "C"
 {
 #else
-#define false 0
-#define true 1
 #define bool uint8_t
+#define false 0
+#define true (!false)
 #endif
 
 #include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 
 #define THREADL_NONE 0
 #define THREADL_START 1
@@ -468,40 +469,36 @@ extern "C"
      * 
      * @param   pszTag        The Tag string value
      * @param   nTagLength    The length of the tag
-     * @param   pPayload      The Payload variable to receive the message
      * 
-     * @return  true    For success on receiving notification and message
+     * @return  NULL    if an error ocurred
      * 
      * @note    if a Tag was notified using NotifyOne or NotifyAll
      *          the thread will receibe 0 otherwise will receive 
      *          the same value sent.
      */
-    bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* pPayload);
+    bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload);
 
     /**
      * @brief   Return Context Switch lock state
      * 
      * @return  true a context swith is being performed 
      */
-    bool CorePartition_IsLocked ();
+    bool CorePartition_IsLocked (void);
 
     /**
      * @brief   Lock for Context Switch
      */
-    void CorePartition_Lock ();
+    void CorePartition_Lock (void);
 
     /**
      * @brief  Unlock for Context Switch
      * 
      */
-    void CorePartition_Unlock ();
+    void CorePartition_Unlock (void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#ifdef __cplusplus
-
-#endif
 
 #endif /* CorePartition_hpp */

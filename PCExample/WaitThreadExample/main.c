@@ -96,20 +96,23 @@ void kernel (void* pValue)
 
 void Thread1 (void* pValue)
 {
-    CpxMsgPayload payload;
+    CpxMsgPayload payload={0,0,0};
 
     while (1)
     {
-        if (CorePartition_WaitMessage (szTagName, sizeof (szTagName) - 1, &payload) == false)
+        if ((CorePartition_WaitMessage (szTagName, sizeof (szTagName) - 1, &payload)) == false)
         {
-            printf ("Error waiting for messages");
+            printf ("Error waiting for messages\n");
+            exit(1);
         }
-
-        printf ("Thread %zu: received a notification. payload: [%zu::%zu from %s]\n",
-                CorePartition_GetID (),
-                payload.nAttribute,
-                payload.nValue,
-                CorePartition_GetThreadNameByID (payload.nThreadID));
+        else
+        {
+            printf ("Thread %zu: received a notification. payload: [%zu::%llu from %s]\n",
+                    CorePartition_GetID (),
+                    payload.nAttribute,
+                    payload.nValue,
+                    CorePartition_GetThreadNameByID (payload.nThreadID));
+        }
 
         CorePartition_Sleep (1000);
     }

@@ -167,7 +167,67 @@ void ThreadCounterMessageHandler (void* pContext, const char* pszTopic, size_t n
 // Global context for async access
 uint32_t nValues[3] = {0, 0, 0};
 
-char pszEventualTag[] = "eventual";
+const char pszEventualTag[] = "eventual";
+
+uint32_t WaitForData ()
+{
+    CpxMsgPayload payload = {0,0,0};
+
+    if (CorePartition_WaitMessage (pszEventualTag, sizeof (pszEventualTag) - 1, &payload) == false)
+    {
+        Serial.print ("    Error Waiting for messages.   ");
+        CorePartition_Yield ();
+        return 0;
+    }
+
+    return payload.nValue;
+}
+
+void eventualThread (void* pValue)
+{
+    uint32_t nValue = 0;
+    uint32_t nRemoteValue = 0;
+
+    uint32_t nLast = CorePartition_GetCurrentTick ();
+
+    CorePartition_SetThreadName ("Eventual", 8);
+
+    SetLocation (6, 5);
+
+    Serial.print (">> Eventual Thread");
+    Serial.print (CorePartition_GetID ());
+    Serial.print (": Requested, Starting Up...");
+
+    CorePartition_Yield ();
+
+    while (10 - nValue)
+    {
+        SetLocation (6, 5);
+
+        Serial.print (">> Eventual Thread");
+        Serial.print (CorePartition_GetID ());
+        Serial.print (": ");
+        Serial.print (nValue++);
+        Serial.print (": ");
+        Serial.print (nRemoteValue++);
+        Serial.print (F (", Sleep Time: "));
+        Serial.print (CorePartition_GetLastMomentum () - nLast);
+
+        nLast = CorePartition_GetLastMomentum ();
+        Serial.println (F ("ms\e[0K\n"));
+
+        nRemoteValue = WaitForData ();
+    }
+
+    SetLocation (6, 5);
+    ClearCurrentLine ();
+
+    Serial.print (">> Eventual Thread");
+    Serial.print (CorePartition_GetID ());
+    Serial.print (": Thread done!");
+
+    CorePartition_Yield ();
+}
 
 void Thread (void* pValue)
 {
@@ -182,6 +242,7 @@ void Thread (void* pValue)
     CorePartition_SetThreadName ("Display", 7);
 
     int nCount = 0;
+    int nFail = 0;
 
     while (1)
     {
@@ -208,6 +269,8 @@ void Thread (void* pValue)
         Serial.print (CorePartition_GetStackSize ());
         Serial.print ("/");
         Serial.print (CorePartition_GetMaxStackSize ());
+        Serial.print (", Notification fail:");
+        Serial.print (nFail);
         Serial.print (", DutyCycle Time: ");
         Serial.print (CorePartition_GetLastDutyCycle ());
         Serial.println ("ms\e[0k\n\n");
@@ -221,68 +284,34 @@ void Thread (void* pValue)
 
         if (CorePartition_GetStatusByID (4) == THREADL_NONE)
         {
-            CorePartition_CreateSecureThread (eventualThread, NULL, 40 * sizeof (size_t), 2000);
-            nCount=1;
+            CorePartition_CreateSecureThread (eventualThread, NULL, 40 * sizeof (size_t), 1000);
+            nCount = 1;
+            nFail = 0;
         }
 
         if (nCount)
         {
-            if (nCount++ == 10)
+            if (nCount == 10)
             {
                 nCount = 0;
-                CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag)-1, 0, 0);
+                if (CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag) - 1, 0, 0) == false)
+                {
+                    nFail++;
+                }
             }
             else
             {
-                CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag)-1, 0, 1);
+                if (CorePartition_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag) - 1, 0, 1) == false)
+                {
+                    nFail++;
+                }
+                else
+                {
+                    nCount++;
+                }
             }
         }
     }
-}
-
-
-void eventualThread (void* pValue)
-{
-    uint32_t nValue = 0;
-    uint32_t nLast = CorePartition_GetCurrentTick ();
-
-    CorePartition_SetThreadName ("Eventual", 8);
-
-    SetLocation (6, 5);
-
-    Serial.print (">> Eventual Thread");
-    Serial.print (CorePartition_GetID ());
-    Serial.print (": Requested, Starting Up...");
-
-    CorePartition_Yield ();
-
-    CpxMsgPayload payload = {0,0,1};
-
-    while (payload.nValue)
-    {
-        SetLocation (6, 5);
-
-        Serial.print (">> Eventual Thread");
-        Serial.print (CorePartition_GetID ());
-        Serial.print (": ");
-        Serial.print (nValue++);
-        Serial.print (F (", Sleep Time: "));
-        Serial.print (CorePartition_GetLastMomentum () - nLast);
-
-        nLast = CorePartition_GetLastMomentum ();
-        Serial.println (F ("ms\e[0K\n"));
-
-        CorePartition_WaitMessage(pszEventualTag, sizeof (pszEventualTag)-1, &payload);
-    }
-
-    SetLocation (6, 5);
-    ClearCurrentLine ();
-
-    Serial.print (">> Eventual Thread");
-    Serial.print (CorePartition_GetID ());
-    Serial.print (": Thread done!");
-
-    CorePartition_Yield ();
 }
 
 uint32_t CorePartition_GetCurrentTick ()

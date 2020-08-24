@@ -4,6 +4,7 @@
 *.elf
 *.out
 *.hex
+*.map
 *.jlink
 .DS_Store
 ._.DS_Store
