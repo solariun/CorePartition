@@ -467,10 +467,11 @@ extern "C"
     /**
      * @brief   Wait for a specific notification from a given TAG and payload
      * 
-     * @param   pszTag        The Tag string value
-     * @param   nTagLength    The length of the tag
+     * @param   pszTag      The Tag string value
+     * @param   nTagLength  The length of the tag
+     * @param   payload     The payload with the information sent by other thread   
      * 
-     * @return  NULL    if an error ocurred
+     * @return  false   if an error ocurred
      * 
      * @note    if a Tag was notified using NotifyOne or NotifyAll
      *          the thread will receibe 0 otherwise will receive 
