@@ -54,7 +54,7 @@
 #include <assert.h>
 #include <string>
 
-#include "LedMatrix.cpp"
+//#include "LedMatrix.cpp"
 
 #define MAX(x, y) (x > y ? x : y)
 #define MIN(x, y) (x < y ? x : y)
@@ -72,7 +72,7 @@ int CLK = D5;  // SS    - NodeMCU - D5 (HSCLK)
 
 // Functions
 
-#define MAX_LED_MATRIX 4
+#define MAX_LED_MATRIX 8
 LedControl lc = LedControl (DIN, CLK, CS, MAX_LED_MATRIX);
 
 void SetLocation (Stream& device, uint16_t nY, uint16_t nX)
@@ -390,14 +390,14 @@ const char* topicDisplay = "display";
 
 #define MATRIX_DISPLAY_CHANGE 1
 
-void LedDisplayBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttribute, uint64_t nValue )
+void LedDisplayBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payload)
 {
     if (strncmp (pszTopic, topicDisplay, sizeof (topicDisplay)-1) == 0)
     {
-        switch (nAttribute)
+        switch (payload.nAttribute)
         {
             case MATRIX_DISPLAY_CHANGE:
-                strDisplay = (const char*) nValue;
+                strDisplay = (const char*) payload.nValue;
                 matrixTextScroller.Reset();
                 break;
             
@@ -407,6 +407,9 @@ void LedDisplayBrokerHandler (const char* pszTopic, size_t nSize, size_t nAttrib
     }
 }
 
+
+char chContext = 'A';
+
 /// LedDisplayShow - Will update information o Display
 /// @param pValue  Information injected from CorePartition on startup
 void LedDisplayShow (void* pValue)
@@ -414,7 +417,7 @@ void LedDisplayShow (void* pValue)
     unsigned long start = millis ();
     size_t nValue = 0;
 
-    CorePartition_EnableBroker (1, LedDisplayBrokerHandler);
+    CorePartition_EnableBroker ((void*) &chContext, 1, LedDisplayBrokerHandler);
 
     CorePartition_SubscribeTopic (topicDisplay, sizeof (topicDisplay)-1);
 
