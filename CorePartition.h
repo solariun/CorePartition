@@ -67,7 +67,7 @@ extern "C"
     extern uint32_t CorePartition_GetCurrentTick (void);
     extern void CorePartition_SleepTicks (uint32_t);
 
-    static const char CorePartition_version[] = "V2.6.0 develop Compiled at " __TIMESTAMP__;
+    static const char CorePartition_version[] = "V2.6.0.1 develop Compiled at " __TIMESTAMP__;
 
     /**
      * @brief Start CorePartition thread provisioning
@@ -106,36 +106,6 @@ extern "C"
      *                          have in mind it will be costy on time so use it wisely.
      */
     bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
-
-    /**
-     * @brief  Override current +1 cycle on to specialize it
-     *
-     * @param pTimeInterface    Time interface call back
-     *
-     * @return false    should report fail on time problems only
-     *
-     * @note    On complex processors like ESP8266, ESP32, powerfull ARM or RISC-V
-     *          some internal watchdog needs to be call by yield or similar process
-     *          that is always implemented on sleep, so, it is advisable to
-     *          ALWAYS override tick process is always a good procedure and will
-     *          make your processor will work better and on-time.
-     */
-    bool CorePartition_SetCurrentTimeInterface (uint32_t (*pTimeInterface) (void));
-
-    /**
-     * @brief Override current +1 cycle count and sleep
-     *
-     * @param pSleepInterface    sleep time callback
-     *
-     * @return false    should report fail on time problems only
-     *
-     * @note    On complex processors like ESP8266, ESP32, powerfull ARM or RISC-V
-     *          some internal watchdog needs to be call by yield or similar process
-     *          that is always implemented on sleep, so, it is advisable to
-     *          ALWAYS override tick process is always a good procedure and will
-     *          make your processor will work better and on-time.
-     */
-    bool CorePartition_SetSleepTimeInterface (void (*pSleepInterface) (uint32_t nSleepTime));
 
     /**
      * @brief  Callback for informing Stack Overflow Thread destruction and actions

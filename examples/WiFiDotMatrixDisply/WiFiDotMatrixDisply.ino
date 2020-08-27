@@ -60,7 +60,7 @@
 #define MIN(x, y) (x < y ? x : y)
 
 #ifndef STASSID
-#define STASSID "WhiteKingdom4G"
+#define STASSID "WhiteKingdom2.4Ghz"
 #define STAPSK "Creative01000"
 #endif
 
