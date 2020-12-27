@@ -36,9 +36,11 @@
 extern "C"
 {
 #else
+#ifndef bool
 #define bool uint8_t
 #define false 0
 #define true (!false)
+#endif 
 #endif
 
 #include <setjmp.h>
@@ -72,7 +74,7 @@ extern "C"
     /**
      * @brief Start CorePartition thread provisioning
      *
-     * @param nThreadPartitions
+     * @param nThreadPartitions     Number of threads to be aprovisioned
      * @return true  true if successfully created all provisioned threads
      */
     bool CorePartition_Start (size_t nThreadPartitions);
