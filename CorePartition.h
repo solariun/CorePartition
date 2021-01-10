@@ -55,7 +55,8 @@ extern "C"
 #define THREADL_SLEEP 3
 #define THREADL_STOPPED 4
 #define THREADL_WAITTAG 5
-#define THREADL_NOW 6
+#define THREADL_LOCK 6
+#define THREADL_NOW 7
 
     typedef struct
     {
@@ -63,6 +64,14 @@ extern "C"
         size_t nAttribute;
         uint64_t nValue;
     } CpxMsgPayload;
+
+    typedef struct SmartLock CpxSmartLock;
+
+    struct SmartLock
+    {
+        size_t nSharedLockCounter;
+        bool bExclusiveLock;
+    };
 
     typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
 
@@ -333,7 +342,7 @@ extern "C"
      * @param   callback    Call back to be used to process thread Synchronously
      *
      * @return  false       failed to create the broker context for the current thread
-     * 
+     *
      * @note    The default context must not be part of the thread stack, or it will be invalid
      *          on callback time, please use global variables or from heap (new or malloc memory),
      *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
@@ -360,7 +369,7 @@ extern "C"
      * @param   nValue      A value for the attribute (tuple)
      *
      * @return  true    If at least one subscriber received the data.
-     * 
+     *
      */
     bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue );
 
@@ -376,26 +385,26 @@ extern "C"
 
     /**
      * @brief   Notify ONE TAG assigned as waiting thread
-     * 
+     *
      * @param   pszTag      The Tag string value
      * @param   nTagLength  The length of the tag
      *
      * @return true         At least one thread will be notified;
-     * 
+     *
      * @note    Please note that any notification triggers a context switch yield
      */
     bool CorePartition_NotifyOne(const char* pszTag, size_t nTagLength);
 
     /**
      * @brief   Notify ONE TAGs assigned as waiting thread with a Message payload
-     * 
+     *
      * @param   pszTag      The Tag string value
      * @param   nTagLength  The length of the tag
      * @param   nAttribute  The Attribute Value to be sent
      * @param   nValue      The Value of the Attribute to be sent
      *
      * @return true         At least one thread will be notified;
-     * 
+     *
      * @note    Please note that any notification triggers a context switch yield
      */
     bool CorePartition_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
@@ -407,7 +416,7 @@ extern "C"
      * @param   nTagLength  The length of the tag
      *
      * @return true         At least one thread will be notified;
-     * 
+     *
      * @note    Please note that any notification triggers a context switch yield 
      */
     bool CorePartition_NotifyAll(const char* pszTag, size_t nTagLength);
@@ -438,13 +447,13 @@ extern "C"
 
     /**
      * @brief   Wait for a specific notification from a given TAG and payload
-     * 
+     *
      * @param   pszTag      The Tag string value
      * @param   nTagLength  The length of the tag
      * @param   payload     The payload with the information sent by other thread   
-     * 
+     *
      * @return  false   if an error ocurred
-     * 
+     *
      * @note    if a Tag was notified using NotifyOne or NotifyAll
      *          the thread will receibe 0 otherwise will receive 
      *          the same value sent.
@@ -453,21 +462,97 @@ extern "C"
 
     /**
      * @brief   Return Context Switch lock state
-     * 
+     *
      * @return  true a context swith is being performed 
      */
-    bool CorePartition_IsLocked (void);
+    bool CorePartition_IsKernelLocked (void);
 
     /**
      * @brief   Lock for Context Switch
      */
-    void CorePartition_Lock (void);
+    void CorePartition_LockKernel (void);
 
     /**
      * @brief  Unlock for Context Switch
-     * 
      */
-    void CorePartition_Unlock (void);
+    void CorePartition_UnlockKernel (void);
+
+    /**
+     * @brief   Init SmartLock variable
+     *
+     * @param   pLock      The Lock variable
+     *
+     * @return  false   the lock is null
+     *
+     * @note    If you re initialize it will unlock all locks
+     */
+    bool CorePartition_LockInit (CpxSmartLock* pLock);
+
+    /**
+     * @brief   Do a exclusive Lock and set to Simple lock
+     *
+     * @param   pLock      The Lock variable
+     *
+     * @return  false   the lock is null
+     *
+     * @note    Wait till Lock is unlocked (type none) and lock it
+     *          set to type Simple and lock, SharedLock will wait
+     *          till it is unlocked.
+     */
+    bool CorePartition_Lock (CpxSmartLock* pLock);
+
+    /**
+     * @brief   Like Lock() but only locks in case it is unloacked
+     *
+     * @param   pLock      The Lock variable
+     *
+     * @return  false   If lock is null or lock is locked
+     *
+     * @note    Wait till exclusive Lock is unlocked (type none) and lock it
+     *          set to type Simple and lock, SharedLock will wait
+     *          till it is unlocked.
+     */
+    bool CorePartition_TryLock (CpxSmartLock* pLock);
+
+    /**
+     * @brief   Can act as multimple locks
+     *
+     * @param   pLock      The Lock variable
+     *
+     * @return  false   If lock is null
+     *
+     * @note    Can aquire multimples locks and lock()
+     *          will wait till all multiples locks has been unlocked
+     *          to lock exclusively
+     */
+    bool CorePartition_SharedLock (CpxSmartLock* pLock);
+
+    /**
+     * @brief   Unlock exclusive locks
+     *
+     * @param   pLock      The Lock variable
+     *
+     * @return  false   If lock is null
+     */
+    bool CorePartition_Unlock (CpxSmartLock* pLock);
+
+    /**
+     * @brief   Unlock shared locks
+     *
+     * @param   pLock      The Lock variable
+     *
+     * @return  false   If lock is null
+     */
+    bool CorePartition_SharedUnlock (CpxSmartLock* pLock);
+
+    bool CorePartition_WaitLock (size_t nLockID, uint8_t* pnStatus);
+
+    bool CorePartition_NotifyLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
+
+#define CorePartition_NotifyAllLock(nLockID) CorePartition_NotifyLock (nLockID, false);
+
+#define CorePartition_NotifyOneLock(nLockID) CorePartition_NotifyLock (nLockID, true);
+
 
 #ifdef __cplusplus
 }

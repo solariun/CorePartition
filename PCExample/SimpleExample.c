@@ -4,24 +4,50 @@
 
 #include "CorePartition.h"
 
-void Thread1(void* pValue)
-{
-     int nValue = 0;
+CpxSmartLock lock;
 
-     while (CorePartition_Yield())
-     {
-          printf ("Thread %zu: Value [%d] every %u ms\n", CorePartition_GetID(), nValue++, CorePartition_GetNice());
-     }
+int nProducers [10];
+
+void Procuder(void* pValue)
+{
+    size_t nID = CorePartition_GetID();
+    
+    nProducers [nID] = 0;
+    
+    while (true)
+    {
+        CorePartition_SharedLock(&lock);
+        
+        nProducers [nID]++;
+        
+        CorePartition_Yield();
+        
+        CorePartition_SharedUnlock(&lock);
+    }
+
 }
 
-void Thread2(void* pValue)
+void Consumer(void* pValue)
 {
-     int nValue = 0;
-
-     while (CorePartition_Yield())
-     {
-          printf ("Thread %zu: Value [%d] every %u ms\n", CorePartition_GetID(), nValue++, CorePartition_GetNice());
-     }
+    int nCount = 0;
+        
+    while (true)
+    {
+        CorePartition_Lock(&lock);
+        
+        printf ("Thread %zu: Values ", CorePartition_GetID());
+        for (nCount=0; nCount < 10;nCount++)
+        {
+            printf ("(%u: [%d]) ", nCount, nProducers [nCount]);
+        }
+        printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCounter);
+          
+        CorePartition_Sleep(1);
+        
+        CorePartition_Unlock(&lock);
+        
+        CorePartition_Yield();
+    }
 }
 
 void CorePartition_SleepTicks (uint32_t nSleepTime)
@@ -46,18 +72,40 @@ static void StackOverflowHandler ()
 int main ()
 {
 
-     assert (CorePartition_Start (3));
+    assert (CorePartition_Start (20));
 
-     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-     //Every 1000 cycles with a Stack page of 210 bytes
-     assert (CorePartition_CreateThread (Thread1, NULL,  210, 1000));
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 100));
 
-     //All the time with a Stack page of 150 bytes and
-     //thread isolation
-     assert (CorePartition_CreateSecureThread (Thread2, NULL, 150, 2000));
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 333));
 
-     assert (CorePartition_CreateSecureThread (Thread2, NULL, 150, 500));
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 444));
 
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 555));
+
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 280));
+
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 160));
+
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 777));
+
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 777));
+
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 1000));
+
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 60000));
+
+    assert (CorePartition_CreateThread (Consumer, NULL, 300, 2000));
+    
+    assert (CorePartition_CreateThread (Consumer, NULL, 300, 1000));
+
+    assert (CorePartition_CreateThread (Consumer, NULL, 300, 500));
+    
+    assert (CorePartition_CreateThread (Consumer, NULL, 300, 3000));
+
+    
+    CorePartition_LockInit(&lock);
+    
      CorePartition_Join();
 }
