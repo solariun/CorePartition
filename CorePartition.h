@@ -545,11 +545,6 @@ typedef struct CpxSmartLock CpxSmartLock;
 
     bool CorePartition_NotifyLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
 
-#define CorePartition_NotifyAllLock(nLockID) CorePartition_NotifyLock (nLockID, false);
-
-#define CorePartition_NotifyOneLock(nLockID) CorePartition_NotifyLock (nLockID, true);
-
-
 #ifdef __cplusplus
 }
 #endif
