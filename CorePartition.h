@@ -66,7 +66,11 @@ typedef struct
     uint64_t nValue;
 } CpxMsgPayload;
 
-typedef struct CpxSmartLock CpxSmartLock;
+typedef struct
+{
+    size_t nSharedLockCounter;
+    bool bExclusiveLock;
+}CpxSmartLock;
 
 
     typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
