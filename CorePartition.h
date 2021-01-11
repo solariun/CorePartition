@@ -59,18 +59,15 @@ extern "C"
 #define THREADL_LOCK 6
 #define THREADL_NOW 7
 
-    typedef struct
-    {
-        size_t nThreadID;
-        size_t nAttribute;
-        uint64_t nValue;
-    } CpxMsgPayload;
+typedef struct
+{
+    size_t nThreadID;
+    size_t nAttribute;
+    uint64_t nValue;
+} CpxMsgPayload;
 
-    typedef struct
-    {
-        size_t nSharedLockCounter;
-        bool bExclusiveLock;
-    }CpxSmartLock;
+typedef struct CpxSmartLock CpxSmartLock;
+
 
     typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
 

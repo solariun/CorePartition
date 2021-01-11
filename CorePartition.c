@@ -60,6 +60,12 @@ enum __cp_lock_type
     CP_LOCK_SHARED
 };
 
+struct CpxSmartLock
+{
+    size_t nSharedLockCounter;
+    bool bExclusiveLock;
+};
+
 typedef struct
 {
     void* pLastStack;
