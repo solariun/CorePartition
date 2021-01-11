@@ -36,13 +36,14 @@
 extern "C"
 {
 #else
-#ifndef bool
-#define bool uint8_t
-#define false 0
-#define true (!false)
-#endif 
+//#ifndef bool
+//#define bool uint8_t
+//#define false 0
+//#define true (!false)
+//#endif
 #endif
 
+#include <stdbool.h>
 #include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -65,13 +66,11 @@ extern "C"
         uint64_t nValue;
     } CpxMsgPayload;
 
-    typedef struct SmartLock CpxSmartLock;
-
-    struct SmartLock
+    typedef struct
     {
         size_t nSharedLockCounter;
         bool bExclusiveLock;
-    };
+    }CpxSmartLock;
 
     typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
 
@@ -83,7 +82,7 @@ extern "C"
     /**
      * @brief Start CorePartition thread provisioning
      *
-     * @param nThreadPartitions     Number of threads to be aprovisioned
+     * @param nThreadPartitions     Number of threads to be provisioned
      * @return true  true if successfully created all provisioned threads
      */
     bool CorePartition_Start (size_t nThreadPartitions);
@@ -91,7 +90,7 @@ extern "C"
     /**
      * @brief  Create a non-Isolated context Thread
      *
-     * @param pFunction         Function (void Function (void* dataPonter)) as thread main
+     * @param pFunction         Function (void Function (void* dataPointer)) as thread main
      * @param pValue            data that will be injected on Thread creation
      * @param nStackMaxSize     Size of the Stack to be used
      * @param nNice             When in time it is good to be used
@@ -105,7 +104,7 @@ extern "C"
     /**
      * @brief  Create a Isolated context Thread
      *
-     * @param pFunction         Function (void Function (void* dataPonter)) as thread main
+     * @param pFunction         Function (void Function (void* dataPointer)) as thread main
      * @param pValue            data that will be injected on Thread creation
      * @param nStackMaxSize     Size of the Stack to be used
      * @param nNice             When in time it is good to be used
@@ -114,7 +113,7 @@ extern "C"
      *
      * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
      * @note                    Isolated thread will control dynamic stack encryption on Context Change
-     *                          have in mind it will be costy on time so use it wisely.
+     *                          have in mind it will be costly on time so use it wisely.
      */
     bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
@@ -146,8 +145,8 @@ extern "C"
      *
      * @param nDelayTickTime    How much ticks to sleep
      *
-     * @note    if Time has been overriden it tick will the corespond
-     *          the time frame used by sleep overriden function
+     * @note    if Time has been overridden it tick will  correspond
+     *          to the time frame used by sleep overridden function
      */
     void CorePartition_Sleep (uint32_t nDelayTickTime);
 
@@ -216,7 +215,7 @@ extern "C"
      *
      * @return uint32_t Nice representing tick
      *
-     * @note    Tick will represent the overriden time interface othersize it will
+     * @note    Tick will represent the overridden time interface otherwise it will
      *          be a single context switch to each
      */
     uint32_t CorePartition_GetNiceByID (size_t nID);
@@ -234,13 +233,13 @@ extern "C"
     void CorePartition_SetNice (uint32_t nNice);
 
     /**
-     * @brief Get Current Thread last momentum on swtich back
+     * @brief Get Current Thread last momentum on switch back
      *
      * @param   nID  Thread ID
      *
      * @return uint32_t the LastMomentum in Tick
      *
-     * @note    Tick will represent the overriden time interface othersize it will
+     * @note    Tick will represent the overridden time interface otherwise it will
      *          be a single context switch to each.
      */
     uint32_t CorePartition_GetLastMomentumByID (size_t nID);
@@ -257,27 +256,27 @@ extern "C"
      *
      * @return uint32_t  time in Tick
      *
-     * @note    Tick will represent the overriden time interface othersize it will
+     * @note    Tick will represent the overridden time interface otherwise it will
      *          be a single context switch to each.
      */
     uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
 
 /**
- * @brief  Get Current Thread DutyCalycle
+ * @brief  Get Current Thread DutyCycle
  */
 #define CorePartition_GetLastDutyCycle() CorePartition_GetLastDutyCycleByID (CorePartition_GetID ())
 
     /**
      * @brief  Get Number of total active Threads
      *
-     * @return size_t numver of threads
+     * @return size_t number of threads
      */
     size_t CorePartition_GetNumberOfActiveThreads (void);
 
     /**
      * @brief  Get Max Number of total active Threads
      *
-     * @return size_t numver of threads
+     * @return size_t number of threads
      */
     size_t CorePartition_GetMaxNumberOfThreads (void);
 
@@ -346,14 +345,14 @@ extern "C"
      * @note    The default context must not be part of the thread stack, or it will be invalid
      *          on callback time, please use global variables or from heap (new or malloc memory),
      *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
-     *          A MEMORY ALOCATED ONE.
+     *          A ALLOCATED MEMORY.
      */
     bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback);
 
     /**
      * @brief   Subscribe for a specific topic
      *
-     * @param   pszTopic    The topic to listem for information
+     * @param   pszTopic    The topic to listen for information
      * @param   length      The size of the topic string
      *
      * @return  false       if there is no more room for a new subscription
@@ -363,7 +362,7 @@ extern "C"
     /**
      * @brief   Public a tuple Param and Value
      *
-     * @param   pszTopic    Topic name to pubish
+     * @param   pszTopic    Topic name to publish
      * @param   length      The size of the topic string
      * @param   nAttribute  A attribute to be use to identify the value
      * @param   nValue      A value for the attribute (tuple)
@@ -452,10 +451,10 @@ extern "C"
      * @param   nTagLength  The length of the tag
      * @param   payload     The payload with the information sent by other thread   
      *
-     * @return  false   if an error ocurred
+     * @return  false   if an error occurred
      *
      * @note    if a Tag was notified using NotifyOne or NotifyAll
-     *          the thread will receibe 0 otherwise will receive 
+     *          the thread will receive 0 otherwise will receive
      *          the same value sent.
      */
     bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload);
@@ -463,7 +462,7 @@ extern "C"
     /**
      * @brief   Return Context Switch lock state
      *
-     * @return  true a context swith is being performed 
+     * @return  true a context switch is being performed
      */
     bool CorePartition_IsKernelLocked (void);
 
@@ -484,7 +483,7 @@ extern "C"
      *
      * @return  false   the lock is null
      *
-     * @note    If you re initialize it will unlock all locks
+     * @note    If you re initialise it will unlock all locks
      */
     bool CorePartition_LockInit (CpxSmartLock* pLock);
 
@@ -502,7 +501,7 @@ extern "C"
     bool CorePartition_Lock (CpxSmartLock* pLock);
 
     /**
-     * @brief   Like Lock() but only locks in case it is unloacked
+     * @brief   Like Lock() but only locks in case it is unlocked
      *
      * @param   pLock      The Lock variable
      *
@@ -515,13 +514,13 @@ extern "C"
     bool CorePartition_TryLock (CpxSmartLock* pLock);
 
     /**
-     * @brief   Can act as multimple locks
+     * @brief   Can act as multiple locks
      *
      * @param   pLock      The Lock variable
      *
      * @return  false   If lock is null
      *
-     * @note    Can aquire multimples locks and lock()
+     * @note    Can acquire multiples locks and lock()
      *          will wait till all multiples locks has been unlocked
      *          to lock exclusively
      */

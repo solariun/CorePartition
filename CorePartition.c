@@ -29,6 +29,11 @@
 // See LICENSE file for the complete information
 */
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "CorePartition.h"
 
 #include <stdlib.h>
@@ -161,7 +166,7 @@ bool CorePartition_WaitLock (size_t nLockID, uint8_t* pnStatus)
         pCurrentThread->nStatus = THREADL_RUNNING;
     }
     
-    return false;
+    return nReturn;
 }
 
 bool CorePartition_NotifyLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
@@ -491,7 +496,7 @@ bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallba
 
 static int32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
 {
-    return ((int32_t) ((CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0) << 16) |
+    return ((int32_t) ((CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0) << 15) |
                        CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0x8408)));
 }
 
@@ -986,3 +991,7 @@ const char* CorePartition_GetThreadNameByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? "-" : pCoreThread[nID]->pszThreadName;
 }
+
+#ifdef __cplusplus
+}
+#endif
