@@ -59,19 +59,18 @@ extern "C"
 #define THREADL_LOCK 6
 #define THREADL_NOW 7
 
-typedef struct
-{
-    size_t nThreadID;
-    size_t nAttribute;
-    uint64_t nValue;
-} CpxMsgPayload;
+    typedef struct
+    {
+        size_t nThreadID;
+        size_t nAttribute;
+        uint64_t nValue;
+    } CpxMsgPayload;
 
-typedef struct
-{
-    size_t nSharedLockCounter;
-    bool bExclusiveLock;
-}CpxSmartLock;
-
+    typedef struct
+    {
+        size_t nSharedLockCounter;
+        bool bExclusiveLock;
+    }CpxSmartLock;
 
     typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
 
@@ -545,13 +544,51 @@ typedef struct
      */
     bool CorePartition_SharedUnlock (CpxSmartLock* pLock);
 
-    bool CorePartition_WaitLock (size_t nLockID, uint8_t* pnStatus);
+    /**
+     * @brief  Wait for a Variable Locks notification
+     * 
+     * @param nLockID   LockID size_t used to notify
+     * @param pnStatus  Payload to be sent, a size_t
+     * 
+     * @return false    if LockID is invalid (== 0) or no data
+     */
+    bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus);
 
-    bool CorePartition_NotifyLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
+    /**
+     * @brief   Notify all/one Variable lock waiting for notification
+     * 
+     * @param nLockID   LockID size_t used to notify
+     * @param nStatus   Payload to be sent, a size_t
+     * @param bOneOnly  If true only one is notified
+     * 
+     * @return false    if LockID is invalid (== 0) or no data
+     */
+    bool CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
+
+/**
+ * @brief   Notify one Variable lock waiting for notification
+ * 
+ * @param nLockID   LockID size_t used to notify
+ * @param nStatus   Payload to be sent, a size_t
+ * @param bOneOnly  If true only one is notified
+ * 
+ * @return false    if LockID is invalid (== 0) or no data
+ */
+#define CorePartition_NotifyVariableLockOne(nLockID, nStatus) CorePartition_NotifyVariableLock (nLockID, nStatus, true)
+
+/**
+ * @brief   Notify all Variable lock waiting for notification
+ * 
+ * @param nLockID   LockID size_t used to notify
+ * @param nStatus   Payload to be sent, a size_t
+ * @param bOneOnly  If true only one is notified
+ * 
+ * @return false    if LockID is invalid (== 0) or no data
+ */
+#define CorePartition_NotifyVariableLockAll(nLockID, nStatus) CorePartition_NotifyVariableLock (nLockID, nStatus, false)
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* CorePartition_hpp */
