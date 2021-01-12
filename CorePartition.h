@@ -68,7 +68,7 @@ extern "C"
 
     typedef struct
     {
-        size_t nSharedLockCounter;
+        bool bSharedLock;
         bool bExclusiveLock;
     }CpxSmartLock;
 
@@ -554,6 +554,8 @@ extern "C"
      */
     bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus);
 
+    size_t CorePartition_WaitingVariableLock (size_t nLockID);
+
     /**
      * @brief   Notify all/one Variable lock waiting for notification
      * 
@@ -563,7 +565,7 @@ extern "C"
      * 
      * @return false    if LockID is invalid (== 0) or no data
      */
-    bool CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
+    size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
 
 /**
  * @brief   Notify one Variable lock waiting for notification

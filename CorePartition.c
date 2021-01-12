@@ -169,8 +169,10 @@ bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
     return nReturn;
 }
 
-bool CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
+size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
 {
+    size_t nNotifiedCount = 0;
+    
     if (nRunningThreads > 0 && nLockID > 0)
     {
         size_t nThreadID = 0;
@@ -191,71 +193,66 @@ bool CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOn
                     pCoreThread[nThreadID]->nStatus = THREADL_NOW;
                     
                     //printf ("%s: NOTIFYING ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
+                    nNotifiedCount++;
                     
                     if (bOneOnly) break;
                 }
             }
         }
         
+        printf ("%s: Notified (‰zu] from ID [%zu] \n", __FUNCTION__, nNotifiedCount, nLockID);
+        
         CorePartition_UnlockKernel();
         
         //printf ("------------------------------------\n");
         
-        return true;
+        return nNotifiedCount;
     }
     
-    return false;
+    return nNotifiedCount;
 }
 
+size_t CorePartition_WaitingVariableLock (size_t nLockID)
+{
+    size_t nNotifiedCount = 0;
+    
+    if (nRunningThreads > 0 && nLockID > 0)
+    {
+        size_t nThreadID = 0;
+        
+        CorePartition_LockKernel();
+        
+        for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+        {
+            if (pCoreThread[nThreadID] != NULL)
+            {
+                //printf ("%s: ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
+
+                if (pCoreThread[nThreadID]->nNamedLock == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                {
+                    //printf ("%s: NOTIFYING ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
+                    nNotifiedCount++;
+                    
+                }
+            }
+        }
+        
+        CorePartition_UnlockKernel();
+            
+        return nNotifiedCount;
+    }
+    
+    return nNotifiedCount;
+}
+
+    
 bool CorePartition_LockInit (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
     
-    pLock->nSharedLockCounter = 0;
+    pLock->bSharedLock = 0;
     pLock->bExclusiveLock = false;
     
-    return true;
-}
-
-bool CorePartition_Lock (CpxSmartLock* pLock)
-{
-    if (pLock == NULL) return false;
-    
-    //Get exclusive lock
-    while (pLock != NULL)
-    {
-        //printf ("%s: Thread #%zu, Waiting for exclusive lock...\n", __FUNCTION__, nCurrentThread);
-                
-        CorePartition_LockKernel();
-        {
-            if (pLock->bExclusiveLock == false)
-            {
-                pLock->bExclusiveLock = true;
-                
-                CorePartition_UnlockKernel();
-                
-                break;
-            }
-        }
-        CorePartition_UnlockKernel();
-        
-        CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
-    }
-    
-    //printf ("%s: Thread #%zu, Got exclusive lock, waiting for all shared to be consumed.\n", __FUNCTION__, nCurrentThread);
-    
-    //Wait all shared locks to be done
-    while (pLock->nSharedLockCounter > 0)
-    {
-        CorePartition_WaitVariableLock ((size_t) &pLock->nSharedLockCounter, NULL);
-        
-       //printf ("%s: Thread %zu, received lock trap (L:[%zu], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->nLockCounter, pLock->nSharedLockCounter);
-    }
-    
-    //printf ("%s: Thread #%zu, All shared to be consumed. full exclusive lock achieved.\n", __FUNCTION__, nCurrentThread);
-    
-    //printf (">>> %s: Thread #%zu, received lock trap (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCounter);
-        
     return true;
 }
 
@@ -266,12 +263,37 @@ bool CorePartition_TryLock (CpxSmartLock* pLock)
     CorePartition_LockKernel();
 
     //Wait all the locks to be done
-    if (pLock->nSharedLockCounter > 0 || pLock->bExclusiveLock  == true) return false;
+    if (pLock->bSharedLock > 0 || pLock->bExclusiveLock  == true) return false;
 
     pLock->bExclusiveLock = true;
     
     CorePartition_UnlockKernel();
     
+    return true;
+}
+
+bool CorePartition_Lock (CpxSmartLock* pLock)
+{
+    if (pLock == NULL) return false;
+    
+    //Get exclusive lock
+    while (pLock->bExclusiveLock)
+    {
+        printf ("%s: Thread #%zu, Waiting for exclusive lock... (L:[%u], SL:[%u])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->bSharedLock);
+                        
+        if (pLock->bExclusiveLock == true) CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
+    }
+
+    pLock->bExclusiveLock = true;
+    
+    //Wait all shared locks to be done
+    while (pLock->bSharedLock)
+    {
+        printf ("%s: Thread %zu, Wait all Shared locks to be consumed (L:[%u], SL:[%u])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->bSharedLock);
+        
+        if (pLock->bSharedLock) CorePartition_WaitVariableLock ((size_t) pLock, NULL);
+    }
+
     return true;
 }
 
@@ -281,26 +303,14 @@ bool CorePartition_SharedLock (CpxSmartLock* pLock)
     
     //printf ("%s: Thread %zu, received lock trap (L:[%zu], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->nLockCounter, pLock->nSharedLockCounter);
     
-    if (pLock->nSharedLockCounter == ((size_t)~0))
-        return false;
-    
-    while (pLock->bExclusiveLock == true)
+    while (pLock->bExclusiveLock)
     {
-        CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
-        
-        //printf ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCounter);
+        printf ("%s: Thread %zu, trying to lock (L:[%u], SL:[%u])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->bSharedLock);
 
-        CorePartition_LockKernel();
-        if (pLock->bExclusiveLock  == false)
-        {
-            pLock->nSharedLockCounter++;
-            
-            CorePartition_UnlockKernel();
-            
-            break;
-        }
-        CorePartition_UnlockKernel();
+        if (pLock->bExclusiveLock) CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
     }
+
+    pLock->bExclusiveLock = true;
     
     return true;
 }
@@ -311,17 +321,19 @@ bool CorePartition_SharedUnlock (CpxSmartLock* pLock)
     
     //printf ("%s: Thread %zu, received lock trap (L:[%zu], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->nLockCounter, pLock->nSharedLockCounter);
     
-    if (pLock->nSharedLockCounter)
+    if (pLock->bSharedLock)
     {
         CorePartition_LockKernel();
 
-        pLock->nSharedLockCounter--;
-
-        CorePartition_UnlockKernel();
-
-        //printf ("%s: Thread %zu, received lock trap (L:[%zu], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->nLockCounter, pLock->nSharedLockCounter);
+        pLock->bSharedLock = (bool) CorePartition_WaitingVariableLock((size_t) &pLock->bSharedLock) ? true : false;
         
-        CorePartition_NotifyVariableLock((size_t) &pLock->nSharedLockCounter, 0, true);
+        CorePartition_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
+        
+        CorePartition_UnlockKernel();
+        
+        pCurrentThread->nStatus = THREADL_NOW;
+        CorePartition_Yield();
+        pCurrentThread->nStatus = THREADL_RUNNING;
         
         return true;
     }
@@ -345,7 +357,11 @@ bool CorePartition_Unlock (CpxSmartLock* pLock)
 
         //printf ("%s: Thread %zu, received lock trap (L:[%zu], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->nLockCounter, pLock->nSharedLockCounter);
         
-        CorePartition_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, false);
+        pLock->bSharedLock = (bool) CorePartition_NotifyVariableLock((size_t) &pLock->bSharedLock, 0, false) ? true : false;
+        
+        pCurrentThread->nStatus = THREADL_NOW;
+        CorePartition_Yield();
+        pCurrentThread->nStatus = THREADL_RUNNING;
         
         return true;
     }

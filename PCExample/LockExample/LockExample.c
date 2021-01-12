@@ -14,13 +14,13 @@ void Procuder(void* pValue)
     
     nProducers [nID] = 0;
     
-    while (true)
+    while (CorePartition_Yield())
     {
         CorePartition_SharedLock(&lock);
         
         nProducers [nID]++;
         
-        CorePartition_Yield();
+        CorePartition_Sleep (0);
         
         CorePartition_SharedUnlock(&lock);
     }
@@ -40,9 +40,10 @@ void Consumer(void* pValue)
         {
             printf ("(%u: [%d]) ", nCount, nProducers [nCount]);
         }
-        printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCounter);
+        
+        printf (" LOCK: L:(%u), SL:(%u)\n", lock.bExclusiveLock, lock.bSharedLock);
           
-        CorePartition_Sleep(1);
+        CorePartition_Sleep(0);
         
         CorePartition_Unlock(&lock);
         
@@ -76,7 +77,7 @@ int main ()
 
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Procuder, NULL, 300, 100));
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 1));
 
     assert (CorePartition_CreateThread (Procuder, NULL, 300, 333));
 
