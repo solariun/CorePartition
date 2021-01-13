@@ -20,6 +20,9 @@ void Procuder(void* pValue)
         
         nProducers [nID]++;
         
+        /*
+         * This will emulate preemption
+         */
         CorePartition_Sleep(0);
         
         CorePartition_SharedUnlock(&lock);
@@ -44,6 +47,10 @@ void Consumer(void* pValue)
         
         printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCount);
           
+
+        /*
+         * This will emulate preemption
+         */
         CorePartition_Sleep(0);
         
         CorePartition_Unlock(&lock);
@@ -81,7 +88,7 @@ int main ()
      * PRODUCERS
      */
     
-    assert (CorePartition_CreateThread (Procuder, NULL, 300, 1));
+    assert (CorePartition_CreateThread (Procuder, NULL, 300, 10));
 
     assert (CorePartition_CreateThread (Procuder, NULL, 300, 333));
 
@@ -119,6 +126,6 @@ int main ()
      CorePartition_Join();
     
     printf ("----------------------------------------------------\n");
-    printf ("System finished, dead lock or all threads has ended.\n");
+    printf ("System finished by dead lock or all threads has ended.\n");
     printf ("----------------------------------------------------\n");
 }

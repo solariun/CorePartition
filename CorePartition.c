@@ -128,11 +128,8 @@ static void (*stackOverflowHandler) (void) = NULL;
 
 static volatile bool lock = false;
 
-static void CorePartition_SetState (uint8_t nNewState)
-{
-    pCurrentThread->nStatus = nNewState;
-}
-    
+#define CorePartition_SetState(nNewState) pCurrentThread->nStatus = nNewState
+        
 void CorePartition_LockKernel (void)
 {
     CorePartition_SetState (THREADL_NOW);
