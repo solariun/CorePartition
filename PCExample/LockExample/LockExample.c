@@ -14,16 +14,17 @@ void Procuder(void* pValue)
     
     nProducers [nID] = 0;
     
-    while (CorePartition_Yield())
+    do
     {
         CorePartition_SharedLock(&lock);
         
         nProducers [nID]++;
         
-        CorePartition_Sleep (0);
+        CorePartition_Sleep(0);
         
         CorePartition_SharedUnlock(&lock);
-    }
+        
+    } while (CorePartition_Yield());
 
 }
 
@@ -31,7 +32,7 @@ void Consumer(void* pValue)
 {
     int nCount = 0;
         
-    while (true)
+    do
     {
         CorePartition_Lock(&lock);
         
@@ -41,14 +42,13 @@ void Consumer(void* pValue)
             printf ("(%u: [%d]) ", nCount, nProducers [nCount]);
         }
         
-        printf (" LOCK: L:(%u), SL:(%u)\n", lock.bExclusiveLock, lock.bSharedLock);
+        printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCount);
           
-        CorePartition_Sleep(0);
+        //CorePartition_Sleep(0);
         
         CorePartition_Unlock(&lock);
         
-        CorePartition_Yield();
-    }
+    } while (CorePartition_Yield());
 }
 
 void CorePartition_SleepTicks (uint32_t nSleepTime)
@@ -77,6 +77,10 @@ int main ()
 
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
+    /*
+     * PRODUCERS
+     */
+    
     assert (CorePartition_CreateThread (Procuder, NULL, 300, 1));
 
     assert (CorePartition_CreateThread (Procuder, NULL, 300, 333));
@@ -97,16 +101,24 @@ int main ()
 
     assert (CorePartition_CreateThread (Procuder, NULL, 300, 60000));
 
+    /*
+     * CONSUMERS
+     */
+
     assert (CorePartition_CreateThread (Consumer, NULL, 300, 2000));
-    
+
     assert (CorePartition_CreateThread (Consumer, NULL, 300, 1000));
 
-    assert (CorePartition_CreateThread (Consumer, NULL, 300, 500));
+    assert (CorePartition_CreateThread (Consumer, NULL, 300, 1000));
     
-    assert (CorePartition_CreateThread (Consumer, NULL, 300, 3000));
+//    assert (CorePartition_CreateThread (Consumer, NULL, 300, 3000));
 
     
     CorePartition_LockInit(&lock);
     
      CorePartition_Join();
+    
+    printf ("----------------------------------------------------\n");
+    printf ("System finished, dead lock or all threads has ended.\n");
+    printf ("----------------------------------------------------\n");
 }
