@@ -44,7 +44,7 @@ void Consumer(void* pValue)
         
         printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCount);
           
-        //CorePartition_Sleep(0);
+        CorePartition_Sleep(0);
         
         CorePartition_Unlock(&lock);
         

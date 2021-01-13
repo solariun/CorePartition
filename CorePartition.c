@@ -330,7 +330,7 @@ bool CorePartition_Lock (CpxSmartLock* pLock)
         //Get exclusive lock
         while (pLock->bExclusiveLock)
         {
-            TRACE ("%s: Thread #%zu, Waiting for exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+            YYTRACE ("%s: Thread #%zu, Waiting for exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
             
             if (pLock->bExclusiveLock == true) CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
         }
@@ -341,7 +341,7 @@ bool CorePartition_Lock (CpxSmartLock* pLock)
         //Wait all shared locks to be done
         while (pLock->nSharedLockCount)
         {
-            TRACE ("%s: Thread %zu, Wait all Shared locks to be consumed (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+            YYTRACE ("%s: Thread %zu, Wait all Shared locks to be consumed (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
             
             if (pLock->nSharedLockCount) CorePartition_WaitVariableLock ((size_t) &pLock->nSharedLockCount, NULL);
         }
@@ -363,7 +363,7 @@ bool CorePartition_SharedLock (CpxSmartLock* pLock)
         
         while (pLock->bExclusiveLock)
         {
-            TRACE ("%s: Thread %zu, trying to lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+            YYTRACE ("%s: Thread %zu, trying to lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
 
             if (pLock->bExclusiveLock) CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
         }
