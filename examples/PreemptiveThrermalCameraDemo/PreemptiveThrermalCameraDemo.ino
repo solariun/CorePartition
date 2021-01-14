@@ -54,25 +54,29 @@ float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 
 // U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE|U8G_I2C_OPT_DEV_0);  // I2C / TWI
 
-volatile bool bLocked = false;
+
+CpxSmartLock cpxLock; 
+
 
 void lock ()
 {
-    CorePartition_Lock ();
+    CorePartition_Lock (&cpxLock);
 }
 
 void unlock ()
 {
-    CorePartition_Unlock ();
-    if (CorePartition_GetStatus () == THREADL_RUNNING) CorePartition_Sleep (0);
+    CorePartition_Unlock (&cpxLock);
 }
 
 ISR (TIMER1_COMPA_vect)
 {
-   // if (CorePartition_IsLocked () == false && CorePartition_GetStatus () == THREADL_RUNNING)
+    if (CorePartition_IsKernelLocked () == false) 
     {
+        digitalWrite(LED_BUILTIN, HIGH);  
         CorePartition_Yield ();
     }
+
+    digitalWrite(LED_BUILTIN, LOW);
 }
 
 void setPreemptionOn ()
@@ -165,6 +169,9 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
 
     Serial.println ();
     Serial.println (F ("Listing all running Preemptive threads"));
+    Serial.println (F ("--------------------------------------"));
+    Serial.print   (F ("Kernel Locked"));
+    Serial.println (CorePartition_IsKernelLocked ()); 
     Serial.println (F ("--------------------------------------"));
     Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
@@ -418,12 +425,16 @@ void StackOverflowHandler ()
     while (!Serial)
         ;
 
+    ClearConsole ();
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
     Serial.println (CorePartition_GetID ());
     Serial.println (F ("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
+    
+    exit (1);
 }
+
 
 void setup ()
 {
@@ -469,16 +480,22 @@ void setup ()
 
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 150, 0));
+    assert (CorePartition_CreateThread (Thread1, NULL, 180, 0));
 
-    assert (CorePartition_CreateThread (Thread3, NULL, 150, 10));
+    assert (CorePartition_CreateThread (Thread3, NULL, 180, 10));
 
-    assert (CorePartition_CreateThread (Thread2, NULL, 150, 10));
+    assert (CorePartition_CreateThread (Thread2, NULL, 180, 10));
+
+
+    // initialize digital pin LED_BUILTIN as an output.
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop ()
 {
     setPreemptionOn ();
+
+    CorePartition_LockInit (&cpxLock);
 
     CorePartition_Join ();
 }

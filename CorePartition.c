@@ -153,7 +153,7 @@ void CorePartition_UnlockKernel (void)
 
 bool CorePartition_IsKernelLocked (void)
 {
-    return lock;
+    return lock > 0 ? true : false;
 }
     
 bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
@@ -191,7 +191,15 @@ bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
             
             nReturn = true;
         }
-        
+
+        // CorePartition_LockKernel();
+        // {
+        //     pCurrentThread->nStatus = THREADL_NOW;
+        // }
+        // CorePartition_UnlockKernel();
+
+        // CorePartition_Yield();
+
         CorePartition_LockKernel();
         {
             pCurrentThread->nStatus = THREADL_RUNNING;
@@ -415,8 +423,8 @@ bool CorePartition_Unlock (CpxSmartLock* pLock)
         {
             pLock->bExclusiveLock = false;
 
-            CorePartition_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
             CorePartition_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
+            CorePartition_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
             
             TRACE ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         }
@@ -862,11 +870,12 @@ void CorePartition_CheckStackOverflow (void)
 
         longjmp (jmpJoinPointer, 1);
     }
+
 }
 
 uint8_t CorePartition_Yield (void)
-{
-    if (nRunningThreads != 0 && CorePartition_IsKernelLocked () == false)
+{    
+    if (CorePartition_IsKernelLocked () == false && nRunningThreads > 0)
     {
         volatile uint8_t nValue = 0xBB;
 

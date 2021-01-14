@@ -93,7 +93,7 @@ typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSiz
 extern uint32_t CorePartition_GetCurrentTick (void);
 extern void CorePartition_SleepTicks (uint32_t);
 
-static const char CorePartition_version[] = "V2.6.0.1 develop Compiled at " __TIMESTAMP__;
+static const char CorePartition_version[] = "V2.7.0 from  " __TIMESTAMP__;
 
 /**
  * @brief Start CorePartition thread provisioning
@@ -153,6 +153,10 @@ void CorePartition_Join (void);
  * @brief   Function to be called inside a thread to change context
  *
  * @return true  always return true while the thread is valid
+ * 
+ * @note    Cooperative state yield, should not be used with preemption
+ *          for speed reasons, that will not complay with LockKernel,
+ *          for this use PreemptionYield.
  */
 uint8_t CorePartition_Yield (void);
 

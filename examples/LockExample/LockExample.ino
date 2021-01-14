@@ -50,16 +50,18 @@ void Producer(void* pValue)
     
     nProducers [nID] = 0;
     
-    while (true)
+    do
     {
         CorePartition_SharedLock(&lock);
         
         nProducers [nID]++;
         
-        CorePartition_Yield();
+        CorePartition_Sleep(0);
         
         CorePartition_SharedUnlock(&lock);
-    }
+
+         
+    } while (CorePartition_Yield());
 
 }
 
@@ -69,7 +71,7 @@ void Consumer(void* pValue)
         
     (void) pValue;
 
-    while (true)
+    do
     {
         CorePartition_Lock(&lock);
         
@@ -94,8 +96,8 @@ void Consumer(void* pValue)
         
         CorePartition_Unlock(&lock);
         
-        CorePartition_Yield();
-    }
+        
+    } while (CorePartition_Yield());
 }
 
 
@@ -171,8 +173,8 @@ void StackOverflowHandler ()
 #define STACK_PRODUCER sizeof(size_t) * 12
 #define STACK_CONSUMER sizeof(size_t) * 37
 #else
-#define STACK_PRODUCER sizeof(size_t) * 20
-#define STACK_CONSUMER sizeof(size_t) * 45
+#define STACK_PRODUCER sizeof(size_t) * 40
+#define STACK_CONSUMER sizeof(size_t) * 60
 #endif
 
 void setup ()
@@ -201,7 +203,7 @@ void setup ()
 
     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Producer, NULL, STACK_PRODUCER, 100));
+    assert (CorePartition_CreateThread (Producer, NULL, STACK_PRODUCER, 0));
 
     assert (CorePartition_CreateThread (Producer, NULL, STACK_PRODUCER, 700));
 
