@@ -900,8 +900,12 @@ bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payl
 {
     if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
+    Cpx_LockKernel ();
+
     pCurrentThread->nStatus = THREADL_WAITTAG;
     pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
+
+    Cpx_UnlockKernel ();
 
     Cpx_Yield ();
 
@@ -914,8 +918,12 @@ bool Cpx_Wait (const char* pszTag, size_t nTagLength)
 {
     if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
+    Cpx_LockKernel ();
+
     pCurrentThread->nStatus = THREADL_WAITTAG;
     pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
+
+    Cpx_UnlockKernel ();
 
     Cpx_Yield ();
 
