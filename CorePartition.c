@@ -128,44 +128,34 @@ static void (*stackOverflowHandler) (void) = NULL;
 
 static volatile bool lock = false;
 
-#define CorePartition_SetState(nNewState) pCurrentThread->nStatus = nNewState
+#define Cpx_SetState(nNewState) pCurrentThread->nStatus = nNewState
         
-void CorePartition_LockKernel (void)
+
+void Cpx_LockKernel (void)
 {
-    CorePartition_SetState (THREADL_NOW);
-    
     lock = true;
-    
-    /*
-     * Making sure to have yield locked
-     * Note: This will only be effective
-     *       for preemption porting.
-     */
-    while (CorePartition_Yield()) lock = true;
-    
-    CorePartition_SetState (THREADL_RUNNING);
 }
 
-void CorePartition_UnlockKernel (void)
+void Cpx_UnlockKernel (void)
 {
     lock = false;
 }
 
-bool CorePartition_IsKernelLocked (void)
+bool Cpx_IsKernelLocked (void)
 {
     return lock > 0 ? true : false;
 }
     
-bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
+bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
 {
     uint8_t nReturn = false;
-    bool bklocked = CorePartition_IsKernelLocked();
+    bool bklocked = Cpx_IsKernelLocked();
     
-    if (bklocked) CorePartition_UnlockKernel();
+    if (bklocked) Cpx_UnlockKernel();
     
     if (nLockID >0)
     {
-        CorePartition_LockKernel();
+        Cpx_LockKernel();
         {
             TRACE ("%s: ThreadID: [%zu], nLockID: [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
             
@@ -173,58 +163,58 @@ bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
 
             pCurrentThread->nStatus = THREADL_LOCK;
         }
-        CorePartition_UnlockKernel();
+        Cpx_UnlockKernel();
         
-        if (CorePartition_Yield())
+        if (Cpx_Yield())
         {
             if (pnStatus != NULL)
             {
-                CorePartition_LockKernel();
+                Cpx_LockKernel();
                 {
                     *pnStatus = pCurrentThread->nNamedLock;
                     pCurrentThread->nNamedLock = 0;
                 }
-                CorePartition_UnlockKernel();
+                Cpx_UnlockKernel();
             }
             
-            if (bklocked) CorePartition_LockKernel();
+            if (bklocked) Cpx_LockKernel();
             
             nReturn = true;
         }
 
-        // CorePartition_LockKernel();
+        // Cpx_LockKernel();
         // {
         //     pCurrentThread->nStatus = THREADL_NOW;
         // }
-        // CorePartition_UnlockKernel();
+        // Cpx_UnlockKernel();
 
-        // CorePartition_Yield();
+        // Cpx_Yield();
 
-        CorePartition_LockKernel();
+        Cpx_LockKernel();
         {
             pCurrentThread->nStatus = THREADL_RUNNING;
         }
-        CorePartition_UnlockKernel();
+        Cpx_UnlockKernel();
     }
     
-    if (bklocked) CorePartition_LockKernel();
+    if (bklocked) Cpx_LockKernel();
     
     return nReturn;
 }
 
-size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
+size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
 {
     size_t nNotifiedCount = 0;
     
-    bool bklocked = CorePartition_IsKernelLocked();
+    bool bklocked = Cpx_IsKernelLocked();
     
-    if (bklocked) CorePartition_UnlockKernel();
+    if (bklocked) Cpx_UnlockKernel();
     
     if (nRunningThreads > 0 && nLockID > 0)
     {
         size_t nThreadID = 0;
         
-        CorePartition_LockKernel();
+        Cpx_LockKernel();
         {
             for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
             {
@@ -248,23 +238,23 @@ size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool b
             
             TRACE ("%s: Notified (%zu] from ID [%zu] \n", __FUNCTION__, nNotifiedCount, nLockID);
         }
-        CorePartition_UnlockKernel();
+        Cpx_UnlockKernel();
                
     }
     
     if (nNotifiedCount)
     {
-        CorePartition_SetState(THREADL_NOW);
-        CorePartition_Yield();
-        CorePartition_SetState(THREADL_RUNNING);
+        Cpx_SetState(THREADL_NOW);
+        Cpx_Yield();
+        Cpx_SetState(THREADL_RUNNING);
     }
     
-    if (bklocked) CorePartition_LockKernel();
+    if (bklocked) Cpx_LockKernel();
     
     return nNotifiedCount;
 }
 
-size_t CorePartition_WaitingVariableLock (size_t nLockID)
+size_t Cpx_WaitingVariableLock (size_t nLockID)
 {
     size_t nNotifiedCount = 0;
     
@@ -272,7 +262,7 @@ size_t CorePartition_WaitingVariableLock (size_t nLockID)
     {
         size_t nThreadID = 0;
         
-        CorePartition_LockKernel();
+        Cpx_LockKernel();
         {
             for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
             {
@@ -289,7 +279,7 @@ size_t CorePartition_WaitingVariableLock (size_t nLockID)
                 }
             }
         }
-        CorePartition_UnlockKernel();
+        Cpx_UnlockKernel();
             
         return nNotifiedCount;
     }
@@ -298,7 +288,7 @@ size_t CorePartition_WaitingVariableLock (size_t nLockID)
 }
 
     
-bool CorePartition_LockInit (CpxSmartLock* pLock)
+bool Cpx_LockInit (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
     
@@ -308,27 +298,27 @@ bool CorePartition_LockInit (CpxSmartLock* pLock)
     return true;
 }
 
-bool CorePartition_TryLock (CpxSmartLock* pLock)
+bool Cpx_TryLock (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
             
-    CorePartition_LockKernel();
+    Cpx_LockKernel();
     {
         //Wait all the locks to be done
         if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock  == true) return false;
 
         pLock->bExclusiveLock = true;
     }
-    CorePartition_UnlockKernel();
+    Cpx_UnlockKernel();
 
     return true;
 }
 
-bool CorePartition_Lock (CpxSmartLock* pLock)
+bool Cpx_Lock (CpxSmartLock* pLock)
 {
     if (pLock == NULL) return false;
     
-    CorePartition_LockKernel();
+    Cpx_LockKernel();
     {
         TRACE ("%s: Thread #%zu, Trying to get exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
@@ -337,7 +327,7 @@ bool CorePartition_Lock (CpxSmartLock* pLock)
         {
             TRACE ("%s: Thread #%zu, Waiting for exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
             
-            if (pLock->bExclusiveLock == true) CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
+            if (pLock->bExclusiveLock == true) Cpx_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
         }
 
         pLock->bExclusiveLock = true;
@@ -348,21 +338,21 @@ bool CorePartition_Lock (CpxSmartLock* pLock)
         {
             TRACE ("%s: Thread %zu, Wait all Shared locks to be consumed (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
             
-            if (pLock->nSharedLockCount) CorePartition_WaitVariableLock ((size_t) &pLock->nSharedLockCount, NULL);
+            if (pLock->nSharedLockCount) Cpx_WaitVariableLock ((size_t) &pLock->nSharedLockCount, NULL);
         }
         
         TRACE ("%s: Thread %zu, Got exclusive Lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
     }
-    CorePartition_UnlockKernel();
+    Cpx_UnlockKernel();
 
     return true;
 }
 
-bool CorePartition_SharedLock (CpxSmartLock* pLock)
+bool Cpx_SharedLock (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
     
-    CorePartition_LockKernel();
+    Cpx_LockKernel();
     {
         TRACE ("%s: Thread %zu, trying to shared lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
@@ -370,19 +360,19 @@ bool CorePartition_SharedLock (CpxSmartLock* pLock)
         {
             TRACE ("%s: Thread %zu, trying to lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
 
-            if (pLock->bExclusiveLock) CorePartition_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
+            if (pLock->bExclusiveLock) Cpx_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
         }
         
         pLock->nSharedLockCount ++;
         
         TRACE ("%s: Thread %zu, Got Shared Lock (L:[%s], SL:[%s])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? "TRUE" : "FALSE", pLock->nSharedLockCount ? "TRUE" : "FALSE");
     }
-    CorePartition_UnlockKernel();
+    Cpx_UnlockKernel();
     
     return true;
 }
 
-bool CorePartition_SharedUnlock (CpxSmartLock* pLock)
+bool Cpx_SharedUnlock (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
     
@@ -390,19 +380,19 @@ bool CorePartition_SharedUnlock (CpxSmartLock* pLock)
     
     if (pLock->nSharedLockCount)
     {
-        CorePartition_LockKernel();
+        Cpx_LockKernel();
         {
             pLock->nSharedLockCount--;
             
-            CorePartition_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
+            Cpx_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
         }
         
         TRACE ("%s: Thread %zu, Unlocked shared lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
-        CorePartition_UnlockKernel();
+        Cpx_UnlockKernel();
 
         pCurrentThread->nStatus = THREADL_NOW;
-        CorePartition_Yield();
+        Cpx_Yield();
         pCurrentThread->nStatus = THREADL_RUNNING;
         
         return true;
@@ -411,7 +401,7 @@ bool CorePartition_SharedUnlock (CpxSmartLock* pLock)
     return false;
 }
 
-bool CorePartition_Unlock (CpxSmartLock* pLock)
+bool Cpx_Unlock (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
     
@@ -419,21 +409,21 @@ bool CorePartition_Unlock (CpxSmartLock* pLock)
     
     if (pLock->bExclusiveLock == true)
     {
-        CorePartition_LockKernel();
+        Cpx_LockKernel();
         {
             pLock->bExclusiveLock = false;
 
-            CorePartition_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
-            CorePartition_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
+            Cpx_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
+            Cpx_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
             
             TRACE ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         }
-        CorePartition_UnlockKernel();
+        Cpx_UnlockKernel();
         
         TRACE ("%s: Thread %zu, Unlocked lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
         pCurrentThread->nStatus = THREADL_NOW;
-        CorePartition_Yield();
+        Cpx_Yield();
         pCurrentThread->nStatus = THREADL_RUNNING;
         
         return true;
@@ -452,7 +442,7 @@ bool CorePartition_Unlock (CpxSmartLock* pLock)
 // represent the 17 bit value.
 */
 
-uint16_t CorePartition_CRC16 (const uint8_t* pData, size_t nSize, uint16_t nCRC)
+uint16_t Cpx_CRC16 (const uint8_t* pData, size_t nSize, uint16_t nCRC)
 {
     unsigned char nCount;
     unsigned int data;
@@ -479,7 +469,7 @@ uint16_t CorePartition_CRC16 (const uint8_t* pData, size_t nSize, uint16_t nCRC)
     return (nCRC);
 }
 
-bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler) (void))
+bool Cpx_SetStackOverflowHandler (void (*pStackOverflowHandler) (void))
 {
     if (pStackOverflowHandler == NULL || stackOverflowHandler != NULL) return false;
 
@@ -488,7 +478,7 @@ bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler) (void)
     return true;
 }
 
-bool CorePartition_Start (size_t nThreadPartitions)
+bool Cpx_Start (size_t nThreadPartitions)
 {
     if (pCoreThread != NULL || nThreadPartitions == 0) return false;
 
@@ -507,7 +497,7 @@ bool CorePartition_Start (size_t nThreadPartitions)
     return true;
 }
 
-bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nTaskIsolation)
+bool Cpx_CreateThread_ (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, uint8_t nTaskIsolation)
 {
     size_t nThread;
 
@@ -527,7 +517,7 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
         return false;
     }
 
-    CorePartition_SetThreadNameByID (nThread, "thread", 6);
+    Cpx_SetThreadNameByID (nThread, "thread", 6);
 
     pCoreThread[nThread]->nStackMaxSize = nStackMaxSize;
 
@@ -547,7 +537,7 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
 
     pCoreThread[nThread]->nIsolation = nTaskIsolation;
 
-    pCoreThread[nThread]->nLastMomentun = CorePartition_GetCurrentTick ();
+    pCoreThread[nThread]->nLastMomentun = Cpx_GetCurrentTick ();
 
     pCoreThread[nThread]->pSubscriptions = NULL;
 
@@ -560,7 +550,7 @@ bool CorePartition_CreateThread_ (void (*pFunction) (void*), void* pValue, size_
     return true;
 }
 
-bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback)
+bool Cpx_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback)
 {
     if (pCurrentThread->pSubscriptions == NULL)
     {
@@ -583,19 +573,19 @@ bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallba
     return false;
 }
 
-static int32_t CorePartition_GetTopicID (const char* pszTopic, size_t length)
+static int32_t Cpx_GetTopicID (const char* pszTopic, size_t length)
 {
-    return ((int32_t) ((CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0) << 15) |
-                       CorePartition_CRC16 ((const uint8_t*)pszTopic, length, 0x8408)));
+    return ((int32_t) ((Cpx_CRC16 ((const uint8_t*)pszTopic, length, 0) << 15) |
+                       Cpx_CRC16 ((const uint8_t*)pszTopic, length, 0x8408)));
 }
 
-bool CorePartition_IsSubscribed (const char* pszTopic, size_t length)
+bool Cpx_IsSubscribed (const char* pszTopic, size_t length)
 {
     if (pCurrentThread != NULL && pCurrentThread->pSubscriptions != NULL)
     {
         Subscription* pSub = pCurrentThread->pSubscriptions;
         int nCount = 0;
-        uint32_t nTopicID = CorePartition_GetTopicID (pszTopic, length);
+        uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
 
         for (nCount = 0; nCount < pSub->nTopicCount; nCount++)
         {
@@ -609,15 +599,15 @@ bool CorePartition_IsSubscribed (const char* pszTopic, size_t length)
     return false;
 }
 
-bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
+bool Cpx_SubscribeTopic (const char* pszTopic, size_t length)
 {
     Subscription* pSub = pCurrentThread->pSubscriptions;
 
-    if (CorePartition_IsSubscribed (pszTopic, length) == false)
+    if (Cpx_IsSubscribed (pszTopic, length) == false)
     {
         if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
         {
-            (&pSub->nTopicList)[pSub->nTopicCount++] = CorePartition_GetTopicID (pszTopic, length);
+            (&pSub->nTopicList)[pSub->nTopicCount++] = Cpx_GetTopicID (pszTopic, length);
             return true;
         }
     }
@@ -625,12 +615,12 @@ bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length)
     return false;
 }
 
-bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue)
+bool Cpx_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue)
 {
     bool bReturn = false;
 
     size_t nThreadID = 0;
-    uint32_t nTopicID = CorePartition_GetTopicID (pszTopic, length);
+    uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
     size_t nSubID = 0;
 
     CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
@@ -653,14 +643,14 @@ bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAt
     return bReturn;
 }
 
-bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+bool Cpx_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
-    return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 1);
+    return Cpx_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 1);
 }
 
-bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+bool Cpx_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
 {
-    return CorePartition_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 0);
+    return Cpx_CreateThread_ (pFunction, pValue, nStackMaxSize, nNice, 0);
 }
 
 static void StackHandler (uint8_t* pDestine, const uint8_t* pSource, size_t nSize)
@@ -694,7 +684,7 @@ static void RestoreStack (void)
     StackHandler ((uint8_t*)pCurrentThread->pLastStack, (const uint8_t*)&pCurrentThread->stackPage, pCurrentThread->nStackSize);
 }
 
-static uint32_t CorePartition_GetNextTime (size_t nThreadID)
+static uint32_t Cpx_GetNextTime (size_t nThreadID)
 {
     return (uint32_t) (pCoreThread[nThreadID]->nLastMomentun + pCoreThread[nThreadID]->nNice);
 }
@@ -704,7 +694,7 @@ static uint32_t CorePartition_GetNextTime (size_t nThreadID)
 static size_t Momentum_Scheduler (void)
 {
     size_t nThread = nCurrentThread;
-    uint32_t nCurTime = CorePartition_GetCurrentTick ();
+    uint32_t nCurTime = Cpx_GetCurrentTick ();
     uint32_t nNextTime = 0;
     uint32_t nMin = 0xFFFFFFFF;
     size_t nCThread = nCurrentThread + 1;
@@ -771,7 +761,7 @@ static size_t Momentum_Scheduler (void)
     return nThread;
 }
 
-static void CorePartition_StopThread (void)
+static void Cpx_StopThread (void)
 {
     if (pCurrentThread != NULL)
     {
@@ -790,7 +780,7 @@ static void CorePartition_StopThread (void)
 }
 
 size_t nNextThread = 0;
-void CorePartition_Join (void)
+void Cpx_Join (void)
 {
     if (nThreadCount == 0) return;
 
@@ -814,7 +804,7 @@ void CorePartition_Join (void)
 
                         pCurrentThread->mem.func.pFunction (pCurrentThread->mem.func.pValue);
 
-                        CorePartition_StopThread ();
+                        Cpx_StopThread ();
 
                         continue;
 
@@ -839,52 +829,52 @@ void CorePartition_Join (void)
     TRACE ("Leaving...  running: %zu\n", nRunningThreads);
 }
 
-void CorePartition_SetMomentun (void)
+void Cpx_SetMomentun (void)
 {
-    uint32_t nCurTime = CorePartition_GetCurrentTick ();
+    uint32_t nCurTime = Cpx_GetCurrentTick ();
 
     if (NULL != pCurrentThread)
     {
         if ((THREADL_RUNNING == pCurrentThread->nStatus || THREADL_SLEEP == pCurrentThread->nStatus) &&
-            CorePartition_GetNextTime (nCurrentThread) > nCurTime)
+            Cpx_GetNextTime (nCurrentThread) > nCurTime)
         {
-            CorePartition_SleepTicks (CorePartition_GetNextTime (nCurrentThread) - nCurTime);
+            Cpx_SleepTicks (Cpx_GetNextTime (nCurrentThread) - nCurTime);
         }
     }
 
-    pCurrentThread->nLastMomentun = CorePartition_GetCurrentTick ();
+    pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
 }
 
-void CorePartition_UpdateExecTime (void)
+void Cpx_UpdateExecTime (void)
 {
-    pCurrentThread->nExecTime = (CorePartition_GetCurrentTick () - pCurrentThread->nLastMomentun);
+    pCurrentThread->nExecTime = (Cpx_GetCurrentTick () - pCurrentThread->nLastMomentun);
 }
 
-void CorePartition_CheckStackOverflow (void)
+void Cpx_CheckStackOverflow (void)
 {
     if (pCurrentThread->nStackSize > pCurrentThread->nStackMaxSize)
     {
         if (stackOverflowHandler != NULL) stackOverflowHandler ();
 
-        CorePartition_StopThread ();
+        Cpx_StopThread ();
 
         longjmp (jmpJoinPointer, 1);
     }
 
 }
 
-uint8_t CorePartition_Yield (void)
+uint8_t Cpx_Yield (void)
 {    
-    if (CorePartition_IsKernelLocked () == false && nRunningThreads > 0)
+    if (Cpx_IsKernelLocked () == false && nRunningThreads > 0)
     {
         volatile uint8_t nValue = 0xBB;
 
-        CorePartition_UpdateExecTime ();
+        Cpx_UpdateExecTime ();
 
         pCurrentThread->pLastStack = (void*)&nValue;
         pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
 
-        CorePartition_CheckStackOverflow ();
+        Cpx_CheckStackOverflow ();
 
         BackupStack ();
 
@@ -898,7 +888,7 @@ uint8_t CorePartition_Yield (void)
 
         RestoreStack ();
 
-        CorePartition_SetMomentun ();
+        Cpx_SetMomentun ();
 
         return 1;
     }
@@ -906,35 +896,35 @@ uint8_t CorePartition_Yield (void)
     return 0;
 }
 
-bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload)
+bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload)
 {
     if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
     pCurrentThread->nStatus = THREADL_WAITTAG;
-    pCurrentThread->nNotifyUID = CorePartition_GetTopicID (pszTag, nTagLength);
+    pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-    CorePartition_Yield ();
+    Cpx_Yield ();
 
     *payload = pCurrentThread->payload;
 
     return true;
 }
 
-bool CorePartition_Wait (const char* pszTag, size_t nTagLength)
+bool Cpx_Wait (const char* pszTag, size_t nTagLength)
 {
     if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
     pCurrentThread->nStatus = THREADL_WAITTAG;
-    pCurrentThread->nNotifyUID = CorePartition_GetTopicID (pszTag, nTagLength);
+    pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-    CorePartition_Yield ();
+    Cpx_Yield ();
 
     return true;
 }
 
-bool CorePartition_SetTopicID (const char* pszTag, size_t nTagLength, uint32_t* pnTopicID)
+bool Cpx_SetTopicID (const char* pszTag, size_t nTagLength, uint32_t* pnTopicID)
 {
-    if (pnTopicID != NULL && (*pnTopicID = CorePartition_GetTopicID (pszTag, nTagLength)) > 0)
+    if (pnTopicID != NULL && (*pnTopicID = Cpx_GetTopicID (pszTag, nTagLength)) > 0)
     {
         return true;
     }
@@ -942,14 +932,14 @@ bool CorePartition_SetTopicID (const char* pszTag, size_t nTagLength, uint32_t* 
     return false;
 }
 
-bool CorePartition_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue, bool boolOne)
+bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue, bool boolOne)
 {
     uint32_t nTopicID = 0;
     size_t nThreadID = 0;
     bool bReturn = false;
     /* Go through thread lists */
 
-    if (pszTag == NULL || nTagLength == 0 || (nTopicID = CorePartition_GetTopicID (pszTag, nTagLength)) == 0)
+    if (pszTag == NULL || nTagLength == 0 || (nTopicID = Cpx_GetTopicID (pszTag, nTagLength)) == 0)
     {
         return false;
     }
@@ -975,35 +965,35 @@ bool CorePartition_Notify (const char* pszTag, size_t nTagLength, size_t nAttrib
     return bReturn;
 }
 
-bool CorePartition_NotifyOne (const char* pszTag, size_t nTagLength)
+bool Cpx_NotifyOne (const char* pszTag, size_t nTagLength)
 {
-    bool bResult = CorePartition_Notify (pszTag, nTagLength, 0, 0, true);
-    CorePartition_Yield ();
+    bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
+    Cpx_Yield ();
     return bResult;
 }
 
-bool CorePartition_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
+bool Cpx_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
 {
-    bool bResult = CorePartition_Notify (pszTag, nTagLength, nAttribute, nValue, true);
-    CorePartition_Yield ();
+    bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
+    Cpx_Yield ();
     return bResult;
 }
 
-bool CorePartition_NotifyAll (const char* pszTag, size_t nTagLength)
+bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength)
 {
-    bool bResult = CorePartition_Notify (pszTag, nTagLength, 0, 0, false);
-    CorePartition_Yield ();
+    bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
+    Cpx_Yield ();
     return bResult;
 }
 
-bool CorePartition_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
+bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
 {
-    bool bResult = CorePartition_Notify (pszTag, nTagLength, nAttribute, nValue, false);
-    CorePartition_Yield ();
+    bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, false);
+    Cpx_Yield ();
     return bResult;
 }
 
-void CorePartition_Sleep (uint32_t nDelayTickTime)
+void Cpx_Sleep (uint32_t nDelayTickTime)
 {
     uint32_t nBkpNice = 0;
 
@@ -1014,80 +1004,80 @@ void CorePartition_Sleep (uint32_t nDelayTickTime)
     pCurrentThread->nStatus = THREADL_SLEEP;
     pCurrentThread->nNice = nDelayTickTime;
 
-    CorePartition_Yield ();
+    Cpx_Yield ();
 
     pCurrentThread->nStatus = THREADL_RUNNING;
     pCurrentThread->nNice = nBkpNice;
 }
 
-size_t CorePartition_GetID (void)
+size_t Cpx_GetID (void)
 {
     return nCurrentThread;
 }
 
-size_t CorePartition_GetStackSizeByID (size_t nID)
+size_t Cpx_GetStackSizeByID (size_t nID)
 {
     VERIFY (nID < nMaxThreads || pCoreThread[nID] != NULL, 0);
     
     return pCoreThread[nID]->nStackSize;
 }
 
-size_t CorePartition_GetMaxStackSizeByID (size_t nID)
+size_t Cpx_GetMaxStackSizeByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStackMaxSize;
 }
 
-uint32_t CorePartition_GetNiceByID (size_t nID)
+uint32_t Cpx_GetNiceByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nNice;
 }
 
-uint8_t CorePartition_GetStatusByID (size_t nID)
+uint8_t Cpx_GetStatusByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStatus;
 }
 
-char CorePartition_IsSecureByID (size_t nID)
+char Cpx_IsSecureByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : (pCoreThread[nID]->nIsolation != 0 ? 'S' : 'N');
 }
 
-uint32_t CorePartition_GetLastDutyCycleByID (size_t nID)
+uint32_t Cpx_GetLastDutyCycleByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nExecTime;
 }
 
-uint32_t CorePartition_GetLastMomentumByID (size_t nID)
+uint32_t Cpx_GetLastMomentumByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nLastMomentun;
 }
 
-size_t CorePartition_GetNumberOfActiveThreads (void)
+size_t Cpx_GetNumberOfActiveThreads (void)
 {
     return nRunningThreads;
 }
 
-size_t CorePartition_GetMaxNumberOfThreads (void)
+size_t Cpx_GetMaxNumberOfThreads (void)
 {
     return nMaxThreads;
 }
 
-size_t CorePartition_GetThreadContextSize (void)
+size_t Cpx_GetThreadContextSize (void)
 {
     return sizeof (CoreThread);
 }
 
-bool CorePartition_IsCoreRunning (void)
+bool Cpx_IsCoreRunning (void)
 {
     return nRunningThreads > 0 ? true : false;
 }
 
-void CorePartition_SetNice (uint32_t nNice)
+void Cpx_SetNice (uint32_t nNice)
 {
     pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
 }
 
-bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize)
+bool Cpx_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize)
 {
     if (NULL != pszName && nNameSize > 0)
     {
@@ -1103,7 +1093,7 @@ bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t n
     return false;
 }
 
-const char* CorePartition_GetThreadNameByID (size_t nID)
+const char* Cpx_GetThreadNameByID (size_t nID)
 {
     return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? "-" : pCoreThread[nID]->pszThreadName;
 }

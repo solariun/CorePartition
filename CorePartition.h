@@ -29,8 +29,8 @@
 // See LICENSE file for the complete information
 */
 
-#ifndef CorePartition_hpp
-#define CorePartition_hpp
+#ifndef Cpx_hpp
+#define Cpx_hpp
 
 #ifdef __cplusplus
 extern "C"
@@ -90,10 +90,10 @@ typedef struct
 
 typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payLoad);
 
-extern uint32_t CorePartition_GetCurrentTick (void);
-extern void CorePartition_SleepTicks (uint32_t);
+extern uint32_t Cpx_GetCurrentTick (void);
+extern void Cpx_SleepTicks (uint32_t);
 
-static const char CorePartition_version[] = "V2.7.0 from  " __TIMESTAMP__;
+static const char Cpx_version[] = "V2.7.0 from  " __TIMESTAMP__;
 
 /**
  * @brief Start CorePartition thread provisioning
@@ -101,7 +101,7 @@ static const char CorePartition_version[] = "V2.7.0 from  " __TIMESTAMP__;
  * @param nThreadPartitions     Number of threads to be provisioned
  * @return true  true if successfully created all provisioned threads
  */
-bool CorePartition_Start (size_t nThreadPartitions);
+bool Cpx_Start (size_t nThreadPartitions);
 
 /**
  * @brief  Create a non-Isolated context Thread
@@ -115,7 +115,7 @@ bool CorePartition_Start (size_t nThreadPartitions);
  *
  * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
  */
-bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
+bool Cpx_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
 /**
  * @brief  Create a Isolated context Thread
@@ -131,7 +131,7 @@ bool CorePartition_CreateThread (void (*pFunction) (void*), void* pValue, size_t
  * @note                    Isolated thread will control dynamic stack encryption on Context Change
  *                          have in mind it will be costly on time so use it wisely.
  */
-bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
+bool Cpx_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
 /**
  * @brief  Callback for informing Stack Overflow Thread destruction and actions
@@ -140,14 +140,14 @@ bool CorePartition_CreateSecureThread (void (*pFunction) (void*), void* pValue, 
  *
  * @return false     only return false on errors
  */
-bool CorePartition_SetStackOverflowHandler (void (*pStackOverflowHandler) (void));
+bool Cpx_SetStackOverflowHandler (void (*pStackOverflowHandler) (void));
 
 /**
  * @brief This will start all the threads
  *
  * @note At least ONE thread must be defines before using this function
  */
-void CorePartition_Join (void);
+void Cpx_Join (void);
 
 /**
  * @brief   Function to be called inside a thread to change context
@@ -158,7 +158,7 @@ void CorePartition_Join (void);
  *          for speed reasons, that will not complay with LockKernel,
  *          for this use PreemptionYield.
  */
-uint8_t CorePartition_Yield (void);
+uint8_t Cpx_Yield (void);
 
 /**
  * @brief  Will set the thread to a special sleep state
@@ -168,14 +168,14 @@ uint8_t CorePartition_Yield (void);
  * @note    if Time has been overridden it tick will  correspond
  *          to the time frame used by sleep overridden function
  */
-void CorePartition_Sleep (uint32_t nDelayTickTime);
+void Cpx_Sleep (uint32_t nDelayTickTime);
 
 /**
  * @brief Get Current Thread ID
  *
  * @return size_t   Thread ID
  */
-size_t CorePartition_GetID (void);
+size_t Cpx_GetID (void);
 
 /**
  * @brief Get Current Thread ID
@@ -186,12 +186,12 @@ size_t CorePartition_GetID (void);
  *
  * @note    if a non valid ID is provided it will return 0
  */
-size_t CorePartition_GetStackSizeByID (size_t nID);
+size_t Cpx_GetStackSizeByID (size_t nID);
 
 /**
 * @brief Get Current Thread Stack Size
 */
-#define CorePartition_GetStackSize() CorePartition_GetStackSizeByID (CorePartition_GetID ())
+#define Cpx_GetStackSize() Cpx_GetStackSizeByID (Cpx_GetID ())
 
 /**
  * @brief  Get total size of stack context page for a Thread ID
@@ -200,19 +200,19 @@ size_t CorePartition_GetStackSizeByID (size_t nID);
  *
  * @return size_t  total size of stack context page
  */
-size_t CorePartition_GetMaxStackSizeByID (size_t nID);
+size_t Cpx_GetMaxStackSizeByID (size_t nID);
 
 /**
 * @brief Get Current Thread Total Stack context page size
 */
-#define CorePartition_GetMaxStackSize() CorePartition_GetMaxStackSizeByID (CorePartition_GetID ())
+#define Cpx_GetMaxStackSize() Cpx_GetMaxStackSizeByID (Cpx_GetID ())
 
 /**
  * @brief Get Thread context size
  *
  * @return size_t total size of the thread context
  */
-size_t CorePartition_GetThreadContextSize (void);
+size_t Cpx_GetThreadContextSize (void);
 
 /**
  * @brief  Get a thread status for a thread ID
@@ -221,12 +221,12 @@ size_t CorePartition_GetThreadContextSize (void);
  *
  * @return uint8_t Actual thread context
  */
-uint8_t CorePartition_GetStatusByID (size_t nID);
+uint8_t Cpx_GetStatusByID (size_t nID);
 
 /**
 * @brief Get current Thread Status
 */
-#define CorePartition_GetStatus() CorePartition_GetStatusByID (CorePartition_GetID ())
+#define Cpx_GetStatus() Cpx_GetStatusByID (Cpx_GetID ())
 
 /**
  * @brief Current Thread Nice
@@ -238,19 +238,19 @@ uint8_t CorePartition_GetStatusByID (size_t nID);
  * @note    Tick will represent the overridden time interface otherwise it will
  *          be a single context switch to each
  */
-uint32_t CorePartition_GetNiceByID (size_t nID);
+uint32_t Cpx_GetNiceByID (size_t nID);
 
 /**
 * @brief Get Current Thread Nice
 */
-#define CorePartition_GetNice() CorePartition_GetNiceByID (CorePartition_GetID ())
+#define Cpx_GetNice() Cpx_GetNiceByID (Cpx_GetID ())
 
 /**
  * @brief Set Current Thread Nice
  *
  * @param nNice  Nice to be used
  */
-void CorePartition_SetNice (uint32_t nNice);
+void Cpx_SetNice (uint32_t nNice);
 
 /**
  * @brief Get Current Thread last momentum on switch back
@@ -262,12 +262,12 @@ void CorePartition_SetNice (uint32_t nNice);
  * @note    Tick will represent the overridden time interface otherwise it will
  *          be a single context switch to each.
  */
-uint32_t CorePartition_GetLastMomentumByID (size_t nID);
+uint32_t Cpx_GetLastMomentumByID (size_t nID);
 
 /**
 * @brief Get current Thread Last Momentum
 */
-#define CorePartition_GetLastMomentum() CorePartition_GetLastMomentumByID (CorePartition_GetID ())
+#define Cpx_GetLastMomentum() Cpx_GetLastMomentumByID (Cpx_GetID ())
 
 /**
  * @brief  Last Duty Cycle of the current Thread
@@ -279,26 +279,26 @@ uint32_t CorePartition_GetLastMomentumByID (size_t nID);
  * @note    Tick will represent the overridden time interface otherwise it will
  *          be a single context switch to each.
  */
-uint32_t CorePartition_GetLastDutyCycleByID (size_t nID);
+uint32_t Cpx_GetLastDutyCycleByID (size_t nID);
 
 /**
 * @brief  Get Current Thread DutyCycle
 */
-#define CorePartition_GetLastDutyCycle() CorePartition_GetLastDutyCycleByID (CorePartition_GetID ())
+#define Cpx_GetLastDutyCycle() Cpx_GetLastDutyCycleByID (Cpx_GetID ())
 
 /**
  * @brief  Get Number of total active Threads
  *
  * @return size_t number of threads
  */
-size_t CorePartition_GetNumberOfActiveThreads (void);
+size_t Cpx_GetNumberOfActiveThreads (void);
 
 /**
  * @brief  Get Max Number of total active Threads
  *
  * @return size_t number of threads
  */
-size_t CorePartition_GetMaxNumberOfThreads (void);
+size_t Cpx_GetMaxNumberOfThreads (void);
 
 /**
  * @brief Return the Secure Status for a thread ID
@@ -307,14 +307,14 @@ size_t CorePartition_GetMaxNumberOfThreads (void);
  *
  * @return char  return 'S' for secure and 'N' for normal
  */
-char CorePartition_IsSecureByID (size_t nID);
+char Cpx_IsSecureByID (size_t nID);
 
 /**
  * @brief Report if there is any running thread
  *
  * @return false in case there is none running
  */
-bool CorePartition_IsCoreRunning (void);
+bool Cpx_IsCoreRunning (void);
 
 /**
  * @brief   Set the default name of the current thread
@@ -325,7 +325,7 @@ bool CorePartition_IsCoreRunning (void);
  *
  * @return false        if the size is zero or name is null
  */
-bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize);
+bool Cpx_SetThreadNameByID (size_t nID, const char* pszName, uint8_t nNameSize);
 
 /**
 * @brief Set current thread name
@@ -335,7 +335,7 @@ bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t n
 *
 * @return  false       if the data is null
 */
-#define CorePartition_SetThreadName(pszName, nNameSize) CorePartition_SetThreadNameByID (CorePartition_GetID (), pszName, nNameSize)
+#define Cpx_SetThreadName(pszName, nNameSize) Cpx_SetThreadNameByID (Cpx_GetID (), pszName, nNameSize)
 
 /**
  * @brief Get the thread name of a specific Thread ID
@@ -344,14 +344,14 @@ bool CorePartition_SetThreadNameByID (size_t nID, const char* pszName, uint8_t n
  *
  * @return const char*  The associated thread's name;
  */
-const char* CorePartition_GetThreadNameByID (size_t nID);
+const char* Cpx_GetThreadNameByID (size_t nID);
 
 /**
 * @brief Get the current thread name
 *
 * @return      const char* The associated thread's name
 */
-#define CorePartition_GetThreadName() CorePartition_GetThreadName (CorePartition_GetID ())
+#define Cpx_GetThreadName() Cpx_GetThreadName (Cpx_GetID ())
 
 /**
  * @brief   Enable Broker for the current thread
@@ -367,7 +367,7 @@ const char* CorePartition_GetThreadNameByID (size_t nID);
  *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
  *          A ALLOCATED MEMORY.
  */
-bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback);
+bool Cpx_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback);
 
 /**
  * @brief   Subscribe for a specific topic
@@ -377,7 +377,7 @@ bool CorePartition_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallba
  *
  * @return  false       if there is no more room for a new subscription
  */
-bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length);
+bool Cpx_SubscribeTopic (const char* pszTopic, size_t length);
 
 /**
  * @brief   Public a tuple Param and Value
@@ -390,7 +390,7 @@ bool CorePartition_SubscribeTopic (const char* pszTopic, size_t length);
  * @return  true    If at least one subscriber received the data.
  *
  */
-bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue );
+bool Cpx_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue );
 
 /**
  * @brief   Check if the current thread already subscribe to a topic
@@ -400,7 +400,7 @@ bool CorePartition_PublishTopic (const char* pszTopic, size_t length, size_t nAt
  *
  * @return  false       if it was not subscribed
  */
-bool CorePartition_IsSubscribed (const char* pszTopic, size_t length);
+bool Cpx_IsSubscribed (const char* pszTopic, size_t length);
 
 /**
  * @brief   Notify ONE TAG assigned as waiting thread
@@ -412,7 +412,7 @@ bool CorePartition_IsSubscribed (const char* pszTopic, size_t length);
  *
  * @note    Please note that any notification triggers a context switch yield
  */
-bool CorePartition_NotifyOne(const char* pszTag, size_t nTagLength);
+bool Cpx_NotifyOne(const char* pszTag, size_t nTagLength);
 
 /**
  * @brief   Notify ONE TAGs assigned as waiting thread with a Message payload
@@ -426,7 +426,7 @@ bool CorePartition_NotifyOne(const char* pszTag, size_t nTagLength);
  *
  * @note    Please note that any notification triggers a context switch yield
  */
-bool CorePartition_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
+bool Cpx_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
 
 /**
  * @brief   Notify ALL TAGs assigned as waiting thread
@@ -438,7 +438,7 @@ bool CorePartition_NotifyMessageOne(const char* pszTag, size_t nTagLength, size_
  *
  * @note    Please note that any notification triggers a context switch yield
  */
-bool CorePartition_NotifyAll(const char* pszTag, size_t nTagLength);
+bool Cpx_NotifyAll(const char* pszTag, size_t nTagLength);
 
 /**
  * @brief   Notify ALL TAGs assigned as waiting thread with a Message payload
@@ -452,7 +452,7 @@ bool CorePartition_NotifyAll(const char* pszTag, size_t nTagLength);
  *
  * @note    Please note that any notification triggers a context switch yield
  */
-bool CorePartition_NotifyMessageAll(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
+bool Cpx_NotifyMessageAll(const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue );
 
 /**
  * @brief   Wait for a specific notification from a given TAG
@@ -462,7 +462,7 @@ bool CorePartition_NotifyMessageAll(const char* pszTag, size_t nTagLength, size_
  *
  * @return  true    For success on receiving notification
  */
-bool CorePartition_Wait (const char* pszTag, size_t nTagLength);
+bool Cpx_Wait (const char* pszTag, size_t nTagLength);
 
 /**
  * @brief   Wait for a specific notification from a given TAG and payload
@@ -477,24 +477,24 @@ bool CorePartition_Wait (const char* pszTag, size_t nTagLength);
  *          the thread will receive 0 otherwise will receive
  *          the same value sent.
  */
-bool CorePartition_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload);
+bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload);
 
 /**
  * @brief   Return Context Switch lock state
  *
  * @return  true a context switch is being performed
  */
-bool CorePartition_IsKernelLocked (void);
+bool Cpx_IsKernelLocked (void);
 
 /**
  * @brief   Lock for Context Switch
  */
-void CorePartition_LockKernel (void);
+void Cpx_LockKernel (void);
 
 /**
  * @brief  Unlock for Context Switch
  */
-void CorePartition_UnlockKernel (void);
+void Cpx_UnlockKernel (void);
 
 /**
  * @brief   Init SmartLock variable
@@ -505,7 +505,7 @@ void CorePartition_UnlockKernel (void);
  *
  * @note    If you re initialise it will unlock all locks
  */
-bool CorePartition_LockInit (CpxSmartLock* pLock);
+bool Cpx_LockInit (CpxSmartLock* pLock);
 
 /**
  * @brief   Do a exclusive Lock and set to Simple lock
@@ -518,7 +518,7 @@ bool CorePartition_LockInit (CpxSmartLock* pLock);
  *          set to type Simple and lock, SharedLock will wait
  *          till it is unlocked.
  */
-bool CorePartition_Lock (CpxSmartLock* pLock);
+bool Cpx_Lock (CpxSmartLock* pLock);
 
 /**
  * @brief   Like Lock() but only locks in case it is unlocked
@@ -531,7 +531,7 @@ bool CorePartition_Lock (CpxSmartLock* pLock);
  *          set to type Simple and lock, SharedLock will wait
  *          till it is unlocked.
  */
-bool CorePartition_TryLock (CpxSmartLock* pLock);
+bool Cpx_TryLock (CpxSmartLock* pLock);
 
 /**
  * @brief   Can act as multiple locks
@@ -544,7 +544,7 @@ bool CorePartition_TryLock (CpxSmartLock* pLock);
  *          will wait till all multiples locks has been unlocked
  *          to lock exclusively
  */
-bool CorePartition_SharedLock (CpxSmartLock* pLock);
+bool Cpx_SharedLock (CpxSmartLock* pLock);
 
 /**
  * @brief   Unlock exclusive locks
@@ -553,7 +553,7 @@ bool CorePartition_SharedLock (CpxSmartLock* pLock);
  *
  * @return  false   If lock is null
  */
-bool CorePartition_Unlock (CpxSmartLock* pLock);
+bool Cpx_Unlock (CpxSmartLock* pLock);
 
 /**
  * @brief   Unlock shared locks
@@ -562,7 +562,7 @@ bool CorePartition_Unlock (CpxSmartLock* pLock);
  *
  * @return  false   If lock is null
  */
-bool CorePartition_SharedUnlock (CpxSmartLock* pLock);
+bool Cpx_SharedUnlock (CpxSmartLock* pLock);
 
 /**
  * @brief  Wait for a Variable Locks notification
@@ -572,9 +572,9 @@ bool CorePartition_SharedUnlock (CpxSmartLock* pLock);
  *
  * @return false    if LockID is invalid (== 0) or no data
  */
-bool CorePartition_WaitVariableLock (size_t nLockID, uint8_t* pnStatus);
+bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus);
 
-size_t CorePartition_WaitingVariableLock (size_t nLockID);
+size_t Cpx_WaitingVariableLock (size_t nLockID);
 
 /**
  * @brief   Notify all/one Variable lock waiting for notification
@@ -585,7 +585,7 @@ size_t CorePartition_WaitingVariableLock (size_t nLockID);
  *
  * @return false    if LockID is invalid (== 0) or no data
  */
-size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
+size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
 
 /**
  * @brief   Notify one Variable lock waiting for notification
@@ -596,7 +596,7 @@ size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool b
  * 
  * @return false    if LockID is invalid (== 0) or no data
  */
-#define CorePartition_NotifyVariableLockOne(nLockID, nStatus) CorePartition_NotifyVariableLock (nLockID, nStatus, true)
+#define Cpx_NotifyVariableLockOne(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, true)
 
 /**
  * @brief   Notify all Variable lock waiting for notification
@@ -607,10 +607,10 @@ size_t CorePartition_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool b
  * 
  * @return false    if LockID is invalid (== 0) or no data
  */
-#define CorePartition_NotifyVariableLockAll(nLockID, nStatus) CorePartition_NotifyVariableLock (nLockID, nStatus, false)
+#define Cpx_NotifyVariableLockAll(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, false)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CorePartition_hpp */
+#endif /* Cpx_hpp */
