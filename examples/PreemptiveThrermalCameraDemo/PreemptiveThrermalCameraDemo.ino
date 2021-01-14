@@ -60,20 +60,20 @@ CpxSmartLock cpxLock;
 
 void lock ()
 {
-    CorePartition_Lock (&cpxLock);
+    Cpx_Lock (&cpxLock);
 }
 
 void unlock ()
 {
-    CorePartition_Unlock (&cpxLock);
+    Cpx_Unlock (&cpxLock);
 }
 
 ISR (TIMER1_COMPA_vect)
 {
-    if (CorePartition_IsKernelLocked () == false) 
+    if (Cpx_IsKernelLocked () == false) 
     {
         digitalWrite(LED_BUILTIN, HIGH);  
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 
     digitalWrite(LED_BUILTIN, LOW);
@@ -159,7 +159,7 @@ void Delay (uint64_t nSleep)
 
     do
     {
-        CorePartition_Yield ();
+        Cpx_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
 
@@ -171,29 +171,29 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println (F ("Listing all running Preemptive threads"));
     Serial.println (F ("--------------------------------------"));
     Serial.print   (F ("Kernel Locked"));
-    Serial.println (CorePartition_IsKernelLocked ()); 
+    Serial.println (Cpx_IsKernelLocked ()); 
     Serial.println (F ("--------------------------------------"));
     Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
-    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
+    for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
         Serial.print (F ("\e[K"));
         Serial.print (nCount);
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetStatusByID (nCount));
-        Serial.print (CorePartition_IsSecureByID (nCount));
+        Serial.print (Cpx_GetStatusByID (nCount));
+        Serial.print (Cpx_IsSecureByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (Cpx_GetNiceByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (Cpx_GetStackSizeByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (Cpx_GetThreadContextSize ());
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetThreadContextSize ());
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
+        Serial.print (Cpx_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
     }
 }
@@ -410,12 +410,12 @@ void Thread3 (void* pValue)
     }
 }
 
-static uint32_t CorePartition_GetCurrentTick ()
+static uint32_t Cpx_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -427,7 +427,7 @@ void StackOverflowHandler ()
 
     ClearConsole ();
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
-    Serial.println (CorePartition_GetID ());
+    Serial.println (Cpx_GetID ());
     Serial.println (F ("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
@@ -449,7 +449,7 @@ void setup ()
     HideCursor ();
 
     Serial.print ("CoreThread ");
-    Serial.println (CorePartition_version);
+    Serial.println (Cpx_version);
     Serial.println ("");
 
     Serial.println ("Starting up Thread....");
@@ -476,15 +476,15 @@ void setup ()
         lc.clearDisplay (nCount);     // and clear the display
     }
 
-    assert (CorePartition_Start (3));
+    assert (Cpx_Start (3));
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 180, 0));
+    assert (Cpx_CreateThread (Thread1, NULL, 180, 0));
 
-    assert (CorePartition_CreateThread (Thread3, NULL, 180, 10));
+    assert (Cpx_CreateThread (Thread3, NULL, 180, 10));
 
-    assert (CorePartition_CreateThread (Thread2, NULL, 180, 10));
+    assert (Cpx_CreateThread (Thread2, NULL, 180, 10));
 
 
     // initialize digital pin LED_BUILTIN as an output.
@@ -495,7 +495,7 @@ void loop ()
 {
     setPreemptionOn ();
 
-    CorePartition_LockInit (&cpxLock);
+    Cpx_LockInit (&cpxLock);
 
-    CorePartition_Join ();
+    Cpx_Join ();
 }

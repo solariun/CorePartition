@@ -87,7 +87,7 @@ void TraficLight (void* pValue)
                 TraficLightData.boolAttention == true ? nBlink ? HIGH : LOW : TraficLightData.boolYellowLight == true ? HIGH : LOW);
         digitalWrite (TraficLightData.nGreenLightPin, TraficLightData.boolGreenLight == true ? HIGH : LOW);
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
@@ -139,7 +139,7 @@ void WalkerSign (void* pValue)
             digitalWrite (TraficLightData.nWalkerGoPin, LOW);
         }
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
@@ -157,7 +157,7 @@ void __attribute__ ((noinline)) setTraficLights (bool boolRed, bool boolYellow, 
 
 void TraficLightKernel (void* pValue)
 {
-    uint32_t nFactor      = CorePartition_GetNice ();
+    uint32_t nFactor      = Cpx_GetNice ();
     uint32_t nTimeCounter = 0;
 
     nTime = 0;
@@ -193,24 +193,24 @@ void TraficLightKernel (void* pValue)
             setTraficLights (false, false, true);
         }
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
 
-uint32_t CorePartition_GetCurrentTick ()
+uint32_t Cpx_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
 
 void StackOverflowHandler ()
 {
-    size_t nThreadID = CorePartition_GetID () + 1;
+    size_t nThreadID = Cpx_GetID () + 1;
     uint8_t nCount;
 
     pinMode (1, OUTPUT);
@@ -233,19 +233,19 @@ void setup ()
 {
     bool status;
 
-    assert (CorePartition_Start (4));
+    assert (Cpx_Start (4));
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (TraficLight, NULL, 10 * sizeof (size_t), 500));
+    assert (Cpx_CreateThread (TraficLight, NULL, 10 * sizeof (size_t), 500));
 
-    assert (CorePartition_CreateThread (WalkerSign, NULL, 10 * sizeof (size_t), 500));
+    assert (Cpx_CreateThread (WalkerSign, NULL, 10 * sizeof (size_t), 500));
 
-    assert (CorePartition_CreateThread (TraficLightKernel, NULL, 10 * sizeof (size_t), 250));
+    assert (Cpx_CreateThread (TraficLightKernel, NULL, 10 * sizeof (size_t), 250));
 }
 
 
 void loop ()
 {
-    CorePartition_Join ();
+    Cpx_Join ();
 }

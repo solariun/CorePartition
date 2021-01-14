@@ -58,7 +58,7 @@ void Sleep (uint32_t nSleep)
     do
     {
         sleepUseconds (10000);
-        CorePartition_Yield ();
+        Cpx_Yield ();
     } while ((getMiliseconds () - nMomentum) < nSleep);
 }
 
@@ -66,7 +66,7 @@ unsigned int addOne (unsigned int nValue)
 {
     nValue = nValue + 1;
 
-    CorePartition_Yield ();
+    Cpx_Yield ();
 
     return nValue;
 }
@@ -97,14 +97,14 @@ const char* messageTest = "Context";
 
 void kernel (void* pValue)
 {
-    CorePartition_EnableBroker ((void*) messageTest, 2, KernelBrokerHandler);
+    Cpx_EnableBroker ((void*) messageTest, 2, KernelBrokerHandler);
 
-    CorePartition_SubscribeTopic (topicValues, strlen (topicValues));
-    CorePartition_SubscribeTopic (topicExecTime, strlen (topicExecTime));
+    Cpx_SubscribeTopic (topicValues, strlen (topicValues));
+    Cpx_SubscribeTopic (topicExecTime, strlen (topicExecTime));
 
     while (1)
     {
-        printf ("Kernel: [%zu], ID(execTime)[value]: ", CorePartition_GetID ());
+        printf ("Kernel: [%zu], ID(execTime)[value]: ", Cpx_GetID ());
 
         {
             int nCount = 0;
@@ -117,35 +117,35 @@ void kernel (void* pValue)
 
         printf ("\n");
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
 void Thread1 (void* pValue)
 {
     uint32_t nValue = 0;
-    uint32_t nSleepTime = CorePartition_GetCurrentTick ();
-    uint32_t nReturnedSleep = CorePartition_GetCurrentTick ();
+    uint32_t nSleepTime = Cpx_GetCurrentTick ();
+    uint32_t nReturnedSleep = Cpx_GetCurrentTick ();
     int32_t nFactor = 0;
 
     while (1)
     {
-        nFactor = ((nReturnedSleep - nSleepTime) - CorePartition_GetNice ());
+        nFactor = ((nReturnedSleep - nSleepTime) - Cpx_GetNice ());
         printf (">> %lu:  Value: [%u], Nice: [%u] : Precision:[%d]\n",
-                CorePartition_GetID (),
+                Cpx_GetID (),
                 nValue,
-                CorePartition_GetNice (),
+                Cpx_GetNice (),
                 nFactor);
 
         nValue = nValue + 1;
 
-        CorePartition_PublishTopic (topicValues, sizeof (topicValues) - 1, (size_t)CorePartition_GetID (), (size_t)&nValue);
+        Cpx_PublishTopic (topicValues, sizeof (topicValues) - 1, (size_t)Cpx_GetID (), (size_t)&nValue);
 
-        nSleepTime = CorePartition_GetCurrentTick ();
-        CorePartition_Yield ();
-        nReturnedSleep = CorePartition_GetCurrentTick ();
+        nSleepTime = Cpx_GetCurrentTick ();
+        Cpx_Yield ();
+        nReturnedSleep = Cpx_GetCurrentTick ();
 
-        CorePartition_PublishTopic (topicExecTime, sizeof (topicExecTime)-1, (size_t)CorePartition_GetID (), (size_t)(nReturnedSleep - nSleepTime));
+        Cpx_PublishTopic (topicExecTime, sizeof (topicExecTime)-1, (size_t)Cpx_GetID (), (size_t)(nReturnedSleep - nSleepTime));
     }
 }
 
@@ -181,12 +181,12 @@ void PrintBinary (const uint8_t* pBuffer, size_t nSize)
  *    ** REQUIRED **
  */
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     usleep ((useconds_t)nSleepTime * 1000);
 }
 
-uint32_t CorePartition_GetCurrentTick (void)
+uint32_t Cpx_GetCurrentTick (void)
 {
     struct timeval tp;
     gettimeofday (&tp, NULL);
@@ -197,28 +197,28 @@ uint32_t CorePartition_GetCurrentTick (void)
 
 static void StackOverflowHandler ()
 {
-    printf ("Error, Thread#%zu Stack %zu / %zu max\n", CorePartition_GetID (), CorePartition_GetStackSize (), CorePartition_GetMaxStackSize ());
+    printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
 }
 
 /* ------------------------------------ */
 
 int main (int nArgs, const char* pszArg[])
 {
-    if (CorePartition_Start (10) == false)
+    if (Cpx_Start (10) == false)
     {
         printf ("Error starting up Thread.");
         return (1);
     }
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 150));
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 323));
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 764));
-    assert (CorePartition_CreateThread (Thread1, NULL, 256, 1500));
-    assert (CorePartition_CreateSecureThread (kernel, NULL, 256, 250));
+    assert (Cpx_CreateThread (Thread1, NULL, 256, 150));
+    assert (Cpx_CreateThread (Thread1, NULL, 256, 323));
+    assert (Cpx_CreateThread (Thread1, NULL, 256, 764));
+    assert (Cpx_CreateThread (Thread1, NULL, 256, 1500));
+    assert (Cpx_CreateSecureThread (kernel, NULL, 256, 250));
 
-    CorePartition_Join ();
+    Cpx_Join ();
 
     return 0;
 }

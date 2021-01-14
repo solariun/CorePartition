@@ -21,7 +21,7 @@ This Thread Library is a full Cooperative Thread Library, (it is not a task lib,
 
 # Preemptive Threads
 
-This lib can, also, perform as Preemptive, but since the intent is a universal lib, I will leave it up to you, just define a timer to call CorePartition_Yield () a good lock and it will run. There is a example of how to do it.
+This lib can, also, perform as Preemptive, but since the intent is a universal lib, I will leave it up to you, just define a timer to call Cpx_Yield () a good lock and it will run. There is a example of how to do it.
 
 
 
@@ -57,7 +57,7 @@ Arduino official documentation for adding libraries: https://www.arduino.cc/en/g
 
 CorePartitionOS was design for single cores processors and micro controllers, since it will not switch between different cores, instead it will use one and slice it while  controling it to create  threads, deploying a full multi thread environment. Note that it will also create cooperative thread for softwares, enabling it to be able to use lightweight Threads without compromising the whole system.
 
-By default it will use Cooperative thread, which means the developer will need to call CorePartition_Yield(), CorePartition_Wait(), CorePartition_WaitMessage() or CorePartition_Sleep() to trigger context switching. But, by using a timer you will be able to make it preemptive. An example of prenptivess is also provided for a micro controller Atmel 328Pm, run it at Arduino IDE and a NANO boards.
+By default it will use Cooperative thread, which means the developer will need to call Cpx_Yield(), Cpx_Wait(), Cpx_WaitMessage() or Cpx_Sleep() to trigger context switching. But, by using a timer you will be able to make it preemptive. An example of prenptivess is also provided for a micro controller Atmel 328Pm, run it at Arduino IDE and a NANO boards.
 
 All the examples are done using Arduino, why? First because it will act as a HAL (Hardware Abstraction Layer) interface, so, doesn't mater the processor or microcontroller, this Thread will deploy the same results, and will be ready for any hardware interaction: timer, interruption and architecture.
 
@@ -94,7 +94,7 @@ This feature will remain on Experimental for certain time.
 
 # Momentum Scheduler
 
-*The Momentum Scheduler* is Timer based Scheduler optimised to only allow thread to come back to work only its "nice" time or later than that, it means it will work on soft real time as long as the developer keep all the functions clean and fast till the point it call context for a context switch. For some big logic, there will have two way to keep it peace for all the functions, using CorePartition_Yield, that will comply with the nice principle or CorePartition_Sleep that you can dynamically call a specialized nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exempla for keeping it simple).
+*The Momentum Scheduler* is Timer based Scheduler optimised to only allow thread to come back to work only its "nice" time or later than that, it means it will work on soft real time as long as the developer keep all the functions clean and fast till the point it call context for a context switch. For some big logic, there will have two way to keep it peace for all the functions, using Cpx_Yield, that will comply with the nice principle or Cpx_Sleep that you can dynamically call a specialized nice. If you are using a Tick interface to work as milliseconds, nice will me n milliseconds, examples of how to do it is also provided for Desktop application and processor (through Arduino exempla for keeping it simple).
 
 HIGHLY suitable for Arduino (All official single cores models included) as well, a .ino project is also provided with an example.
 
@@ -172,9 +172,9 @@ void Thread1(void* pValue)
 {
      int nValue = 0;
 
-     while (CorePartition_Yield())
+     while (Cpx_Yield())
      {
-          printf ("Thread %zu: Value [%d] every %u ms\n", CorePartition_GetID(), nValue++, CorePartition_GetNice());
+          printf ("Thread %zu: Value [%d] every %u ms\n", Cpx_GetID(), nValue++, Cpx_GetNice());
      }
 }
 
@@ -182,18 +182,18 @@ void Thread2(void* pValue)
 {
      int nValue = 0;
 
-     while (CorePartition_Yield())
+     while (Cpx_Yield())
      {
-          printf ("Thread %zu: Value [%d] every %u ms\n", CorePartition_GetID(), nValue++, CorePartition_GetNice());
+          printf ("Thread %zu: Value [%d] every %u ms\n", Cpx_GetID(), nValue++, Cpx_GetNice());
      }
 }
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     usleep ((useconds_t) nSleepTime * 1000);
 }
 
-uint32_t CorePartition_GetCurrentTick(void)
+uint32_t Cpx_GetCurrentTick(void)
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -203,31 +203,31 @@ uint32_t CorePartition_GetCurrentTick(void)
 
 static void StackOverflowHandler ()
 {
-    printf ("Error, Thread#%zu Stack %zu / %zu max\n", CorePartition_GetID(), CorePartition_GetStackSize(), CorePartition_GetMaxStackSize());
+    printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID(), Cpx_GetStackSize(), Cpx_GetMaxStackSize());
 }
     
 
 int main ()
 {
 
-     assert (CorePartition_Start (3));
+     assert (Cpx_Start (3));
 
-     assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+     assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
      //Every 1000 cycles with a Stack page of 210 bytes
-     assert (CorePartition_CreateThread (Thread1, NULL,  210, 1000));
+     assert (Cpx_CreateThread (Thread1, NULL,  210, 1000));
 
      //All the time with a Stack page of 150 bytes and
      //thread isolation
-     assert (CorePartition_CreateSecureThread (Thread2, NULL, 150, 2000));
+     assert (Cpx_CreateSecureThread (Thread2, NULL, 150, 2000));
 
-     assert (CorePartition_CreateSecureThread (Thread2, NULL, 150, 500));
+     assert (Cpx_CreateSecureThread (Thread2, NULL, 150, 500));
 
-     CorePartition_Join();
+     Cpx_Join();
 }
 ```
 
-Inside your partitioned program (function) use the directive CorePartition_Yield() to let the nano microkernel process next thread, so do not forget to call CorePartition_Yield() or use CorePartition_Sleep() regularly.
+Inside your partitioned program (function) use the directive Cpx_Yield() to let the nano microkernel process next thread, so do not forget to call Cpx_Yield() or use Cpx_Sleep() regularly.
 
 # Arduino Boards
 

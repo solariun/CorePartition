@@ -47,7 +47,7 @@ void Delay (uint64_t nSleep)
     //delay (nSleep); return;
     
     do {
-        CorePartition_Yield();
+        Cpx_Yield();
     } while ((millis() - nMomentum ) <  nSleep);    
 }
 
@@ -55,7 +55,7 @@ void Delay (uint64_t nSleep)
 
 void Thread1 (void* pValue)
 {
-    uint8_t nPin = CorePartition_GetID() + 1;
+    uint8_t nPin = Cpx_GetID() + 1;
     
     pinMode (nPin, OUTPUT);
     
@@ -63,30 +63,30 @@ void Thread1 (void* pValue)
     {
         digitalWrite (nPin, HIGH);
         
-        CorePartition_Yield ();
+        Cpx_Yield ();
 
         digitalWrite (nPin, LOW);
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 
 }
 
 
 
-static uint32_t CorePartition_GetCurrentTick()
+static uint32_t Cpx_GetCurrentTick()
 {
    return (uint32_t) millis();
 }
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
 
 void StackOverflowHandler ()
 {
-    size_t nThreadID = CorePartition_GetID() + 1;
+    size_t nThreadID = Cpx_GetID() + 1;
     uint8_t nCount;
     
     pinMode (nThreadID, OUTPUT);
@@ -117,22 +117,22 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println (F("--------------------------------------"));
     Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
     
-    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
+    for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
         Serial.print (F("\e[K"));
         Serial.print (nCount);
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetStatusByID (nCount));
+        Serial.print (Cpx_GetStatusByID (nCount));
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (Cpx_GetNiceByID (nCount));
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (Cpx_GetStackSizeByID (nCount));
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount));
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (Cpx_GetThreadContextSize ());
         Serial.print (F("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetThreadContextSize ());
         Serial.println ();
     }
 }
@@ -145,7 +145,7 @@ void WhachDog (void* pValue)
     while (true)
     {
         ShowRunningThreads ();
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 #endif
@@ -173,23 +173,23 @@ void setup()
     
 
 #ifdef _DEBUG
-    assert (CorePartition_Start (5));
+    assert (Cpx_Start (5));
 #else
-    assert (CorePartition_Start (4));
+    assert (Cpx_Start (4));
 #endif
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 25, 50));
+    assert (Cpx_CreateThread (Thread1, NULL, 25, 50));
     
-    assert (CorePartition_CreateThread (Thread1, NULL, 25, 1000));
+    assert (Cpx_CreateThread (Thread1, NULL, 25, 1000));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 25, 812));
+    assert (Cpx_CreateThread (Thread1, NULL, 25, 812));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 25, 200));
+    assert (Cpx_CreateThread (Thread1, NULL, 25, 200));
 
 #ifdef _DEBUG
-    assert (CorePartition_CreateThread (WhachDog, 20, 200));
+    assert (Cpx_CreateThread (WhachDog, 20, 200));
 #endif
     
 }
@@ -198,5 +198,5 @@ void setup()
 
 void loop()
 {
-    CorePartition_Join();
+    Cpx_Join();
 }

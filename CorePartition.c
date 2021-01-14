@@ -932,12 +932,14 @@ bool Cpx_SetTopicID (const char* pszTag, size_t nTagLength, uint32_t* pnTopicID)
     return false;
 }
 
-bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue, bool boolOne)
+static bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue, bool boolOne)
 {
     uint32_t nTopicID = 0;
     size_t nThreadID = 0;
     bool bReturn = false;
     /* Go through thread lists */
+
+    Cpx_LockKernel ();
 
     if (pszTag == NULL || nTagLength == 0 || (nTopicID = Cpx_GetTopicID (pszTag, nTagLength)) == 0)
     {
@@ -961,6 +963,8 @@ bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute, uint6
             }
         }
     }
+
+    Cpx_UnlockKernel ();
 
     return bReturn;
 }

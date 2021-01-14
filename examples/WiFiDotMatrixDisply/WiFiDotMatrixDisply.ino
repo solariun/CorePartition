@@ -133,7 +133,7 @@ void Delay (uint64_t nSleep)
 
     do
     {
-        CorePartition_Yield ();
+        Cpx_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
 
@@ -146,31 +146,31 @@ void ShowRunningThreads (Stream& client)
     client.println (F ("--------------------------------------"));
     client.println (F ("ID\tName\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
-    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
+    for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
-        if (CorePartition_GetStatusByID (nCount) > 0)
+        if (Cpx_GetStatusByID (nCount) > 0)
         {
             client.print (F ("\e[K"));
             client.print (nCount);
-            client.printf ("\t%-8s", CorePartition_GetThreadNameByID (nCount));
+            client.printf ("\t%-8s", Cpx_GetThreadNameByID (nCount));
             client.print (F ("\t"));
-            client.print (CorePartition_GetStatusByID (nCount));
-            client.print (CorePartition_IsSecureByID (nCount));
+            client.print (Cpx_GetStatusByID (nCount));
+            client.print (Cpx_IsSecureByID (nCount));
             client.print (F ("\t"));
-            client.print (CorePartition_GetNiceByID (nCount));
+            client.print (Cpx_GetNiceByID (nCount));
             client.print (F ("\t"));
-            client.print (CorePartition_GetStackSizeByID (nCount));
+            client.print (Cpx_GetStackSizeByID (nCount));
             client.print (F ("\t"));
-            client.print (CorePartition_GetMaxStackSizeByID (nCount));
+            client.print (Cpx_GetMaxStackSizeByID (nCount));
             client.print (F ("\t"));
-            client.print (CorePartition_GetThreadContextSize ());
+            client.print (Cpx_GetThreadContextSize ());
             client.print (F ("\t"));
-            client.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+            client.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetThreadContextSize ());
             client.print (F ("\t"));
-            client.print (CorePartition_GetLastDutyCycleByID (nCount));
+            client.print (Cpx_GetLastDutyCycleByID (nCount));
             client.println ("ms");
             client.flush ();
-            CorePartition_Yield ();
+            Cpx_Yield ();
         }
     }
 }
@@ -283,7 +283,7 @@ private:
             printRow (nLocY, nLocX, nDigit, i, (((uint8_t*)&charLeft)[i] << (8 - nOffset) | ((uint8_t*)&charRight)[i] >> nOffset));
         }
 
-        // CorePartition_Sleep (1);
+        // Cpx_Sleep (1);
     }
 
 protected:
@@ -417,11 +417,11 @@ void LedDisplayShow (void* pValue)
     unsigned long start = millis ();
     size_t nValue = 0;
 
-    CorePartition_EnableBroker ((void*) &chContext, 1, LedDisplayBrokerHandler);
+    Cpx_EnableBroker ((void*) &chContext, 1, LedDisplayBrokerHandler);
 
-    CorePartition_SubscribeTopic (topicDisplay, sizeof (topicDisplay)-1);
+    Cpx_SubscribeTopic (topicDisplay, sizeof (topicDisplay)-1);
 
-    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Display", 7);
+    Cpx_SetThreadNameByID (Cpx_GetID (), "Display", 7);
 
     uint8_t a = 0;
     uint8_t b = 0;
@@ -433,7 +433,7 @@ void LedDisplayShow (void* pValue)
     while (1)
     {
         matrixTextScroller.show (0, 0, strDisplay.c_str (), strDisplay.length ());
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
@@ -595,14 +595,14 @@ public:
             client.print (strDisplay.c_str ());
             client.println ("]");
 
-            CorePartition_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
+            Cpx_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
         }
     }
 };
 
 void ClientHandler (void* pSrvClient)
 {
-    CorePartition_SetThreadNameByID (CorePartition_GetID (), "R_Client", 8);
+    Cpx_SetThreadNameByID (Cpx_GetID (), "R_Client", 8);
     pSrvClient;
 
     WiFiClient client = server.available ();
@@ -625,7 +625,7 @@ void ClientHandler (void* pSrvClient)
     CommandShow commandShow;
     terminal.AssignCommand (commandShow);
 
-    while (terminal.WaitForACommand () && client.connected ()) CorePartition_Yield ();
+    while (terminal.WaitForACommand () && client.connected ()) Cpx_Yield ();
 
     if (client.connected () == true)
     {
@@ -637,7 +637,7 @@ void ClientHandler (void* pSrvClient)
 /// @param pValue Information injected from CorePartition on startup
 void TelnetListener (void* pValue)
 {
-    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Listener", 8);
+    Cpx_SetThreadNameByID (Cpx_GetID (), "Listener", 8);
     WiFi.mode (WIFI_STA);
 
     WiFi.begin (ssid, password);
@@ -647,7 +647,7 @@ void TelnetListener (void* pValue)
 
     strDisplay = "Connecting to ";
     strDisplay += ssid;
-    CorePartition_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
+    Cpx_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
 
     std::string strValue;
     uint8_t nOffset = 0;
@@ -666,7 +666,7 @@ void TelnetListener (void* pValue)
         strDisplay.push_back ((char)CHAR_ANIME_1 + nOffset);
         nOffset = nOffset < 8 ? nOffset + 1 : 0;
 
-        CorePartition_Sleep (100);
+        Cpx_Sleep (100);
     }
 
     matrixTextScroller.setSpeed (nSpeed);
@@ -676,7 +676,7 @@ void TelnetListener (void* pValue)
     strDisplay += (char)CHAR_WIFI;
     strDisplay += ':';
     strDisplay += WiFi.localIP ().toString ().c_str ();
-    CorePartition_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
+    Cpx_PublishTopic (topicDisplay, sizeof (topicDisplay)-1, MATRIX_DISPLAY_CHANGE, (size_t) strDisplay.c_str());
 
     // start server
     server.begin ();
@@ -694,7 +694,7 @@ void TelnetListener (void* pValue)
 
             // Create a thread to start handling
             // otherwise send busy and close it
-            if (CorePartition_CreateThread (ClientHandler, (void*)nullptr, 512, 300) == false)
+            if (Cpx_CreateThread (ClientHandler, (void*)nullptr, 512, 300) == false)
             {
                 server.available ().println ("LedDisplay: Busy");
 
@@ -707,13 +707,13 @@ void TelnetListener (void* pValue)
             }
         }
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
 void SerialTerminalHandler (void* injection)
 {
-    CorePartition_SetThreadNameByID (CorePartition_GetID (), "Terminal", 8);
+    Cpx_SetThreadNameByID (Cpx_GetID (), "Terminal", 8);
 
     Terminal serial (reinterpret_cast<Stream&> (Serial));
 
@@ -727,19 +727,19 @@ void SerialTerminalHandler (void* injection)
     {
         serial.ExecuteMOTD ();
 
-        while (serial.WaitForACommand ()) CorePartition_Yield ();
+        while (serial.WaitForACommand ()) Cpx_Yield ();
     }
 }
 
 /// Espcializing CorePartition Tick as Milleseconds
-uint32_t CorePartition_GetCurrentTick ()
+uint32_t Cpx_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
 
 /// Specializing CorePartition Idle time
 /// @param nSleepTime How log the sleep will lest
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -751,7 +751,7 @@ void StackOverflowHandler ()
         ;
 
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
-    Serial.println (CorePartition_GetID ());
+    Serial.println (Cpx_GetID ());
     Serial.println (F ("--------------------------------------"));
     ShowRunningThreads ((Stream&)(Serial));
     Serial.flush ();
@@ -774,7 +774,7 @@ void setup ()
     LocalEcho (Serial, false);
 
     Serial.print ("CoreThread ");
-    Serial.println (CorePartition_version);
+    Serial.println (Cpx_version);
     Serial.println ("");
 
     Serial.println ("Starting up Thread....");
@@ -800,21 +800,21 @@ void setup ()
     }
 
     // Max threads on system.
-    if (CorePartition_Start (25) == false)
+    if (Cpx_Start (25) == false)
     {
         Serial.println ("Error staring up Threads.");
         exit (1);
     }
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateSecureThread (SerialTerminalHandler, NULL, 500, 200));
-    assert (CorePartition_CreateThread (LedDisplayShow, NULL, 300, 80));
-    assert (CorePartition_CreateThread (TelnetListener, NULL, 300, 500));
+    assert (Cpx_CreateSecureThread (SerialTerminalHandler, NULL, 500, 200));
+    assert (Cpx_CreateThread (LedDisplayShow, NULL, 300, 80));
+    assert (Cpx_CreateThread (TelnetListener, NULL, 300, 500));
 }
 
 /// Main Loop for Arduino Standards
 void loop ()
 {
-    CorePartition_Join ();
+    Cpx_Join ();
 }

@@ -124,7 +124,7 @@ void Delay (uint32_t nSleep)
 
     do
     {
-        CorePartition_Yield ();
+        Cpx_Yield ();
     } while ((millis () - nMomentum) < nSleep);
 }
 
@@ -170,7 +170,7 @@ public:
 
         forceRedraw ();
 
-        while (CorePartition_Yield () || Serial)
+        while (Cpx_Yield () || Serial)
         {
             if (boolRedraw == true)
             {
@@ -321,7 +321,7 @@ void TraficLight (void* pValue)
                 TraficLightData.boolAttention == true ? nBlink ? HIGH : LOW : TraficLightData.boolYellowLight == true ? HIGH : LOW);
         digitalWrite (TraficLightData.nGreenLightPin, TraficLightData.boolGreenLight == true ? HIGH : LOW);
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
@@ -373,7 +373,7 @@ void WalkerSign (void* pValue)
             digitalWrite (TraficLightData.nWalkerGoPin, LOW);
         }
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
@@ -387,25 +387,25 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     Serial.println (F ("--------------------------------------"));
     Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
-    for (nCount = 0; nCount < CorePartition_GetNumberOfActiveThreads (); nCount++)
+    for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
         Serial.print (F ("\e[K"));
         Serial.print (nCount);
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetStatusByID (nCount));
-        Serial.print (CorePartition_IsSecureByID (nCount));
+        Serial.print (Cpx_GetStatusByID (nCount));
+        Serial.print (Cpx_IsSecureByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetNiceByID (nCount));
+        Serial.print (Cpx_GetNiceByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetStackSizeByID (nCount));
+        Serial.print (Cpx_GetStackSizeByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount));
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetThreadContextSize ());
+        Serial.print (Cpx_GetThreadContextSize ());
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetMaxStackSizeByID (nCount) + CorePartition_GetThreadContextSize ());
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetThreadContextSize ());
         Serial.print (F ("\t"));
-        Serial.print (CorePartition_GetLastDutyCycleByID (nCount));
+        Serial.print (Cpx_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
     }
 }
@@ -474,7 +474,7 @@ void Terminal (void* pValue)
     bool boolActive = false;
     int nCommandLen = 0;
 
-    while (CorePartition_Yield () || true)
+    while (Cpx_Yield () || true)
     {
         if (Serial)
         {
@@ -490,7 +490,7 @@ void Terminal (void* pValue)
             Serial.println (F ("Trafic Light Manager v1.0"));
             Serial.println (F ("By Gustavo Campos"));
             Serial.print (F ("Thread #"));
-            Serial.println (CorePartition_GetID ());
+            Serial.println (Cpx_GetID ());
 
             ShowRunningThreads ();
 
@@ -502,7 +502,7 @@ void Terminal (void* pValue)
 
             Serial.flush ();
 
-            while (CorePartition_Yield () || Serial)
+            while (Cpx_Yield () || Serial)
             {
                 nCommandLen = readCommand.getCommand ();
 
@@ -642,7 +642,7 @@ void __attribute__ ((noinline)) setTraficLights (bool boolRed, bool boolYellow, 
 
 void TraficLightKernel (void* pValue)
 {
-    uint32_t nFactor      = CorePartition_GetNice ();
+    uint32_t nFactor      = Cpx_GetNice ();
     uint32_t nTimeCounter = 0;
 
     nTime = 0;
@@ -678,17 +678,17 @@ void TraficLightKernel (void* pValue)
             setTraficLights (false, false, true);
         }
 
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 }
 
 
-uint32_t CorePartition_GetCurrentTick ()
+uint32_t Cpx_GetCurrentTick ()
 {
     return (uint32_t)millis ();
 }
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -699,7 +699,7 @@ void StackOverflowHandler ()
         ;
 
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
-    Serial.println (CorePartition_GetID ());
+    Serial.println (Cpx_GetID ());
     Serial.println (F ("--------------------------------------"));
     ShowRunningThreads ();
     Serial.flush ();
@@ -717,21 +717,21 @@ void setup ()
 
     pinMode (13, OUTPUT);
 
-    assert (CorePartition_Start (4));
+    assert (Cpx_Start (4));
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (TraficLight, NULL, 30 * sizeof (size_t), 500));
+    assert (Cpx_CreateThread (TraficLight, NULL, 30 * sizeof (size_t), 500));
 
-    assert (CorePartition_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500));
+    assert (Cpx_CreateThread (WalkerSign, NULL, 30 * sizeof (size_t), 500));
 
-    assert (CorePartition_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250));
+    assert (Cpx_CreateThread (TraficLightKernel, NULL, 30 * sizeof (size_t), 250));
 
-    assert (CorePartition_CreateThread (Terminal, NULL, 42 * sizeof (size_t), 50));
+    assert (Cpx_CreateThread (Terminal, NULL, 42 * sizeof (size_t), 50));
 }
 
 
 void loop ()
 {
-    CorePartition_Join ();
+    Cpx_Join ();
 }

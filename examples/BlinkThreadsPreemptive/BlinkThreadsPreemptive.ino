@@ -51,16 +51,16 @@ void unlock ()
 {
     bLocked = false;
 
-    if (CorePartition_GetStatus () == THREADL_RUNNING) CorePartition_Sleep (0);
+    if (Cpx_GetStatus () == THREADL_RUNNING) Cpx_Sleep (0);
 }
 
 ISR (TIMER1_COMPA_vect)
 {
     cli ();
 
-    if (bLocked == false && CorePartition_GetStatus () == THREADL_RUNNING)
+    if (bLocked == false && Cpx_GetStatus () == THREADL_RUNNING)
     {
-        CorePartition_Yield ();
+        Cpx_Yield ();
     }
 
 
@@ -89,14 +89,14 @@ void setPreemptionOn ()
 
 void Thread1 (void* pValue)
 {
-    uint8_t nPin = CorePartition_GetID () + 2;
+    uint8_t nPin = Cpx_GetID () + 2;
     bool boolTogle = true;
 
     pinMode (nPin, OUTPUT);
 
     while (1)
     {
-        // Serial.println (CorePartition_GetStackSize ());
+        // Serial.println (Cpx_GetStackSize ());
 
         delay (10);
 
@@ -109,7 +109,7 @@ void Thread1 (void* pValue)
 
 void StackOverflowHandler ()
 {
-    size_t nThreadID = CorePartition_GetID () + 2;
+    size_t nThreadID = Cpx_GetID () + 2;
     uint8_t nCount;
 
     pinMode (nThreadID, OUTPUT);
@@ -128,12 +128,12 @@ void StackOverflowHandler ()
     }
 }
 
-static uint32_t CorePartition_GetCurrentTick()
+static uint32_t Cpx_GetCurrentTick()
 {
    return (uint32_t) millis();
 }
 
-void CorePartition_SleepTicks (uint32_t nSleepTime)
+void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     delay (nSleepTime);
 }
@@ -148,24 +148,24 @@ void setup ()
     // Serial.begin(115200);
     // while (!Serial);
 
-    if (CorePartition_Start (4) == false)
+    if (Cpx_Start (4) == false)
     {
         exit (1);
     }
 
-    assert (CorePartition_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 80, 10));
+    assert (Cpx_CreateThread (Thread1, NULL, 80, 10));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 80, 20));
+    assert (Cpx_CreateThread (Thread1, NULL, 80, 20));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 80, 440));
+    assert (Cpx_CreateThread (Thread1, NULL, 80, 440));
 
-    assert (CorePartition_CreateThread (Thread1, NULL, 80, 50));
+    assert (Cpx_CreateThread (Thread1, NULL, 80, 50));
 }
 
 
 void loop ()
 {
-    CorePartition_Join ();
+    Cpx_Join ();
 }
