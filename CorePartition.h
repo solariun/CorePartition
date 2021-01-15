@@ -480,23 +480,6 @@ bool Cpx_Wait (const char* pszTag, size_t nTagLength);
 bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload);
 
 /**
- * @brief   Return Context Switch lock state
- *
- * @return  true a context switch is being performed
- */
-bool Cpx_IsKernelLocked (void);
-
-/**
- * @brief   Lock for Context Switch
- */
-void Cpx_LockKernel (void);
-
-/**
- * @brief  Unlock for Context Switch
- */
-void Cpx_UnlockKernel (void);
-
-/**
  * @brief   Init SmartLock variable
  *
  * @param   pLock      The Lock variable

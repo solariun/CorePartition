@@ -96,14 +96,11 @@ typedef struct
     size_t nStackMaxSize;
     size_t nStackSize;
 
-    size_t nNamedLock;
-
-    uint32_t nNotifyUID;
-
     uint32_t nNice;
     uint32_t nLastMomentun;
     uint32_t nExecTime;
 
+    uint32_t nNotifyUID;
     CpxMsgPayload payload;
     
     char pszThreadName[THREAD_NAME_MAX + 1];
@@ -126,78 +123,33 @@ jmp_buf jmpJoinPointer;
 
 static void (*stackOverflowHandler) (void) = NULL;
 
-static volatile bool lock = false;
-
 #define Cpx_SetState(nNewState) pCurrentThread->nStatus = nNewState
-        
-
-void Cpx_LockKernel (void)
-{
-    lock = true;
-}
-
-void Cpx_UnlockKernel (void)
-{
-    lock = false;
-}
-
-bool Cpx_IsKernelLocked (void)
-{
-    return lock > 0 ? true : false;
-}
-    
+            
 bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
 {
     uint8_t nReturn = false;
-    bool bklocked = Cpx_IsKernelLocked();
-    
-    if (bklocked) Cpx_UnlockKernel();
     
     if (nLockID >0)
     {
-        Cpx_LockKernel();
-        {
-            TRACE ("%s: ThreadID: [%zu], nLockID: [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
-            
-            pCurrentThread->nNamedLock = (size_t) nLockID;
+        TRACE ("%s: ThreadID: [%zu], nLockID: [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
+        
+        pCurrentThread->payload.nAttribute = (size_t) nLockID;
 
-            pCurrentThread->nStatus = THREADL_LOCK;
-        }
-        Cpx_UnlockKernel();
+        pCurrentThread->nStatus = THREADL_LOCK;
         
         if (Cpx_Yield())
         {
             if (pnStatus != NULL)
             {
-                Cpx_LockKernel();
-                {
-                    *pnStatus = pCurrentThread->nNamedLock;
-                    pCurrentThread->nNamedLock = 0;
-                }
-                Cpx_UnlockKernel();
+                *pnStatus = pCurrentThread->payload.nAttribute;
+                pCurrentThread->payload.nAttribute = 0;
             }
-            
-            if (bklocked) Cpx_LockKernel();
             
             nReturn = true;
         }
 
-        // Cpx_LockKernel();
-        // {
-        //     pCurrentThread->nStatus = THREADL_NOW;
-        // }
-        // Cpx_UnlockKernel();
-
-        // Cpx_Yield();
-
-        Cpx_LockKernel();
-        {
-            pCurrentThread->nStatus = THREADL_RUNNING;
-        }
-        Cpx_UnlockKernel();
+        pCurrentThread->nStatus = THREADL_RUNNING;
     }
-    
-    if (bklocked) Cpx_LockKernel();
     
     return nReturn;
 }
@@ -205,41 +157,32 @@ bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
 size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
 {
     size_t nNotifiedCount = 0;
-    
-    bool bklocked = Cpx_IsKernelLocked();
-    
-    if (bklocked) Cpx_UnlockKernel();
-    
+        
     if (nRunningThreads > 0 && nLockID > 0)
     {
         size_t nThreadID = 0;
         
-        Cpx_LockKernel();
+        for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
         {
-            for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+            if (pCoreThread[nThreadID] != NULL)
             {
-                if (pCoreThread[nThreadID] != NULL)
+                TRACE ("%s: ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->payload.nAttribute, nLockID);
+
+                if (pCoreThread[nThreadID]->payload.nAttribute == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
                 {
-                    TRACE ("%s: ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
+                    TRACE ("%s: NOTIFYING ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->payload.nAttribute, nLockID);
 
-                    if (pCoreThread[nThreadID]->nNamedLock == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
-                    {
-                        TRACE ("%s: NOTIFYING ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
-
-                        pCoreThread[nThreadID]->nNamedLock = nStatus;
-                        pCoreThread[nThreadID]->nStatus = THREADL_NOW;
-                                                
-                        nNotifiedCount++;
-                        
-                        if (bOneOnly) break;
-                    }
+                    pCoreThread[nThreadID]->payload.nAttribute = nStatus;
+                    pCoreThread[nThreadID]->nStatus = THREADL_NOW;
+                                            
+                    nNotifiedCount++;
+                    
+                    if (bOneOnly) break;
                 }
             }
-            
-            TRACE ("%s: Notified (%zu] from ID [%zu] \n", __FUNCTION__, nNotifiedCount, nLockID);
         }
-        Cpx_UnlockKernel();
-               
+        
+        TRACE ("%s: Notified (%zu] from ID [%zu] \n", __FUNCTION__, nNotifiedCount, nLockID);
     }
     
     if (nNotifiedCount)
@@ -248,8 +191,6 @@ size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
         Cpx_Yield();
         Cpx_SetState(THREADL_RUNNING);
     }
-    
-    if (bklocked) Cpx_LockKernel();
     
     return nNotifiedCount;
 }
@@ -262,24 +203,20 @@ size_t Cpx_WaitingVariableLock (size_t nLockID)
     {
         size_t nThreadID = 0;
         
-        Cpx_LockKernel();
+        for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
         {
-            for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+            if (pCoreThread[nThreadID] != NULL)
             {
-                if (pCoreThread[nThreadID] != NULL)
-                {
-                    TRACE ("%s: ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
+                TRACE ("%s: ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->payload.nAttribute, nLockID);
 
-                    if (pCoreThread[nThreadID]->nNamedLock == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
-                    {
-                        TRACE ("%s: NOTIFYING ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->nNamedLock, nLockID);
-                        nNotifiedCount++;
-                        
-                    }
+                if (pCoreThread[nThreadID]->payload.nAttribute == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                {
+                    TRACE ("%s: NOTIFYING ID: [%zu], Status: [%u], nNamedLock: [%zu] == target: [%zu]\n", __FUNCTION__, nThreadID, pCoreThread[nThreadID]->nStatus, pCoreThread[nThreadID]->payload.nAttribute, nLockID);
+                    nNotifiedCount++;
+                    
                 }
             }
         }
-        Cpx_UnlockKernel();
             
         return nNotifiedCount;
     }
@@ -302,14 +239,10 @@ bool Cpx_TryLock (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
             
-    Cpx_LockKernel();
-    {
-        //Wait all the locks to be done
-        if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock  == true) return false;
+    //Wait all the locks to be done
+    if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock  == true) return false;
 
-        pLock->bExclusiveLock = true;
-    }
-    Cpx_UnlockKernel();
+    pLock->bExclusiveLock = true;
 
     return true;
 }
@@ -318,32 +251,28 @@ bool Cpx_Lock (CpxSmartLock* pLock)
 {
     if (pLock == NULL) return false;
     
-    Cpx_LockKernel();
+    TRACE ("%s: Thread #%zu, Trying to get exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+    
+    //Get exclusive lock
+    while (pLock->bExclusiveLock)
     {
-        TRACE ("%s: Thread #%zu, Trying to get exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+        TRACE ("%s: Thread #%zu, Waiting for exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
-        //Get exclusive lock
-        while (pLock->bExclusiveLock)
-        {
-            TRACE ("%s: Thread #%zu, Waiting for exclusive lock... (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
-            
-            if (pLock->bExclusiveLock == true) Cpx_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
-        }
-
-        pLock->bExclusiveLock = true;
-
-        
-        //Wait all shared locks to be done
-        while (pLock->nSharedLockCount)
-        {
-            TRACE ("%s: Thread %zu, Wait all Shared locks to be consumed (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
-            
-            if (pLock->nSharedLockCount) Cpx_WaitVariableLock ((size_t) &pLock->nSharedLockCount, NULL);
-        }
-        
-        TRACE ("%s: Thread %zu, Got exclusive Lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+        if (pLock->bExclusiveLock == true) Cpx_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
     }
-    Cpx_UnlockKernel();
+
+    pLock->bExclusiveLock = true;
+
+    
+    //Wait all shared locks to be done
+    while (pLock->nSharedLockCount)
+    {
+        TRACE ("%s: Thread %zu, Wait all Shared locks to be consumed (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+        
+        if (pLock->nSharedLockCount) Cpx_WaitVariableLock ((size_t) &pLock->nSharedLockCount, NULL);
+    }
+    
+    TRACE ("%s: Thread %zu, Got exclusive Lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
 
     return true;
 }
@@ -352,22 +281,18 @@ bool Cpx_SharedLock (CpxSmartLock* pLock)
 {
     if (pLock == false) return false;
     
-    Cpx_LockKernel();
+    TRACE ("%s: Thread %zu, trying to shared lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+    
+    while (pLock->bExclusiveLock)
     {
-        TRACE ("%s: Thread %zu, trying to shared lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
-        
-        while (pLock->bExclusiveLock)
-        {
-            TRACE ("%s: Thread %zu, trying to lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
+        TRACE ("%s: Thread %zu, trying to lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
 
-            if (pLock->bExclusiveLock) Cpx_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
-        }
-        
-        pLock->nSharedLockCount ++;
-        
-        TRACE ("%s: Thread %zu, Got Shared Lock (L:[%s], SL:[%s])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? "TRUE" : "FALSE", pLock->nSharedLockCount ? "TRUE" : "FALSE");
+        if (pLock->bExclusiveLock) Cpx_WaitVariableLock ((size_t) &pLock->bExclusiveLock, NULL);
     }
-    Cpx_UnlockKernel();
+    
+    pLock->nSharedLockCount ++;
+    
+    TRACE ("%s: Thread %zu, Got Shared Lock (L:[%s], SL:[%s])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? "TRUE" : "FALSE", pLock->nSharedLockCount ? "TRUE" : "FALSE");
     
     return true;
 }
@@ -380,17 +305,12 @@ bool Cpx_SharedUnlock (CpxSmartLock* pLock)
     
     if (pLock->nSharedLockCount)
     {
-        Cpx_LockKernel();
-        {
-            pLock->nSharedLockCount--;
-            
-            Cpx_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
-        }
+        pLock->nSharedLockCount--;
+        
+        Cpx_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
         
         TRACE ("%s: Thread %zu, Unlocked shared lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
-        Cpx_UnlockKernel();
-
         pCurrentThread->nStatus = THREADL_NOW;
         Cpx_Yield();
         pCurrentThread->nStatus = THREADL_RUNNING;
@@ -409,16 +329,12 @@ bool Cpx_Unlock (CpxSmartLock* pLock)
     
     if (pLock->bExclusiveLock == true)
     {
-        Cpx_LockKernel();
-        {
-            pLock->bExclusiveLock = false;
+        pLock->bExclusiveLock = false;
 
-            Cpx_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
-            Cpx_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
-            
-            TRACE ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
-        }
-        Cpx_UnlockKernel();
+        Cpx_NotifyVariableLock((size_t) &pLock->nSharedLockCount, 0, false);
+        Cpx_NotifyVariableLock((size_t) &pLock->bExclusiveLock, 0, true);
+        
+        TRACE ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
         TRACE ("%s: Thread %zu, Unlocked lock (L:[%u], SL:[%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock, pLock->nSharedLockCount);
         
@@ -543,7 +459,7 @@ bool Cpx_CreateThread_ (void (*pFunction) (void*), void* pValue, size_t nStackMa
 
     pCoreThread[nThread]->nNotifyUID = 0;
     
-    pCoreThread[nThread]->nNamedLock=0;
+    pCoreThread[nThread]->payload = (CpxMsgPayload){0,0,0};
     
     nThreadCount++;
 
@@ -865,7 +781,7 @@ void Cpx_CheckStackOverflow (void)
 
 uint8_t Cpx_Yield (void)
 {    
-    if (Cpx_IsKernelLocked () == false && nRunningThreads > 0)
+    if (nRunningThreads > 0)
     {
         volatile uint8_t nValue = 0xBB;
 
@@ -900,12 +816,8 @@ bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payl
 {
     if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
-    Cpx_LockKernel ();
-
     pCurrentThread->nStatus = THREADL_WAITTAG;
     pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
-
-    Cpx_UnlockKernel ();
 
     Cpx_Yield ();
 
@@ -918,12 +830,8 @@ bool Cpx_Wait (const char* pszTag, size_t nTagLength)
 {
     if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
-    Cpx_LockKernel ();
-
     pCurrentThread->nStatus = THREADL_WAITTAG;
     pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
-
-    Cpx_UnlockKernel ();
 
     Cpx_Yield ();
 
@@ -947,8 +855,6 @@ static bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute
     bool bReturn = false;
     /* Go through thread lists */
 
-    Cpx_LockKernel ();
-
     if (pszTag == NULL || nTagLength == 0 || (nTopicID = Cpx_GetTopicID (pszTag, nTagLength)) == 0)
     {
         return false;
@@ -961,7 +867,7 @@ static bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute
             if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->nStatus == THREADL_WAITTAG &&
                 pCoreThread[nThreadID]->nNotifyUID == nTopicID)
             {
-                pCoreThread[nThreadID]->nStatus = THREADL_RUNNING;
+                pCoreThread[nThreadID]->nStatus = THREADL_NOW;
                 pCoreThread[nThreadID]->payload = (CpxMsgPayload){nCurrentThread, nAttribute, nValue};
                 pCoreThread[nThreadID]->nNotifyUID = 0;
 
@@ -971,8 +877,6 @@ static bool Cpx_Notify (const char* pszTag, size_t nTagLength, size_t nAttribute
             }
         }
     }
-
-    Cpx_UnlockKernel ();
 
     return bReturn;
 }
