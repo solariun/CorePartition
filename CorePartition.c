@@ -132,14 +132,18 @@ extern "C"
     bool bCpxPreemptionState = false;
     bool bCpxPLockQuest = false;
     bool bCpxPLock = false;
-
-#pragma weak Cpx_LockPreemption
+    
+    
+/*
+ * WEAK FUNCTION TO BE OVERLOADED BY APPLICATIONS
+ */
+#pragma weak Cpx_SetPreemptionState
     void Cpx_SetPreemptionState (bool bPreemptionState)
     {
         bCpxPreemptionState = bPreemptionState;
     }
 
-#pragma weak Cpx_LockPreemption
+#pragma weak Cpx_GetPreemptionState
     bool Cpx_GetPreemptionState (void)
     {
         return bCpxPreemptionState;
@@ -161,7 +165,6 @@ extern "C"
             bCpxPLock = true;
             bCpxPLockQuest = false;            
         }
-        
     }
 
 #pragma weak Cpx_UnlockPreemption
@@ -171,9 +174,9 @@ extern "C"
     }
 
 #pragma weak Cpx_IsPreemptionLocked
-    void Cpx_IsPreemptionLocked (void)
+    bool Cpx_IsPreemptionLocked (void)
     {
-        bCpxPLock = false;
+        return bCpxPLock;
     }
 
 #pragma weak Cpx_PreemptionYield
@@ -189,10 +192,10 @@ extern "C"
             {
                 bCpxPLockQuest = false;
                 bCpxPLock = true;
-
-                return true;
             }
         }
+        
+        return true;
     }
 
     // weak symbols for mandatory functions
@@ -221,24 +224,39 @@ extern "C"
         return;
     }
 
+/*
+ * --------------------------------------------------
+ * String functions not capable of overloading
+ * --------------------------------------------------
+ */
+    
     bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
     {
         uint8_t nReturn = false;
-
+        
         if (nLockID > 0)
         {
+            Cpx_LockPreemption();
+            
             TRACE ("%s: ThreadID: [%zu], nLockID: [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
 
             pCurrentThread->payload.nAttribute = (size_t)nLockID;
 
             pCurrentThread->nStatus = THREADL_LOCK;
 
+            Cpx_UnlockPreemption();
+            
             if (Cpx_Yield ())
             {
+                
                 if (pnStatus != NULL)
                 {
+                    Cpx_LockPreemption();
+                    
                     *pnStatus = pCurrentThread->payload.nAttribute;
                     pCurrentThread->payload.nAttribute = 0;
+                    
+                    Cpx_UnlockPreemption();
                 }
 
                 nReturn = true;
@@ -253,7 +271,8 @@ extern "C"
     size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
     {
         size_t nNotifiedCount = 0;
-
+        Cpx_LockPreemption();
+        
         if (nRunningThreads > 0 && nLockID > 0)
         {
             size_t nThreadID = 0;
@@ -290,13 +309,15 @@ extern "C"
 
             TRACE ("%s: Notified (%zu] from ID [%zu] \n", __FUNCTION__, nNotifiedCount, nLockID);
         }
-
-        if (nNotifiedCount)
+                
+        if (nNotifiedCount && Cpx_IsPreemptionLocked() == false)
         {
             Cpx_SetState (THREADL_NOW);
             Cpx_Yield ();
             Cpx_SetState (THREADL_RUNNING);
         }
+        
+        Cpx_UnlockPreemption();
 
         return nNotifiedCount;
     }
@@ -304,7 +325,9 @@ extern "C"
     size_t Cpx_WaitingVariableLock (size_t nLockID)
     {
         size_t nNotifiedCount = 0;
-
+        
+        Cpx_LockPreemption();
+        
         if (nRunningThreads > 0 && nLockID > 0)
         {
             size_t nThreadID = 0;
@@ -332,17 +355,17 @@ extern "C"
                     }
                 }
             }
-
-            return nNotifiedCount;
         }
-
+        
+        Cpx_UnlockPreemption();
+        
         return nNotifiedCount;
     }
 
     bool Cpx_LockInit (CpxSmartLock* pLock)
     {
         if (pLock == false) return false;
-
+        
         pLock->nSharedLockCount = 0;
         pLock->bExclusiveLock = false;
 
@@ -352,19 +375,25 @@ extern "C"
     bool Cpx_TryLock (CpxSmartLock* pLock)
     {
         if (pLock == false) return false;
-
+        
+        Cpx_LockPreemption();
+        
         // Wait all the locks to be done
         if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock == true) return false;
 
         pLock->bExclusiveLock = true;
-
+        
+        Cpx_UnlockPreemption();
+        
         return true;
     }
 
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
         if (pLock == NULL) return false;
-
+        
+        Cpx_LockPreemption();
+        
         TRACE ("%s: Thread #%zu, Trying to get exclusive lock... (L:[%u], SL:[%zu])\n",
                __FUNCTION__,
                nCurrentThread,
@@ -379,8 +408,15 @@ extern "C"
                    nCurrentThread,
                    pLock->bExclusiveLock,
                    pLock->nSharedLockCount);
-
-            if (pLock->bExclusiveLock == true) Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+            
+            if (pLock->bExclusiveLock == true)
+            {
+                Cpx_UnlockPreemption();
+                
+                Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+                
+                Cpx_LockPreemption();
+            }
         }
 
         pLock->bExclusiveLock = true;
@@ -393,8 +429,15 @@ extern "C"
                    nCurrentThread,
                    pLock->bExclusiveLock,
                    pLock->nSharedLockCount);
-
-            if (pLock->nSharedLockCount) Cpx_WaitVariableLock ((size_t)&pLock->nSharedLockCount, NULL);
+                        
+            if (pLock->nSharedLockCount)
+            {
+                Cpx_UnlockPreemption();
+                
+                Cpx_WaitVariableLock ((size_t)&pLock->nSharedLockCount, NULL);
+                
+                Cpx_LockPreemption();
+            }
         }
 
         TRACE ("%s: Thread %zu, Got exclusive Lock (L:[%u], SL:[%zu])\n",
@@ -403,13 +446,17 @@ extern "C"
                pLock->bExclusiveLock,
                pLock->nSharedLockCount);
 
+        Cpx_UnlockPreemption();
+        
         return true;
     }
 
     bool Cpx_SharedLock (CpxSmartLock* pLock)
     {
         if (pLock == false) return false;
-
+        
+        Cpx_LockPreemption();
+        
         TRACE ("%s: Thread %zu, trying to shared lock (L:[%u], SL:[%zu])\n",
                __FUNCTION__,
                nCurrentThread,
@@ -424,7 +471,14 @@ extern "C"
                    pLock->bExclusiveLock,
                    pLock->nSharedLockCount);
 
-            if (pLock->bExclusiveLock) Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+            if (pLock->bExclusiveLock)
+            {
+                Cpx_UnlockPreemption();
+                
+                Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+                
+                Cpx_LockPreemption();
+            }
         }
 
         pLock->nSharedLockCount++;
@@ -435,6 +489,8 @@ extern "C"
                pLock->bExclusiveLock ? "TRUE" : "FALSE",
                pLock->nSharedLockCount ? "TRUE" : "FALSE");
 
+        Cpx_UnlockPreemption();
+        
         return true;
     }
 
@@ -442,6 +498,8 @@ extern "C"
     {
         if (pLock == false) return false;
 
+        Cpx_LockPreemption();
+        
         TRACE ("%s: Thread %zu, Unlocking Shared Lock (L:[%u], SL:[%zu])\n",
                __FUNCTION__,
                nCurrentThread,
@@ -452,8 +510,12 @@ extern "C"
         {
             pLock->nSharedLockCount--;
 
+            Cpx_UnlockPreemption();
+            
             Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
 
+            Cpx_LockPreemption();
+            
             TRACE ("%s: Thread %zu, Unlocked shared lock (L:[%u], SL:[%zu])\n",
                    __FUNCTION__,
                    nCurrentThread,
@@ -463,10 +525,14 @@ extern "C"
             pCurrentThread->nStatus = THREADL_NOW;
             Cpx_Yield ();
             pCurrentThread->nStatus = THREADL_RUNNING;
-
+            
+            Cpx_UnlockPreemption();
+            
             return true;
         }
 
+        Cpx_UnlockPreemption();
+        
         return false;
     }
 
@@ -474,6 +540,8 @@ extern "C"
     {
         if (pLock == false) return false;
 
+        Cpx_LockPreemption();
+        
         TRACE ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n",
                __FUNCTION__,
                nCurrentThread,
@@ -483,10 +551,15 @@ extern "C"
         if (pLock->bExclusiveLock == true)
         {
             pLock->bExclusiveLock = false;
-
+            
+            Cpx_UnlockPreemption();
+            
             Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
+                        
             Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, true);
 
+            Cpx_LockPreemption();
+            
             TRACE ("%s: Thread %zu, received lock trap (L:[%u], SL:[%zu])\n",
                    __FUNCTION__,
                    nCurrentThread,
@@ -499,13 +572,13 @@ extern "C"
                    pLock->bExclusiveLock,
                    pLock->nSharedLockCount);
 
-            pCurrentThread->nStatus = THREADL_NOW;
-            Cpx_Yield ();
-            pCurrentThread->nStatus = THREADL_RUNNING;
-
+            Cpx_UnlockPreemption();
+            
             return true;
         }
-
+        
+        Cpx_UnlockPreemption();
+        
         return false;
     }
 
@@ -929,12 +1002,22 @@ extern "C"
         }
     }
 
+    static volatile bool  nYelling = false;
+    
     uint8_t Cpx_Yield (void)
     {
-        if (nRunningThreads > 0)
+        bool nReturn = 0;
+        
+        if (nRunningThreads > 0 && nYelling == false)
         {
+            bool bIsLocked = Cpx_IsPreemptionLocked();
+            
+            if (pCurrentThread->nStatus == THREADL_RUNNING) nYelling = true;
+            
             volatile uint8_t nValue = 0xBB;
-
+            
+            TRACE ("%s: 2 Thread #%zu, yielding: [%u]\n", __FUNCTION__, nCurrentThread,  nYelling);
+            
             Cpx_UpdateExecTime ();
 
             pCurrentThread->pLastStack = (void*)&nValue;
@@ -956,23 +1039,35 @@ extern "C"
 
             Cpx_SetMomentun ();
 
-            return 1;
+            pCurrentThread->nStatus = THREADL_RUNNING;
+                        
+            nReturn = 1;
+            
+            nYelling = false;
         }
-
-        return 0;
+        
+        return nReturn;
     }
-
+    
     bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload)
     {
         if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
+        Cpx_LockPreemption();
+        
         pCurrentThread->nStatus = THREADL_WAITTAG;
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
+        Cpx_UnlockPreemption();
+        
         Cpx_Yield ();
 
+        Cpx_LockPreemption();
+        
         *payload = pCurrentThread->payload;
-
+        
+        Cpx_UnlockPreemption();
+        
         return true;
     }
 
@@ -980,9 +1075,14 @@ extern "C"
     {
         if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
 
+        Cpx_LockPreemption();
+        
         pCurrentThread->nStatus = THREADL_WAITTAG;
+        
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
+        Cpx_UnlockPreemption();
+        
         Cpx_Yield ();
 
         return true;
@@ -990,11 +1090,17 @@ extern "C"
 
     bool Cpx_SetTopicID (const char* pszTag, size_t nTagLength, uint32_t* pnTopicID)
     {
+        bool nReturn = false;
+        
+        Cpx_LockPreemption();
+        
         if (pnTopicID != NULL && (*pnTopicID = Cpx_GetTopicID (pszTag, nTagLength)) > 0)
         {
-            return true;
+            nReturn = true;
         }
 
+        Cpx_LockPreemption();
+        
         return false;
     }
 
@@ -1005,6 +1111,8 @@ extern "C"
         bool bReturn = false;
         /* Go through thread lists */
 
+        Cpx_LockPreemption();
+        
         if (pszTag == NULL || nTagLength == 0 || (nTopicID = Cpx_GetTopicID (pszTag, nTagLength)) == 0)
         {
             return false;
@@ -1027,35 +1135,49 @@ extern "C"
                 }
             }
         }
-
+        
+        if (bReturn == true)
+        {
+            Cpx_SetState(THREADL_NOW);
+            Cpx_Yield();
+        }
+        
+        Cpx_UnlockPreemption();
+        
         return bReturn;
     }
 
     bool Cpx_NotifyOne (const char* pszTag, size_t nTagLength)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
-        Cpx_Yield ();
+                
         return bResult;
     }
 
     bool Cpx_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
-        Cpx_Yield ();
+        
         return bResult;
     }
 
     bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
-        Cpx_Yield ();
+        
         return bResult;
     }
 
     bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, false);
+        
+        Cpx_LockPreemption();
+        
         Cpx_Yield ();
+        
+        Cpx_UnlockPreemption();
+        
         return bResult;
     }
 

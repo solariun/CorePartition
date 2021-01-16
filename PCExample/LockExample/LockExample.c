@@ -71,7 +71,7 @@ void Consumer(void* pValue)
 //     return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
 // }
 
-static void Cpx_StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID(), Cpx_GetStackSize(), Cpx_GetMaxStackSize());
 }
