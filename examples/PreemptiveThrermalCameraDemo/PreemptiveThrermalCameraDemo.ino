@@ -57,26 +57,38 @@ float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 
 CpxSmartLock cpxLock; 
 
+static bool needlock=false;
+static bool timerlock=false;
 
 void lock ()
 {
-    Cpx_Lock (&cpxLock);
+    while (timerlock == false)
+    {
+        needlock = true;
+        delay (1);
+    }
 }
 
 void unlock ()
 {
-    Cpx_Unlock (&cpxLock);
+    timerlock=false;
 }
 
 ISR (TIMER1_COMPA_vect)
 {
-    if (Cpx_IsKernelLocked () == false) 
+    if (timerlock) return;
+
+    if (needlock == false) 
     {
         digitalWrite(LED_BUILTIN, HIGH);  
         Cpx_Yield ();
+        digitalWrite(LED_BUILTIN, LOW);
     }
-
-    digitalWrite(LED_BUILTIN, LOW);
+    else if (needlock)
+    {
+        needlock = false;
+        timerlock=true;
+    }
 }
 
 void setPreemptionOn ()
@@ -169,9 +181,6 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
 
     Serial.println ();
     Serial.println (F ("Listing all running Preemptive threads"));
-    Serial.println (F ("--------------------------------------"));
-    Serial.print   (F ("Kernel Locked"));
-    Serial.println (Cpx_IsKernelLocked ()); 
     Serial.println (F ("--------------------------------------"));
     Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 

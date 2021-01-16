@@ -58,20 +58,20 @@ void Consumer(void* pValue)
     } while (Cpx_Yield());
 }
 
-void Cpx_SleepTicks (uint32_t nSleepTime)
-{
-    usleep ((useconds_t) nSleepTime * 1000);
-}
+// void Cpx_SleepTicks (uint32_t nSleepTime)
+// {
+//     usleep ((useconds_t) nSleepTime * 1000);
+// }
 
-uint32_t Cpx_GetCurrentTick(void)
-{
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
+// uint32_t Cpx_GetCurrentTick(void)
+// {
+//     struct timeval tp;
+//     gettimeofday(&tp, NULL);
     
-    return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
-}
+//     return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+// }
 
-static void StackOverflowHandler ()
+static void Cpx_StackOverflowHandler ()
 {
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID(), Cpx_GetStackSize(), Cpx_GetMaxStackSize());
 }
@@ -81,8 +81,6 @@ int main ()
 {
 
     assert (Cpx_Start (20));
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     /*
      * PRODUCERS

@@ -38,6 +38,13 @@
 
 #define THREAD_VALUES_ATTRB 1
 
+bool Lock = false;
+
+void Cpx_LockPreemption ()
+{
+    Lock = 1;
+}
+
 CpxSmartLock lock;
 
 int nProducers [7];
@@ -100,7 +107,6 @@ void Consumer(void* pValue)
     } while (Cpx_Yield());
 }
 
-
 void ShowRunningThreads ()
 {
     size_t nThreadID = 0;
@@ -137,18 +143,17 @@ void ShowRunningThreads ()
     }
 }
 
+// uint32_t Cpx_GetCurrentTick ()
+// {
+//     return (uint32_t)millis ();
+// }
 
-uint32_t Cpx_GetCurrentTick ()
-{
-    return (uint32_t)millis ();
-}
+// void Cpx_SleepTicks (uint32_t nSleepTime)
+// {
+//     delay (nSleepTime);
+// }
 
-void Cpx_SleepTicks (uint32_t nSleepTime)
-{
-    delay (nSleepTime);
-}
-
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     while (!Serial)
         ;
@@ -167,7 +172,6 @@ void StackOverflowHandler ()
 
     while (true) delay (1000);
 }
-
 
 #ifdef __AVR__
 #define STACK_PRODUCER sizeof(size_t) * 12
@@ -200,8 +204,6 @@ void setup ()
         Serial.println ("Fail to start CorePartition.");
         exit (0);
     }
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 0));
 
