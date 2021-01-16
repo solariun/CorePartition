@@ -177,7 +177,7 @@ extern "C"
     }
 
 #pragma weak Cpx_PreemptionYield
-    uint_8 Cpx_PreemptionYield ()
+    uint8_t Cpx_PreemptionYield ()
     {
         if (bCpxPreemptionState == true)
         {
