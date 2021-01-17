@@ -93,13 +93,11 @@ void Producer (void* pValue)
 
         nProducers[nID]++;
 
-        Cpx_Yield ();
-
-        if (nID == 5) Serial.println (Cpx_GetID ());
+        Cpx_Sleep (0);
 
         Cpx_SharedUnlock (&lock);
 
-    } while (true);
+    } while (Cpx_Yield ());
 }
 
 void Consumer_print ()
@@ -117,9 +115,6 @@ void Consumer_print ()
             Serial.print (F (": ["));
             Serial.print (nProducers[nCount]);
             Serial.print (F ("]"));
-            Serial.print (Cpx_GetStatusByID (nCount));
-            Serial.print (F(","));
-            Serial.print (Cpx_GetLockIDByID (nCount));
             Serial.print (F (") "));
         }
 
@@ -137,24 +132,24 @@ void Consumer (void* pValue)
     {
         Cpx_Lock (&lock);
 
-        ShowRunningThreads ();
+        Consumer_print ();
+
+        Cpx_Sleep (0);
         
         Cpx_Unlock (&lock);
-
-        Consumer_print ();
 
     } while (Cpx_Yield ());
 }
 
-// uint32_t Cpx_GetCurrentTick ()
-// {
-//     return (uint32_t)millis ();
-// }
+uint32_t Cpx_GetCurrentTick ()
+{
+    return (uint32_t)millis ();
+}
 
-// void Cpx_SleepTicks (uint32_t nSleepTime)
-// {
-//     delay (nSleepTime);
-// }
+void Cpx_SleepTicks (uint32_t nSleepTime)
+{
+    delay (nSleepTime);
+}
 
 void Cpx_StackOverflowHandler ()
 {
@@ -225,6 +220,10 @@ void setup ()
     /* --------------------------------------------------------------------- */
 
     assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 1000));
+
+    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 1400));
+
+    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 5000));
 
     Cpx_Join ();
 

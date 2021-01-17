@@ -163,7 +163,7 @@ extern "C"
 #pragma weak Cpx_StackOverflowHandler
     void Cpx_StackOverflowHandler (void)
     {
-        return;
+        TRACE ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID(), Cpx_GetStackSize(), Cpx_GetMaxStackSize());
     }
 
     /*
