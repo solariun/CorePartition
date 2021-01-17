@@ -47,7 +47,6 @@ void Consumer(void* pValue)
         
         printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCount);
           
-
         /*
          * This will emulate preemption
          */

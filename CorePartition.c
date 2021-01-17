@@ -178,18 +178,22 @@ extern "C"
         CoreThread* pLCoreThread = NULL;
 
         YYTRACE ("------------------------------------------------\n");
+        YYTRACE ("  %-4s  %-4s  %5s/%-5s  %-8s  %-8s\n", "TID", "Stat", " Stack", "Max", "Nice", " VarLock");
+        YYTRACE ("------------------------------------------------\n");
 
         for (nCount = 0; nCount < nMaxThreads; nCount++)
         {
-            pLCoreThread = pCoreThread[nCount];
-
-            YYTRACE ("%-4zu, %-4u, %5zu/%-5zu, %-8zu, %-8zu\n",
-                     nCount,
-                     pLCoreThread->nStatus,
-                     pLCoreThread->nStackSize,
-                     pLCoreThread->nStackMaxSize,
-                     pLCoreThread->nNice,
-                     pLCoreThread->nVariableLockID);
+            if ((pLCoreThread = pCoreThread[nCount]) != NULL)
+            {
+                YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zu\n",
+                         nCurrentThread == nCount ? '*' : ' ',
+                         nCount,
+                         pLCoreThread->nStatus,
+                         pLCoreThread->nStackSize,
+                         pLCoreThread->nStackMaxSize,
+                         pLCoreThread->nNice,
+                         pLCoreThread->nVariableLockID);
+            }
         }
 
         YYTRACE ("------------------------------------------------\n");
@@ -215,7 +219,7 @@ extern "C"
                     pCurrentThread->payload.nAttribute = 0;
                 }
 
-                printf ("%s: Thread #%zu, Received trap variable [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
+                TRACE ("%s: Thread #%zu, Received trap variable [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
 
                 nReturn = true;
             }
@@ -238,26 +242,25 @@ extern "C"
             {
                 if (pCoreThread[nThreadID] != NULL)
                 {
-                    if (nThreadID == 8 && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    if (pCoreThread[nThreadID]->nVariableLockID == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    {
+                        
+                        pCoreThread[nThreadID]->nVariableLockID = nStatus;
+                        pCoreThread[nThreadID]->nStatus = THREADL_NOW;
 
-                        if (pCoreThread[nThreadID]->nVariableLockID == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
-                        {
-                            pCoreThread[nThreadID]->nVariableLockID = nStatus;
-                            pCoreThread[nThreadID]->nStatus = THREADL_NOW;
+                        nNotifiedCount++;
 
-                            nNotifiedCount++;
-
-                            if (bOneOnly) break;
-                        }
+                        if (bOneOnly) break;
+                    }
                 }
             }
 
-            // YYTRACE ("%s: Notified (%zu] from ID [%zu] \n", __FUNCTION__, nNotifiedCount, nLockID);
+            TRACE ("%s: Thread #%zu Notified (%zu] from ID [%zu] \n", __FUNCTION__, nCurrentThread, nNotifiedCount, nLockID);
 
-            // if (nNotifiedCount > 0)
-            // {
-            //     Cpx_NowYield ();
-            // }
+             if (nNotifiedCount > 0)
+             {
+                 Cpx_NowYield ();
+             }
         }
 
         return nNotifiedCount;
@@ -291,6 +294,7 @@ extern "C"
         if (pLock == false) return false;
 
         pLock->nSharedLockCount = 0;
+        pLock->nLockCount = 0;
         pLock->bExclusiveLock = false;
 
         return true;
@@ -303,26 +307,23 @@ extern "C"
         // Wait all the locks to be done
         if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock == true) return false;
 
+        pLock->nLockCount++;
         pLock->bExclusiveLock = true;
 
         return true;
     }
 
+    
+#define Cpx_PrintLock(pLock) TRACE ("%s: Thread #%zu Lock: [%c, %zu](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? 'T' : 'F', pLock->nLockCount, Cpx_WaitingVariableLock ((size_t) &pLock->bExclusiveLock), pLock->nSharedLockCount, Cpx_WaitingVariableLock ((size_t) &pLock->nSharedLockCount));
+    
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
         if (pLock == NULL) return false;
 
-        // Get exclusive lock
-        while (pLock->bExclusiveLock)
-        {
-            if (pLock->bExclusiveLock == true)
-            {
-                Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
-            }
-        }
-
-        pLock->bExclusiveLock = true;
-
+        Cpx_PrintLock (pLock);
+        
+        pLock->nLockCount++;
+        
         // Wait all shared locks to be done
         while (pLock->nSharedLockCount)
         {
@@ -332,16 +333,32 @@ extern "C"
             }
         }
 
+        // Get exclusive lock
+        while (pLock->bExclusiveLock)
+        {
+            if (pLock->bExclusiveLock == true)
+            {
+                Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+            }
+        }
+        
+        pLock->bExclusiveLock = true;
+
+        Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
+        Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
+
         return true;
     }
 
     bool Cpx_SharedLock (CpxSmartLock* pLock)
     {
         if (pLock == NULL) return false;
-
-        while (pLock->bExclusiveLock)
+        
+        Cpx_PrintLock (pLock);
+        
+        while (pLock->nLockCount > 0)
         {
-            if (pLock->bExclusiveLock)
+            if (pLock->nLockCount > 0)
             {
                 Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
             }
@@ -349,19 +366,25 @@ extern "C"
 
         pLock->nSharedLockCount++;
 
+        //Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
+        Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
+
         return true;
     }
 
     bool Cpx_SharedUnlock (CpxSmartLock* pLock)
     {
         if (pLock == NULL) return false;
-
+        
+        Cpx_PrintLock (pLock);
+        
         if (pLock->nSharedLockCount)
         {
             pLock->nSharedLockCount--;
 
             Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
-
+            //Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
+            
             return true;
         }
 
@@ -370,19 +393,17 @@ extern "C"
 
     bool Cpx_Unlock (CpxSmartLock* pLock)
     {
-        Cpx_PrintDebugInfo ();
-
-        YYTRACE ("TESTE");
-
         if (pLock == NULL) return false;
 
+        Cpx_PrintLock (pLock);
+        
         if (pLock->bExclusiveLock == true)
         {
+            pLock->nLockCount--;
             pLock->bExclusiveLock = false;
 
             Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
-
-            Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, true);
+            //Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
 
             return true;
         }
@@ -836,7 +857,7 @@ extern "C"
         pCurrentThread->nStatus = THREADL_WAITTAG;
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-        Cpx_NowYield ();
+        Cpx_Yield ();
 
         *payload = pCurrentThread->payload;
 
@@ -851,7 +872,7 @@ extern "C"
 
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-        Cpx_NowYield ();
+        Cpx_Yield ();
 
         return true;
     }
@@ -896,14 +917,14 @@ extern "C"
             }
         }
 
+        if (bReturn == true) Cpx_NowYield ();
+        
         return bReturn;
     }
 
     bool Cpx_NotifyOne (const char* pszTag, size_t nTagLength)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
-
-        if (bResult == true) Cpx_NowYield ();
 
         return bResult;
     }
@@ -912,8 +933,6 @@ extern "C"
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
 
-        if (bResult == true) Cpx_NowYield ();
-
         return bResult;
     }
 
@@ -921,16 +940,12 @@ extern "C"
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
 
-        if (bResult == true) Cpx_NowYield ();
-
         return bResult;
     }
 
     bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, false);
-
-        if (bResult == true) Cpx_NowYield ();
 
         return bResult;
     }

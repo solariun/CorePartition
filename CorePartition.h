@@ -85,6 +85,7 @@ typedef struct
 typedef struct
 {
     size_t nSharedLockCount;
+    size_t nLockCount;
     bool bExclusiveLock;
 }CpxSmartLock;
 
