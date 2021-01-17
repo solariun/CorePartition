@@ -108,7 +108,7 @@ extern "C"
         uint32_t nExecTime;
 
         uint32_t nNotifyUID;
-        size_t nVariableLockID;
+        void* pnVariableLockID;
         CpxMsgPayload payload;
 
         uint8_t nStatus;
@@ -185,29 +185,29 @@ extern "C"
         {
             if ((pLCoreThread = pCoreThread[nCount]) != NULL)
             {
-                YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zu\n",
+                YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zx\n",
                          nCurrentThread == nCount ? '*' : ' ',
                          nCount,
                          pLCoreThread->nStatus,
                          pLCoreThread->nStackSize,
                          pLCoreThread->nStackMaxSize,
                          pLCoreThread->nNice,
-                         pLCoreThread->nVariableLockID);
+                         (size_t) pLCoreThread->pnVariableLockID);
             }
         }
 
         YYTRACE ("------------------------------------------------\n");
     }
 
-    bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus)
+    bool Cpx_WaitVariableLock (void* pnLockID, size_t* pnStatus)
     {
         uint8_t nReturn = false;
 
-        if (nLockID > 0)
+        if (pnLockID > 0)
         {
-            TRACE ("%s: ThreadID: [%zu], nLockID: [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
+            TRACE ("%s: ThreadID: [%zu], nLockID: [%zx]\n", __FUNCTION__, nCurrentThread, (size_t) pnLockID);
 
-            pCurrentThread->nVariableLockID = (size_t)nLockID;
+            pCurrentThread->pnVariableLockID = (size_t)pnLockID;
 
             pCurrentThread->nStatus = THREADL_LOCK;
 
@@ -215,11 +215,11 @@ extern "C"
             {
                 if (pnStatus != NULL)
                 {
-                    *pnStatus = pCurrentThread->nVariableLockID;
+                    *pnStatus = (size_t) pCurrentThread->pnVariableLockID;
                     pCurrentThread->payload.nAttribute = 0;
                 }
 
-                TRACE ("%s: Thread #%zu, Received trap variable [%zu]\n", __FUNCTION__, nCurrentThread, nLockID);
+                TRACE ("%s: Thread #%zu, Received trap variable [%zx]\n", __FUNCTION__, nCurrentThread, (size_t) pnLockID);
 
                 nReturn = true;
             }
@@ -230,11 +230,11 @@ extern "C"
         return nReturn;
     }
 
-    size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly)
+    size_t Cpx_NotifyVariableLock (void* pnLockID, size_t nStatus, bool bOneOnly)
     {
         size_t nNotifiedCount = 0;
 
-        if (nRunningThreads > 0 && nLockID > 0)
+        if (nRunningThreads > 0 && pnLockID > 0)
         {
             size_t nThreadID = 0;
 
@@ -242,10 +242,11 @@ extern "C"
             {
                 if (pCoreThread[nThreadID] != NULL)
                 {
-                    if (pCoreThread[nThreadID]->nVariableLockID == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
                     {
-                        
-                        pCoreThread[nThreadID]->nVariableLockID = nStatus;
+                        TRACE ("%s: TID#%-4zu (%-16zx) Notifying  -> Thread #%zu\n", __FUNCTION__, nCurrentThread, (size_t) pnLockID, nThreadID);
+
+                        pCoreThread[nThreadID]->pnVariableLockID = (void*) nStatus;
                         pCoreThread[nThreadID]->nStatus = THREADL_NOW;
 
                         nNotifiedCount++;
@@ -255,7 +256,7 @@ extern "C"
                 }
             }
 
-            TRACE ("%s: Thread #%zu Notified (%zu] from ID [%zu] \n", __FUNCTION__, nCurrentThread, nNotifiedCount, nLockID);
+            TRACE ("%s: Thread #%zu Notified (%zu] from ID [%zx] \n", __FUNCTION__, nCurrentThread, nNotifiedCount, (size_t) pnLockID);
 
              if (nNotifiedCount > 0)
              {
@@ -266,11 +267,11 @@ extern "C"
         return nNotifiedCount;
     }
 
-    size_t Cpx_WaitingVariableLock (size_t nLockID)
+    size_t Cpx_WaitingVariableLock (void* pnLockID)
     {
         size_t nNotifiedCount = 0;
 
-        if (nRunningThreads > 0 && nLockID > 0)
+        if (nRunningThreads > 0 && pnLockID > 0)
         {
             size_t nThreadID = 0;
 
@@ -278,7 +279,7 @@ extern "C"
             {
                 if (pCoreThread[nThreadID] != NULL)
                 {
-                    if (pCoreThread[nThreadID]->nVariableLockID == nLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
                     {
                         nNotifiedCount++;
                     }
@@ -311,8 +312,8 @@ extern "C"
         return true;
     }
 
-    
-#define Cpx_PrintLock(pLock) TRACE ("%s: Thread #%zu Lock: [%c](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? 'T' : 'F', Cpx_WaitingVariableLock ((size_t) &pLock->bExclusiveLock), pLock->nSharedLockCount, Cpx_WaitingVariableLock ((size_t) &pLock->nSharedLockCount));
+
+#define Cpx_PrintLock(pLock) TRACE ("%s: Thread #%zu Lock: [%c](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? 'T' : 'F', Cpx_WaitingVariableLock ((void*) &pLock->bExclusiveLock), pLock->nSharedLockCount, Cpx_WaitingVariableLock ((void*) &pLock->nSharedLockCount));
     
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
@@ -325,7 +326,7 @@ extern "C"
         {
             if (pLock->bExclusiveLock == true)
             {
-                Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
             }
         }
         
@@ -337,7 +338,7 @@ extern "C"
         {
             if (pLock->nSharedLockCount)
             {
-                Cpx_WaitVariableLock ((size_t)&pLock->nSharedLockCount, NULL);
+                Cpx_WaitVariableLock ((void*)&pLock->nSharedLockCount, NULL);
             }
         }
 
@@ -354,14 +355,14 @@ extern "C"
         {
             if (pLock->bExclusiveLock > 0)
             {
-                Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
+                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
             }
         }
 
         pLock->nSharedLockCount++;
 
-        Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
-        Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
+        Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
+        Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, false);
 
         return true;
     }
@@ -376,8 +377,8 @@ extern "C"
         {
             pLock->nSharedLockCount--;
 
-            Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
-            //Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
+            Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
+            //Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, false);
             
             return true;
         }
@@ -395,8 +396,8 @@ extern "C"
         {
             pLock->bExclusiveLock = false;
 
-            Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
-            Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, true);
+            Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
+            Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, true);
 
             return true;
         }
@@ -504,7 +505,7 @@ extern "C"
 
         pCoreThread[nThread]->payload = (CpxMsgPayload){0, 0, 0};
 
-        pCoreThread[nThread]->nVariableLockID = 0;
+        pCoreThread[nThread]->pnVariableLockID = 0;
 
         nThreadCount++;
 
@@ -651,25 +652,6 @@ extern "C"
 
         if (nRunningThreads > 0)
         {
-            // Priority execution
-            nCount = 0;
-            nCThread = nCurrentThread + 1;
-            while (nCount < nMaxThreads)
-            {
-                if (nCThread >= nMaxThreads)
-                {
-                    nCThread = 0;
-                }
-                else if (NULL != (pThread = pCoreThread[nCThread]) && (THREADL_START == pThread->nStatus || THREADL_NOW == pThread->nStatus))
-                {
-                    nThread = nCThread;
-                    return nThread;
-                }
-
-                nCThread++;
-                nCount++;
-            }
-
             // normal execution
             nCount = 0;
             nCThread = nCurrentThread + 1;
@@ -685,7 +667,7 @@ extern "C"
                 {
                     nNextTime = pThread->nLastMomentun + pThread->nNice;
 
-                    if (nNextTime < nCurTime)
+                    if (nNextTime < nCurTime ||  (THREADL_START == pThread->nStatus || THREADL_NOW == pThread->nStatus))
                     {
                         nThread = nCThread;
                         return nThread;
@@ -1022,14 +1004,14 @@ extern "C"
         pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
     }
 
-    size_t Cpx_GetLockID ()
+    void* Cpx_GetLockID ()
     {
-        return pCurrentThread->nVariableLockID;
+        return pCurrentThread->pnVariableLockID;
     }
 
-    size_t Cpx_GetLockIDByID (size_t nID)
+    void* Cpx_GetLockIDByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nVariableLockID;
+        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->pnVariableLockID;
     }
 
 #ifdef __cplusplus

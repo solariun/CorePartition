@@ -551,25 +551,32 @@ bool Cpx_SharedUnlock (CpxSmartLock* pLock);
 /**
  * @brief  Wait for a Variable Locks notification
  *
- * @param nLockID   LockID size_t used to notify
+ * @param nLockID   Variable address
  * @param pnStatus  Payload to be sent, a size_t
  *
  * @return false    if LockID is invalid (== 0) or no data
  */
-bool Cpx_WaitVariableLock (size_t nLockID, uint8_t* pnStatus);
+bool Cpx_WaitVariableLock (void* nLockID, size_t* pnStatus);
 
-size_t Cpx_WaitingVariableLock (size_t nLockID);
+/**
+ * @brief   Return how much threads are locked waiting for a variable notification
+ * 
+ * @param nLockID   Variable address
+ * 
+ * @return size_t   How much active waiting for a variable
+ */
+size_t Cpx_WaitingVariableLock (void* nLockID);
 
 /**
  * @brief   Notify all/one Variable lock waiting for notification
  *
- * @param nLockID   LockID size_t used to notify
+ * @param nLockID   Variable address
  * @param nStatus   Payload to be sent, a size_t
  * @param bOneOnly  If true only one is notified
  *
  * @return false    if LockID is invalid (== 0) or no data
  */
-size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
+size_t Cpx_NotifyVariableLock (void* nLockID, size_t nStatus, bool bOneOnly);
 
 /**
  * @brief   Notify one Variable lock waiting for notification
@@ -594,9 +601,9 @@ size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
 #define Cpx_NotifyVariableLockAll(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, false)
 
 
-size_t Cpx_GetLockID(void);
+void* Cpx_GetLockID(void);
 
-size_t Cpx_GetLockIDByID(size_t nID);
+void* Cpx_GetLockIDByID(size_t nID);
 
 #ifdef __cplusplus
 }
