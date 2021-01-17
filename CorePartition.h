@@ -92,6 +92,7 @@ typedef void (*TopicCallback) (void* pContext, const char* pszTopic, size_t nSiz
 
 extern uint32_t Cpx_GetCurrentTick (void);
 extern void Cpx_SleepTicks (uint32_t);
+extern void Cpx_StackOverflowHandler (void);
 
 static const char Cpx_version[] = "V2.7.0 from  " __TIMESTAMP__;
 
@@ -591,6 +592,11 @@ size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
  * @return false    if LockID is invalid (== 0) or no data
  */
 #define Cpx_NotifyVariableLockAll(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, false)
+
+
+size_t Cpx_GetLockID();
+
+size_t Cpx_GetLockIDByID(size_t nID);
 
 #ifdef __cplusplus
 }

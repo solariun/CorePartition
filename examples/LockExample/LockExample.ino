@@ -40,73 +40,6 @@
 
 bool Lock = false;
 
-void Cpx_LockPreemption ()
-{
-    Lock = 1;
-}
-
-CpxSmartLock lock;
-
-int nProducers [7];
-
-void Producer(void* pValue)
-{
-    (void) pValue;
-
-    size_t nID = Cpx_GetID();
-    
-    nProducers [nID] = 0;
-    
-    do
-    {
-        Cpx_SharedLock(&lock);
-        
-        nProducers [nID]++;
-        
-        Cpx_Sleep(0);
-        
-        Cpx_SharedUnlock(&lock);
-
-         
-    } while (Cpx_Yield());
-
-}
-
-void Consumer(void* pValue)
-{
-    unsigned int nCount = 0;
-        
-    (void) pValue;
-
-    do
-    {
-        Cpx_Lock(&lock);
-        
-        Serial.print (F ("Thread "));
-        Serial.print (Cpx_GetID());
-        Serial.print (F (": Values -> "));
-
-        for (nCount=0; nCount < (sizeof (nProducers)/sizeof (int));nCount++)
-        {
-            Serial.print (F ("("));
-            Serial.print (nCount);
-            Serial.print (F (": ["));
-            Serial.print (nProducers [nCount]);
-            Serial.print (F ("]) "));
-        }
-
-        Serial.println ("");
-        
-        Serial.flush ();
-
-        Cpx_Sleep(1);
-        
-        Cpx_Unlock(&lock);
-        
-        
-    } while (Cpx_Yield());
-}
-
 void ShowRunningThreads ()
 {
     size_t nThreadID = 0;
@@ -136,11 +69,81 @@ void ShowRunningThreads ()
             Serial.print (Cpx_GetMaxStackSizeByID (nThreadID) + Cpx_GetThreadContextSize ());
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
-            Serial.print ("ms\t\t");
-            Serial.print (Cpx_GetThreadNameByID (nThreadID));
+            Serial.print ("ms");
         }
         Serial.println ("\e[0K");
     }
+}
+
+CpxSmartLock lock;
+
+int nProducers[7];
+
+void Producer (void* pValue)
+{
+    (void)pValue;
+
+    size_t nID = Cpx_GetID ();
+
+    nProducers[nID] = 0;
+
+    do
+    {
+        Cpx_SharedLock (&lock);
+
+        nProducers[nID]++;
+
+        Cpx_Yield ();
+
+        if (nID == 5) Serial.println (Cpx_GetID ());
+
+        Cpx_SharedUnlock (&lock);
+
+    } while (true);
+}
+
+void Consumer_print ()
+{
+        unsigned int nCount = 0;
+
+        Serial.print (F ("Thread "));
+        Serial.print (Cpx_GetID ());
+        Serial.print (F (": Values -> "));
+
+        for (nCount = 0; nCount < (sizeof (nProducers) / sizeof (int)); nCount++)
+        {
+            Serial.print (F ("("));
+            Serial.print (nCount);
+            Serial.print (F (": ["));
+            Serial.print (nProducers[nCount]);
+            Serial.print (F ("]"));
+            Serial.print (Cpx_GetStatusByID (nCount));
+            Serial.print (F(","));
+            Serial.print (Cpx_GetLockIDByID (nCount));
+            Serial.print (F (") "));
+        }
+
+        Serial.print (", ");
+        Serial.println (Cpx_GetStackSize ());
+
+        Serial.flush ();
+}
+
+void Consumer (void* pValue)
+{
+    (void)pValue;
+
+    do
+    {
+        Cpx_Lock (&lock);
+
+        ShowRunningThreads ();
+        
+        Cpx_Unlock (&lock);
+
+        Consumer_print ();
+
+    } while (Cpx_Yield ());
 }
 
 // uint32_t Cpx_GetCurrentTick ()
@@ -161,7 +164,7 @@ void Cpx_StackOverflowHandler ()
     Serial.println (F ("----------------------------------------"));
 
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
-    Serial.print (Cpx_GetID());
+    Serial.print (Cpx_GetID ());
     Serial.print (F (" Used: "));
     Serial.print (Cpx_GetStackSize ());
     Serial.print (F (", from Max: "));
@@ -174,11 +177,11 @@ void Cpx_StackOverflowHandler ()
 }
 
 #ifdef __AVR__
-#define STACK_PRODUCER sizeof(size_t) * 12
-#define STACK_CONSUMER sizeof(size_t) * 37
+#define STACK_PRODUCER sizeof (size_t) * 20
+#define STACK_CONSUMER sizeof (size_t) * 40
 #else
-#define STACK_PRODUCER sizeof(size_t) * 40
-#define STACK_CONSUMER sizeof(size_t) * 60
+#define STACK_PRODUCER sizeof (size_t) * 40
+#define STACK_CONSUMER sizeof (size_t) * 60
 #endif
 
 void setup ()
@@ -223,13 +226,12 @@ void setup ()
 
     assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 1000));
 
-    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 500));
+    Cpx_Join ();
 
-    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 2000));
+    ShowRunningThreads ();
 
 }
 
 void loop ()
 {
-    Cpx_Join ();
 }
