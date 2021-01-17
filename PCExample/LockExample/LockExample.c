@@ -57,18 +57,18 @@ void Consumer(void* pValue)
     } while (Cpx_Yield());
 }
 
-// void Cpx_SleepTicks (uint32_t nSleepTime)
-// {
-//     usleep ((useconds_t) nSleepTime * 1000);
-// }
+ void Cpx_SleepTicks (uint32_t nSleepTime)
+ {
+     usleep ((useconds_t) nSleepTime * 1000);
+ }
 
-// uint32_t Cpx_GetCurrentTick(void)
-// {
-//     struct timeval tp;
-//     gettimeofday(&tp, NULL);
+ uint32_t Cpx_GetCurrentTick(void)
+ {
+     struct timeval tp;
+     gettimeofday(&tp, NULL);
     
-//     return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
-// }
+     return (uint32_t) tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+ }
 
 void Cpx_StackOverflowHandler ()
 {

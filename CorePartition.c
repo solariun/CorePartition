@@ -294,7 +294,6 @@ extern "C"
         if (pLock == false) return false;
 
         pLock->nSharedLockCount = 0;
-        pLock->nLockCount = 0;
         pLock->bExclusiveLock = false;
 
         return true;
@@ -307,31 +306,19 @@ extern "C"
         // Wait all the locks to be done
         if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock == true) return false;
 
-        pLock->nLockCount++;
         pLock->bExclusiveLock = true;
 
         return true;
     }
 
     
-#define Cpx_PrintLock(pLock) TRACE ("%s: Thread #%zu Lock: [%c, %zu](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? 'T' : 'F', pLock->nLockCount, Cpx_WaitingVariableLock ((size_t) &pLock->bExclusiveLock), pLock->nSharedLockCount, Cpx_WaitingVariableLock ((size_t) &pLock->nSharedLockCount));
+#define Cpx_PrintLock(pLock) TRACE ("%s: Thread #%zu Lock: [%c](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? 'T' : 'F', Cpx_WaitingVariableLock ((size_t) &pLock->bExclusiveLock), pLock->nSharedLockCount, Cpx_WaitingVariableLock ((size_t) &pLock->nSharedLockCount));
     
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
         if (pLock == NULL) return false;
 
         Cpx_PrintLock (pLock);
-        
-        pLock->nLockCount++;
-        
-        // Wait all shared locks to be done
-        while (pLock->nSharedLockCount)
-        {
-            if (pLock->nSharedLockCount)
-            {
-                Cpx_WaitVariableLock ((size_t)&pLock->nSharedLockCount, NULL);
-            }
-        }
 
         // Get exclusive lock
         while (pLock->bExclusiveLock)
@@ -344,8 +331,15 @@ extern "C"
         
         pLock->bExclusiveLock = true;
 
-        Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
-        Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
+        
+        // Wait all shared locks to be done
+        while (pLock->nSharedLockCount)
+        {
+            if (pLock->nSharedLockCount)
+            {
+                Cpx_WaitVariableLock ((size_t)&pLock->nSharedLockCount, NULL);
+            }
+        }
 
         return true;
     }
@@ -356,9 +350,9 @@ extern "C"
         
         Cpx_PrintLock (pLock);
         
-        while (pLock->nLockCount > 0)
+        while (pLock->bExclusiveLock > 0)
         {
-            if (pLock->nLockCount > 0)
+            if (pLock->bExclusiveLock > 0)
             {
                 Cpx_WaitVariableLock ((size_t)&pLock->bExclusiveLock, NULL);
             }
@@ -366,7 +360,7 @@ extern "C"
 
         pLock->nSharedLockCount++;
 
-        //Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
+        Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
         Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
 
         return true;
@@ -399,11 +393,10 @@ extern "C"
         
         if (pLock->bExclusiveLock == true)
         {
-            pLock->nLockCount--;
             pLock->bExclusiveLock = false;
 
-            Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, false);
-            //Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
+            Cpx_NotifyVariableLock ((size_t)&pLock->nSharedLockCount, 0, false);
+            Cpx_NotifyVariableLock ((size_t)&pLock->bExclusiveLock, 0, true);
 
             return true;
         }

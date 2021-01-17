@@ -85,7 +85,6 @@ typedef struct
 typedef struct
 {
     size_t nSharedLockCount;
-    size_t nLockCount;
     bool bExclusiveLock;
 }CpxSmartLock;
 
@@ -595,7 +594,7 @@ size_t Cpx_NotifyVariableLock (size_t nLockID, uint8_t nStatus, bool bOneOnly);
 #define Cpx_NotifyVariableLockAll(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, false)
 
 
-size_t Cpx_GetLockID();
+size_t Cpx_GetLockID(void);
 
 size_t Cpx_GetLockIDByID(size_t nID);
 
