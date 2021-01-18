@@ -891,8 +891,6 @@ extern "C"
                 }
             }
         }
-
-        if (bReturn == true) Cpx_NowYield ();
         
         return bReturn;
     }
@@ -901,6 +899,8 @@ extern "C"
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
 
+        Cpx_NowYield ();
+
         return bResult;
     }
 
@@ -908,12 +908,16 @@ extern "C"
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
 
+        Cpx_NowYield ();
+
         return bResult;
     }
 
     bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
+        
+        Cpx_NowYield ();
 
         return bResult;
     }
@@ -921,6 +925,8 @@ extern "C"
     bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, false);
+
+        Cpx_NowYield ();
 
         return bResult;
     }

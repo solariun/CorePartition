@@ -30,6 +30,7 @@
 // See LICENSE file for the complete information
 */
 
+#include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -61,9 +62,9 @@ void PrintThreads ()
 
     for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
-        printf ("%-4u %-10s %-10u %-10u  %u ms\n",
+        printf ("%c %-4u %-10u %-10u  %u ms\n",
+                nCount == Cpx_GetID () ? '*' : ' ',
                 nCount,
-                Cpx_GetThreadNameByID (nCount),
                 Cpx_GetNiceByID (nCount),
                 Cpx_GetStatusByID (nCount),
                 Cpx_GetLastDutyCycleByID (nCount));
@@ -75,11 +76,10 @@ void PrintThreads ()
 void kernel (void* pValue)
 {
     uint32_t nCurTime = Cpx_GetCurrentTick ();
-    Cpx_SetThreadName ("Kernel", 6);
 
     size_t nCounter = 0;
 
-    while (1)
+    while (Cpx_Yield ())
     {
         nCurTime = Cpx_GetCurrentTick ();
 
@@ -88,9 +88,8 @@ void kernel (void* pValue)
             printf ("\n>>> No waiting thread to notify.\n");
         }
 
-        printf ("Kenrel Sleept for: %d", (Cpx_GetCurrentTick () - nCurTime));
+        printf ("Kenrel Sleept for: %d ms", (Cpx_GetCurrentTick () - nCurTime));
 
-        PrintThreads ();
     }
 }
 
@@ -98,7 +97,7 @@ void Thread1 (void* pValue)
 {
     CpxMsgPayload payload={0,0,0};
 
-    while (1)
+    while (true)
     {
         if ((Cpx_WaitMessage (szTagName, sizeof (szTagName) - 1, &payload)) == false)
         {
@@ -107,14 +106,16 @@ void Thread1 (void* pValue)
         }
         else
         {
-            printf ("Thread %zu: received a notification. payload: [%zu::%llu from %s]\n",
+            printf ("Thread %zu: received a notification. payload: [%zu::%llu from %zu]\n",
                     Cpx_GetID (),
                     payload.nAttribute,
                     payload.nValue,
-                    Cpx_GetThreadNameByID (payload.nThreadID));
+                    payload.nThreadID);
         }
 
-        Cpx_Sleep (1000);
+        PrintThreads ();
+
+        Cpx_Sleep (1000);    
     }
 }
 
@@ -138,7 +139,7 @@ uint32_t Cpx_GetCurrentTick (void)
     return (uint32_t)tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
-static void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
 }
@@ -152,8 +153,6 @@ int main (int nArgs, const char* pszArg[])
         printf ("Error starting up Thread.");
         return (1);
     }
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (Cpx_CreateThread (Thread1, NULL, 256, 0));
     assert (Cpx_CreateThread (Thread1, NULL, 256, 0));

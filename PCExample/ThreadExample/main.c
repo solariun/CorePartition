@@ -195,7 +195,7 @@ uint32_t Cpx_GetCurrentTick (void)
     return (uint32_t)tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
-static void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
 }
@@ -210,13 +210,11 @@ int main (int nArgs, const char* pszArg[])
         return (1);
     }
 
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
-
     assert (Cpx_CreateThread (Thread1, NULL, 256, 150));
     assert (Cpx_CreateThread (Thread1, NULL, 256, 323));
     assert (Cpx_CreateThread (Thread1, NULL, 256, 764));
     assert (Cpx_CreateThread (Thread1, NULL, 256, 1500));
-    assert (Cpx_CreateSecureThread (kernel, NULL, 256, 250));
+    assert (Cpx_CreateThread (kernel, NULL, 256, 250));
 
     Cpx_Join ();
 

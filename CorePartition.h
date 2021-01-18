@@ -36,11 +36,13 @@
 extern "C"
 {
 #else
-//#ifndef bool
-//#define bool uint8_t
-//#define false 0
-//#define true (!false)
-//#endif
+#if 0
+#ifndef bool
+#define bool uint8_t
+#define false 0
+#define true (!false)
+#endif
+#endif
 #endif
 
 #include <stdbool.h>
