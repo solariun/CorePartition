@@ -181,6 +181,7 @@ extern "C"
 
     static void Cpx_PrintDebugInfo ()
     {
+#ifdef __EXTRA__
         size_t nCount = 0;
         CoreThread* pLCoreThread = NULL;
 
@@ -206,6 +207,8 @@ extern "C"
         }
 
         YYTRACE ("------------------------------------------------\n");
+#endif
+        (void)0;
     }
 
 #define POLY 0x8408
@@ -474,7 +477,7 @@ extern "C"
             if ((THREADL_RUNNING == pCurrentThread->nStatus || THREADL_SLEEP == pCurrentThread->nStatus) &&
                 Cpx_GetNextTime (nCurrentThread) > nCurTime)
             {
-                Cpx_SleepTicks (Cpx_GetNextTime (nCurrentThread) - nCurTime);
+                Cpx_SleepTicks (Cpx_GetNextTime (nCurrentThread) - Cpx_GetCurrentTick ());
             }
         }
 

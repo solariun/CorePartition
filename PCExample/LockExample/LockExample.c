@@ -17,8 +17,6 @@ void Procuder (void* pValue)
 
     do
     {
-        printf ("%s: #%zu Nice: [%u] -> Duty: [%u ms]\n", __FUNCTION__, Cpx_GetID (), Cpx_GetNice (), (uint32_t) (Cpx_GetCurrentTick () - nLastDuty));
-
         Cpx_SharedLock (&lock);
 
         nProducers[nID]++;
@@ -26,9 +24,9 @@ void Procuder (void* pValue)
         /*
          * This will emulate preemption
          */
-        // Cpx_Sleep(0);
+        Cpx_Sleep(0);
 
-        //Cpx_SharedUnlock (&lock);
+        Cpx_SharedUnlock (&lock);
 
         nLastDuty = Cpx_GetCurrentTick ();
     } while (Cpx_Yield ());
@@ -53,7 +51,7 @@ void Consumer (void* pValue)
         /*
          * This will emulate preemption
          */
-        // Cpx_Sleep(0);
+        Cpx_Sleep(0);
 
         Cpx_Unlock (&lock);
 
