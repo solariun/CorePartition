@@ -57,7 +57,7 @@ extern "C"
     {                     \
         return ret;       \
     }
-#define YYTRACE pri ntf
+#define YYTRACE printf
 #define TRACE NOTRACE
 
 #endif
