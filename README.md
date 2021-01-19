@@ -219,9 +219,9 @@ int main ()
 
      //All the time with a Stack page of 150 bytes and
      //thread isolation
-     assert (Cpx_CreateSecureThread (Thread2, NULL, 150, 2000));
+     assert (Cpx_CreateThread (Thread2, NULL, 150, 2000));
 
-     assert (Cpx_CreateSecureThread (Thread2, NULL, 150, 500));
+     assert (Cpx_CreateThread (Thread2, NULL, 150, 500));
 
      Cpx_Join();
 }

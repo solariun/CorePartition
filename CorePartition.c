@@ -163,12 +163,19 @@ extern "C"
 #pragma weak Cpx_StackOverflowHandler
     void Cpx_StackOverflowHandler (void)
     {
-        TRACE ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID(), Cpx_GetStackSize(), Cpx_GetMaxStackSize());
+        TRACE ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
     }
 
     /*
      * --------------------------------------------------
      * String functions not capable of overloading
+     * --------------------------------------------------
+     */
+
+
+    /*
+     * -------------------------------------------------- 
+     * KERNEL FUNCTIONS ---------------------------------
      * --------------------------------------------------
      */
 
@@ -192,217 +199,11 @@ extern "C"
                          pLCoreThread->nStackSize,
                          pLCoreThread->nStackMaxSize,
                          pLCoreThread->nNice,
-                         (size_t) pLCoreThread->pnVariableLockID);
+                         (size_t)pLCoreThread->pnVariableLockID);
             }
         }
 
         YYTRACE ("------------------------------------------------\n");
-    }
-
-    bool Cpx_WaitVariableLock (void* pnLockID, size_t* pnStatus)
-    {
-        uint8_t nReturn = false;
-
-        if (pnLockID > 0)
-        {
-            TRACE ("%s: ThreadID: [%zu], nLockID: [%zx]\n", __FUNCTION__, nCurrentThread, (size_t) pnLockID);
-
-            pCurrentThread->pnVariableLockID = (size_t)pnLockID;
-
-            pCurrentThread->nStatus = THREADL_LOCK;
-
-            if (Cpx_Yield ())
-            {
-                if (pnStatus != NULL)
-                {
-                    *pnStatus = (size_t) pCurrentThread->pnVariableLockID;
-                    pCurrentThread->payload.nAttribute = 0;
-                }
-
-                TRACE ("%s: Thread #%zu, Received trap variable [%zx]\n", __FUNCTION__, nCurrentThread, (size_t) pnLockID);
-
-                nReturn = true;
-            }
-
-            pCurrentThread->nStatus = THREADL_RUNNING;
-        }
-
-        return nReturn;
-    }
-
-    size_t Cpx_NotifyVariableLock (void* pnLockID, size_t nStatus, bool bOneOnly)
-    {
-        size_t nNotifiedCount = 0;
-
-        if (nRunningThreads > 0 && pnLockID > 0)
-        {
-            size_t nThreadID = 0;
-
-            for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
-            {
-                if (pCoreThread[nThreadID] != NULL)
-                {
-                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
-                    {
-                        TRACE ("%s: TID#%-4zu (%-16zx) Notifying  -> Thread #%zu\n", __FUNCTION__, nCurrentThread, (size_t) pnLockID, nThreadID);
-
-                        pCoreThread[nThreadID]->pnVariableLockID = (void*) nStatus;
-                        pCoreThread[nThreadID]->nStatus = THREADL_NOW;
-
-                        nNotifiedCount++;
-
-                        if (bOneOnly) break;
-                    }
-                }
-            }
-
-            TRACE ("%s: Thread #%zu Notified (%zu] from ID [%zx] \n", __FUNCTION__, nCurrentThread, nNotifiedCount, (size_t) pnLockID);
-
-             if (nNotifiedCount > 0)
-             {
-                 Cpx_NowYield ();
-             }
-        }
-
-        return nNotifiedCount;
-    }
-
-    size_t Cpx_WaitingVariableLock (void* pnLockID)
-    {
-        size_t nNotifiedCount = 0;
-
-        if (nRunningThreads > 0 && pnLockID > 0)
-        {
-            size_t nThreadID = 0;
-
-            for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
-            {
-                if (pCoreThread[nThreadID] != NULL)
-                {
-                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
-                    {
-                        nNotifiedCount++;
-                    }
-                }
-            }
-        }
-
-        return nNotifiedCount;
-    }
-
-    bool Cpx_LockInit (CpxSmartLock* pLock)
-    {
-        if (pLock == false) return false;
-
-        pLock->nSharedLockCount = 0;
-        pLock->bExclusiveLock = false;
-
-        return true;
-    }
-
-    bool Cpx_TryLock (CpxSmartLock* pLock)
-    {
-        if (pLock == false) return false;
-
-        // Wait all the locks to be done
-        if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock == true) return false;
-
-        pLock->bExclusiveLock = true;
-
-        return true;
-    }
-
-
-#define Cpx_PrintLock(pLock) TRACE ("%s: Thread #%zu Lock: [%c](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", __FUNCTION__, nCurrentThread, pLock->bExclusiveLock ? 'T' : 'F', Cpx_WaitingVariableLock ((void*) &pLock->bExclusiveLock), pLock->nSharedLockCount, Cpx_WaitingVariableLock ((void*) &pLock->nSharedLockCount));
-    
-    bool Cpx_Lock (CpxSmartLock* pLock)
-    {
-        if (pLock == NULL) return false;
-
-        Cpx_PrintLock (pLock);
-
-        // Get exclusive lock
-        while (pLock->bExclusiveLock)
-        {
-            if (pLock->bExclusiveLock == true)
-            {
-                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
-            }
-        }
-        
-        pLock->bExclusiveLock = true;
-
-        
-        // Wait all shared locks to be done
-        while (pLock->nSharedLockCount)
-        {
-            if (pLock->nSharedLockCount)
-            {
-                Cpx_WaitVariableLock ((void*)&pLock->nSharedLockCount, NULL);
-            }
-        }
-
-        return true;
-    }
-
-    bool Cpx_SharedLock (CpxSmartLock* pLock)
-    {
-        if (pLock == NULL) return false;
-        
-        Cpx_PrintLock (pLock);
-        
-        while (pLock->bExclusiveLock > 0)
-        {
-            if (pLock->bExclusiveLock > 0)
-            {
-                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
-            }
-        }
-
-        pLock->nSharedLockCount++;
-
-        Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
-        Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, false);
-
-        return true;
-    }
-
-    bool Cpx_SharedUnlock (CpxSmartLock* pLock)
-    {
-        if (pLock == NULL) return false;
-        
-        Cpx_PrintLock (pLock);
-        
-        if (pLock->nSharedLockCount)
-        {
-            pLock->nSharedLockCount--;
-
-            Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
-            //Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, false);
-            
-            return true;
-        }
-
-        return false;
-    }
-
-    bool Cpx_Unlock (CpxSmartLock* pLock)
-    {
-        if (pLock == NULL) return false;
-
-        Cpx_PrintLock (pLock);
-        
-        if (pLock->bExclusiveLock == true)
-        {
-            pLock->bExclusiveLock = false;
-
-            Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
-            Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, true);
-
-            return true;
-        }
-
-        return false;
     }
 
 #define POLY 0x8408
@@ -512,99 +313,6 @@ extern "C"
         return true;
     }
 
-    bool Cpx_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback)
-    {
-        if (pCurrentThread->pSubscriptions == NULL)
-        {
-            Subscription* pSub = NULL;
-            size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
-
-            if ((pSub = malloc (nMemorySize)) != NULL)
-            {
-                pSub->nTopicCount = 0;
-                pSub->callback = callback;
-                pSub->nMaxTopics = nMaxTopics;
-                pSub->pContext = pContext;
-
-                pCurrentThread->pSubscriptions = pSub;
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    static int32_t Cpx_GetTopicID (const char* pszTopic, size_t length)
-    {
-        return ((int32_t) ((Cpx_CRC16 ((const uint8_t*)pszTopic, length, 0) << 15) | Cpx_CRC16 ((const uint8_t*)pszTopic, length, 0x8408)));
-    }
-
-    bool Cpx_IsSubscribed (const char* pszTopic, size_t length)
-    {
-        if (pCurrentThread != NULL && pCurrentThread->pSubscriptions != NULL)
-        {
-            Subscription* pSub = pCurrentThread->pSubscriptions;
-            int nCount = 0;
-            uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
-
-            for (nCount = 0; nCount < pSub->nTopicCount; nCount++)
-            {
-                if ((&pSub->nTopicList)[nCount] == nTopicID)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    bool Cpx_SubscribeTopic (const char* pszTopic, size_t length)
-    {
-        Subscription* pSub = pCurrentThread->pSubscriptions;
-
-        if (Cpx_IsSubscribed (pszTopic, length) == false)
-        {
-            if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
-            {
-                (&pSub->nTopicList)[pSub->nTopicCount++] = Cpx_GetTopicID (pszTopic, length);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    bool Cpx_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue)
-    {
-        bool bReturn = false;
-
-        size_t nThreadID = 0;
-        uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
-        size_t nSubID = 0;
-
-        CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
-
-        for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
-        {
-            if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->pSubscriptions != NULL)
-            {
-                for (nSubID = 0; nSubID < pCoreThread[nThreadID]->pSubscriptions->nTopicCount; nSubID++)
-                {
-                    if ((&pCoreThread[nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
-                    {
-                        pCoreThread[nThreadID]->pSubscriptions->callback (
-                                pCoreThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, payload);
-                        bReturn = true;
-                    }
-                }
-            }
-        }
-
-        return bReturn;
-    }
-
     static void BackupStack (void)
     {
         memcpy ((uint8_t*)&pCurrentThread->stackPage, (const uint8_t*)pCurrentThread->pLastStack, pCurrentThread->nStackSize);
@@ -648,11 +356,12 @@ extern "C"
             }
         }
 
-        if (!bRunning) nRunningThreads = 0;
+        Cpx_PrintDebugInfo ();
+
+        if (nCount == nMaxThreads) nRunningThreads = 0;
 
         if (nRunningThreads > 0)
         {
-            // normal execution
             nCount = 0;
             nCThread = nCurrentThread + 1;
 
@@ -663,11 +372,11 @@ extern "C"
                     nCThread = 0;
                 }
 
-                if (NULL != (pThread = pCoreThread[nCThread]) && pThread->nStatus != THREADL_WAITTAG && pThread->nStatus != THREADL_LOCK)
+                if (NULL != (pThread = pCoreThread[nCThread]) && pThread->nStatus >= THREADL_RUNNING)
                 {
                     nNextTime = pThread->nLastMomentun + pThread->nNice;
 
-                    if (nNextTime < nCurTime ||  (THREADL_START == pThread->nStatus || THREADL_NOW == pThread->nStatus))
+                    if (nNextTime < nCurTime || (THREADL_START == pThread->nStatus || THREADL_NOW == pThread->nStatus))
                     {
                         nThread = nCThread;
                         return nThread;
@@ -825,6 +534,190 @@ extern "C"
         return 0;
     }
 
+    void Cpx_Sleep (uint32_t nDelayTickTime)
+    {
+        uint32_t nBkpNice = 0;
+
+        VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, );
+
+        nBkpNice = pCurrentThread->nNice;
+
+        pCurrentThread->nStatus = THREADL_SLEEP;
+        pCurrentThread->nNice = nDelayTickTime;
+
+        Cpx_Yield ();
+
+        pCurrentThread->nStatus = THREADL_RUNNING;
+        pCurrentThread->nNice = nBkpNice;
+    }
+
+    /*
+     * -------------------------------------------------- 
+     *   GET/SET'S FOR MANAGING THREADS -----------------
+     * -------------------------------------------------- 
+     */
+
+    size_t Cpx_GetID (void)
+    {
+        return nCurrentThread;
+    }
+
+    size_t Cpx_GetStackSizeByID (size_t nID)
+    {
+        VERIFY (nID < nMaxThreads || pCoreThread[nID] != NULL, 0);
+
+        return pCoreThread[nID]->nStackSize;
+    }
+
+    size_t Cpx_GetMaxStackSizeByID (size_t nID)
+    {
+        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStackMaxSize;
+    }
+
+    uint32_t Cpx_GetNiceByID (size_t nID)
+    {
+        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nNice;
+    }
+
+    uint8_t Cpx_GetStatusByID (size_t nID)
+    {
+        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStatus;
+    }
+
+    uint32_t Cpx_GetLastDutyCycleByID (size_t nID)
+    {
+        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nExecTime;
+    }
+
+    uint32_t Cpx_GetLastMomentumByID (size_t nID)
+    {
+        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nLastMomentun;
+    }
+
+    size_t Cpx_GetNumberOfActiveThreads (void)
+    {
+        return nRunningThreads;
+    }
+
+    size_t Cpx_GetMaxNumberOfThreads (void)
+    {
+        return nMaxThreads;
+    }
+
+    size_t Cpx_GetThreadContextSize (void)
+    {
+        return sizeof (CoreThread);
+    }
+
+    bool Cpx_IsCoreRunning (void)
+    {
+        return nRunningThreads > 0 ? true : false;
+    }
+
+    void Cpx_SetNice (uint32_t nNice)
+    {
+        pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
+    }
+
+    /*
+     * -------------------------------------------------- 
+     *  BROKER BASED IPC IMPLEMENTATION -----------------
+     * -------------------------------------------------- 
+     */
+
+    bool Cpx_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback)
+    {
+        if (pCurrentThread->pSubscriptions == NULL)
+        {
+            Subscription* pSub = NULL;
+            size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
+
+            if ((pSub = malloc (nMemorySize)) != NULL)
+            {
+                pSub->nTopicCount = 0;
+                pSub->callback = callback;
+                pSub->nMaxTopics = nMaxTopics;
+                pSub->pContext = pContext;
+
+                pCurrentThread->pSubscriptions = pSub;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static int32_t Cpx_GetTopicID (const char* pszTopic, size_t length)
+    {
+        return ((int32_t) ((Cpx_CRC16 ((const uint8_t*)pszTopic, length, 0) << 15) | Cpx_CRC16 ((const uint8_t*)pszTopic, length, 0x8408)));
+    }
+
+    bool Cpx_IsSubscribed (const char* pszTopic, size_t length)
+    {
+        if (pCurrentThread != NULL && pCurrentThread->pSubscriptions != NULL)
+        {
+            Subscription* pSub = pCurrentThread->pSubscriptions;
+            int nCount = 0;
+            uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
+
+            for (nCount = 0; nCount < pSub->nTopicCount; nCount++)
+            {
+                if ((&pSub->nTopicList)[nCount] == nTopicID)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool Cpx_SubscribeTopic (const char* pszTopic, size_t length)
+    {
+        Subscription* pSub = pCurrentThread->pSubscriptions;
+
+        if (Cpx_IsSubscribed (pszTopic, length) == false)
+        {
+            if (pSub != NULL && pSub->nTopicCount < pSub->nMaxTopics)
+            {
+                (&pSub->nTopicList)[pSub->nTopicCount++] = Cpx_GetTopicID (pszTopic, length);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool Cpx_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue)
+    {
+        bool bReturn = false;
+
+        size_t nThreadID = 0;
+        uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
+        size_t nSubID = 0;
+
+        CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
+
+        for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+        {
+            if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->pSubscriptions != NULL)
+            {
+                for (nSubID = 0; nSubID < pCoreThread[nThreadID]->pSubscriptions->nTopicCount; nSubID++)
+                {
+                    if ((&pCoreThread[nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
+                    {
+                        pCoreThread[nThreadID]->pSubscriptions->callback (
+                                pCoreThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, payload);
+                        bReturn = true;
+                    }
+                }
+            }
+        }
+
+        return bReturn;
+    }
+
     bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload)
     {
         if (pszTag == NULL || nTagLength == 0 || pCurrentThread->nStatus != THREADL_RUNNING) return false;
@@ -891,7 +784,7 @@ extern "C"
                 }
             }
         }
-        
+
         return bReturn;
     }
 
@@ -916,7 +809,7 @@ extern "C"
     bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength)
     {
         bool bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
-        
+
         Cpx_NowYield ();
 
         return bResult;
@@ -931,83 +824,220 @@ extern "C"
         return bResult;
     }
 
-    void Cpx_Sleep (uint32_t nDelayTickTime)
+    /*
+     * -------------------------------------------------- 
+     *  THREAD SYNC FUNCTION (SMART LOCK / VARIABLELOCK)-
+     * -------------------------------------------------- 
+     */
+
+    bool Cpx_WaitVariableLock (void* pnLockID, size_t* pnStatus)
     {
-        uint32_t nBkpNice = 0;
+        uint8_t nReturn = false;
 
-        VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, );
+        if (pnLockID > 0)
+        {
+            TRACE ("%s: ThreadID: [%zu], nLockID: [%zx]\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID);
 
-        nBkpNice = pCurrentThread->nNice;
+            pCurrentThread->pnVariableLockID = (void*) pnLockID;
 
-        pCurrentThread->nStatus = THREADL_SLEEP;
-        pCurrentThread->nNice = nDelayTickTime;
+            pCurrentThread->nStatus = THREADL_LOCK;
 
-        Cpx_Yield ();
+            if (Cpx_Yield ())
+            {
+                if (pnStatus != NULL)
+                {
+                    *pnStatus = (size_t)pCurrentThread->pnVariableLockID;
+                    pCurrentThread->payload.nAttribute = 0;
+                }
 
-        pCurrentThread->nStatus = THREADL_RUNNING;
-        pCurrentThread->nNice = nBkpNice;
+                TRACE ("%s: Thread #%zu, Received trap variable [%zx]\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID);
+
+                nReturn = true;
+            }
+
+            pCurrentThread->nStatus = THREADL_RUNNING;
+        }
+
+        return nReturn;
     }
 
-    size_t Cpx_GetID (void)
+    size_t Cpx_NotifyVariableLock (void* pnLockID, size_t nStatus, bool bOneOnly)
     {
-        return nCurrentThread;
+        size_t nNotifiedCount = 0;
+
+        if (nRunningThreads > 0 && pnLockID > 0)
+        {
+            size_t nThreadID = 0;
+
+            for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+            {
+                if (pCoreThread[nThreadID] != NULL)
+                {
+                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    {
+                        TRACE ("%s: TID#%-4zu (%-16zx) Notifying  -> Thread #%zu\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID, nThreadID);
+
+                        pCoreThread[nThreadID]->pnVariableLockID = (void*)nStatus;
+                        pCoreThread[nThreadID]->nStatus = THREADL_NOW;
+
+                        nNotifiedCount++;
+
+                        if (bOneOnly) break;
+                    }
+                }
+            }
+
+            TRACE ("%s: Thread #%zu Notified (%zu] from ID [%zx] \n", __FUNCTION__, nCurrentThread, nNotifiedCount, (size_t)pnLockID);
+
+            if (nNotifiedCount > 0)
+            {
+                Cpx_NowYield ();
+            }
+        }
+
+        return nNotifiedCount;
     }
 
-    size_t Cpx_GetStackSizeByID (size_t nID)
+    size_t Cpx_WaitingVariableLock (void* pnLockID)
     {
-        VERIFY (nID < nMaxThreads || pCoreThread[nID] != NULL, 0);
+        size_t nNotifiedCount = 0;
 
-        return pCoreThread[nID]->nStackSize;
+        if (nRunningThreads > 0 && pnLockID > 0)
+        {
+            size_t nThreadID = 0;
+
+            for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
+            {
+                if (pCoreThread[nThreadID] != NULL)
+                {
+                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    {
+                        nNotifiedCount++;
+                    }
+                }
+            }
+        }
+
+        return nNotifiedCount;
     }
 
-    size_t Cpx_GetMaxStackSizeByID (size_t nID)
+    bool Cpx_LockInit (CpxSmartLock* pLock)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStackMaxSize;
+        if (pLock == false) return false;
+
+        pLock->nSharedLockCount = 0;
+        pLock->bExclusiveLock = false;
+
+        return true;
     }
 
-    uint32_t Cpx_GetNiceByID (size_t nID)
+    bool Cpx_TryLock (CpxSmartLock* pLock)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nNice;
+        if (pLock == false) return false;
+
+        /* Wait all the locks to be done */
+        if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock == true) return false;
+
+        pLock->bExclusiveLock = true;
+
+        return true;
     }
 
-    uint8_t Cpx_GetStatusByID (size_t nID)
+#define Cpx_PrintLock(pLock)                                                              \
+    TRACE ("%s: Thread #%zu Lock: [%c](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", \
+           __FUNCTION__,                                                                  \
+           nCurrentThread,                                                                \
+           pLock->bExclusiveLock ? 'T' : 'F',                                             \
+           Cpx_WaitingVariableLock ((void*)&pLock->bExclusiveLock),                       \
+           pLock->nSharedLockCount,                                                       \
+           Cpx_WaitingVariableLock ((void*)&pLock->nSharedLockCount));
+
+    bool Cpx_Lock (CpxSmartLock* pLock)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStatus;
+        if (pLock == NULL) return false;
+
+        Cpx_PrintLock (pLock);
+
+        /* Get exclusive lock */
+        while (pLock->bExclusiveLock)
+        {
+            if (pLock->bExclusiveLock == true)
+            {
+                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
+            }
+        }
+
+        pLock->bExclusiveLock = true;
+
+        /* Wait all shared locks to be done */
+        while (pLock->nSharedLockCount)
+        {
+            if (pLock->nSharedLockCount)
+            {
+                Cpx_WaitVariableLock ((void*)&pLock->nSharedLockCount, NULL);
+            }
+        }
+
+        return true;
     }
 
-    uint32_t Cpx_GetLastDutyCycleByID (size_t nID)
+    bool Cpx_SharedLock (CpxSmartLock* pLock)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nExecTime;
+        if (pLock == NULL) return false;
+
+        Cpx_PrintLock (pLock);
+
+        while (pLock->bExclusiveLock > 0)
+        {
+            if (pLock->bExclusiveLock > 0)
+            {
+                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
+            }
+        }
+
+        pLock->nSharedLockCount++;
+
+        Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
+        Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, false);
+
+        return true;
     }
 
-    uint32_t Cpx_GetLastMomentumByID (size_t nID)
+    bool Cpx_SharedUnlock (CpxSmartLock* pLock)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nLastMomentun;
+        if (pLock == NULL) return false;
+
+        Cpx_PrintLock (pLock);
+
+        if (pLock->nSharedLockCount)
+        {
+            pLock->nSharedLockCount--;
+
+            Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
+
+            return true;
+        }
+
+        return false;
     }
 
-    size_t Cpx_GetNumberOfActiveThreads (void)
+    bool Cpx_Unlock (CpxSmartLock* pLock)
     {
-        return nRunningThreads;
-    }
+        if (pLock == NULL) return false;
 
-    size_t Cpx_GetMaxNumberOfThreads (void)
-    {
-        return nMaxThreads;
-    }
+        Cpx_PrintLock (pLock);
 
-    size_t Cpx_GetThreadContextSize (void)
-    {
-        return sizeof (CoreThread);
-    }
+        if (pLock->bExclusiveLock == true)
+        {
+            pLock->bExclusiveLock = false;
 
-    bool Cpx_IsCoreRunning (void)
-    {
-        return nRunningThreads > 0 ? true : false;
-    }
+            Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
+            Cpx_NotifyVariableLock ((void*)&pLock->bExclusiveLock, 0, true);
 
-    void Cpx_SetNice (uint32_t nNice)
-    {
-        pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
+            return true;
+        }
+
+        return false;
     }
 
     void* Cpx_GetLockID ()

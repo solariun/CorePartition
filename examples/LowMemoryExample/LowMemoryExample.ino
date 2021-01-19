@@ -284,7 +284,7 @@ void Thread (void* pValue)
 
         if (Cpx_GetStatusByID (4) == THREADL_NONE)
         {
-            Cpx_CreateSecureThread (eventualThread, NULL, 40 * sizeof (size_t), 100);
+            Cpx_CreateThread (eventualThread, NULL, 40 * sizeof (size_t), 100);
             nCount = 1;
             nFail = 0;
         }
@@ -376,7 +376,7 @@ void setup ()
 
     assert (Cpx_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 1000));
 
-    assert (Cpx_CreateSecureThread (Thread, (void*)nValues, 50 * sizeof (size_t), 500));
+    assert (Cpx_CreateThread (Thread, (void*)nValues, 50 * sizeof (size_t), 500));
 }
 
 void loop ()

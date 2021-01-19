@@ -12,7 +12,6 @@ Test	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-Cpx_CreateSecureThread        KEYWORD2
 Cpx_CreateThread      KEYWORD2
 Cpx_GetID     KEYWORD2
 Cpx_GetLastDutyCycleByID      KEYWORD2

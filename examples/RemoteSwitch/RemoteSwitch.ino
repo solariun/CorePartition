@@ -425,7 +425,7 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
 }
 
 /// Stack overflow Handler
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     while (!Serial)
         ;
@@ -472,9 +472,7 @@ void setup ()
         exit (1);
     }
 
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
-
-    assert (Cpx_CreateSecureThread (SerialTerminalHandler, NULL, 500, 200));
+    assert (Cpx_CreateThread (SerialTerminalHandler, NULL, 500, 200));
     assert (Cpx_CreateThread (TelnetListener, NULL, 300, 500));
 }
 

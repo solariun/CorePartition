@@ -451,11 +451,11 @@ void setup ()
 
     assert (Cpx_CreateThread (Thread1, NULL, 30 * sizeof (size_t), 100));
 
-    assert (Cpx_CreateSecureThread (ThreadTOP, NULL, 20 * sizeof (size_t), 1));
+    assert (Cpx_CreateThread (ThreadTOP, NULL, 20 * sizeof (size_t), 1));
 
     assert (Cpx_CreateThread (Thread2, NULL, 30 * sizeof (size_t), 500));
 
-    assert (Cpx_CreateSecureThread (Thread3, NULL, 30 * sizeof (size_t), 900));
+    assert (Cpx_CreateThread (Thread3, NULL, 30 * sizeof (size_t), 900));
 
     assert (Cpx_CreateThread (Thread4, NULL, 30 * sizeof (size_t), 2000));
 }

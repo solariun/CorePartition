@@ -808,7 +808,7 @@ void setup ()
 
     assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
-    assert (Cpx_CreateSecureThread (SerialTerminalHandler, NULL, 500, 200));
+    assert (Cpx_CreateThread (SerialTerminalHandler, NULL, 500, 200));
     assert (Cpx_CreateThread (LedDisplayShow, NULL, 300, 80));
     assert (Cpx_CreateThread (TelnetListener, NULL, 300, 500));
 }

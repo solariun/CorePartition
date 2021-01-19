@@ -70,7 +70,7 @@ enum __THREADL_TYPES
     /*
      * Running
      */
-    THREADL_RUNNING = 100,
+    THREADL_RUNNING = 100,    
     THREADL_START,
     THREADL_NOW ,
     
@@ -119,32 +119,7 @@ bool Cpx_Start (size_t nThreadPartitions);
  * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
  */
 bool Cpx_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
-
-/**
- * @brief  Create a Isolated context Thread
- *
- * @param pFunction         Function (void Function (void* dataPointer)) as thread main
- * @param pValue            data that will be injected on Thread creation
- * @param nStackMaxSize     Size of the Stack to be used
- * @param nNice             When in time it is good to be used
- *
- * @return false            fails on more provisioned threads or no more memory to create it
- *
- * @note                    All threads will be create with the size of stack plus context size (~100 bytes)
- * @note                    Isolated thread will control dynamic stack encryption on Context Change
- *                          have in mind it will be costly on time so use it wisely.
- */
-bool Cpx_CreateSecureThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
-
-/**
- * @brief  Callback for informing Stack Overflow Thread destruction and actions
- *
- * @param pStackOverflowHandler     Callback to be called
- *
- * @return false     only return false on errors
- */
-bool Cpx_SetStackOverflowHandler (void (*pStackOverflowHandler) (void));
-
+ 
 /**
  * @brief This will start all the threads
  *
