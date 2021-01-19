@@ -57,7 +57,7 @@ extern "C"
     {                     \
         return ret;       \
     }
-#define YYTRACE printf
+#define YYTRACE pri ntf
 #define TRACE NOTRACE
 
 #endif
@@ -184,6 +184,8 @@ extern "C"
         size_t nCount = 0;
         CoreThread* pLCoreThread = NULL;
 
+        YYTRACE ("------------------------------------------------\n");
+        YYTRACE ("Context size: [%zu], size_t: [%zu] in bytes\n", Cpx_GetThreadContextSize(), sizeof (size_t));
         YYTRACE ("------------------------------------------------\n");
         YYTRACE ("  %-4s  %-4s  %5s/%-5s  %-8s  %-8s\n", "TID", "Stat", " Stack", "Max", "Nice", " VarLock");
         YYTRACE ("------------------------------------------------\n");
@@ -340,8 +342,6 @@ extern "C"
         static size_t nCount = 0;
         CoreThread* pThread = NULL;
 
-        bool bRunning = false;
-
         nCount = 0;
 
         /*
@@ -351,7 +351,6 @@ extern "C"
         {
             if (pCoreThread[nCount] != NULL && pCoreThread[nCount]->nStatus >= THREADL_RUNNING)
             {
-                bRunning = true;
                 break;
             }
         }
