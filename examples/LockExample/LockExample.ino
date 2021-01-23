@@ -179,6 +179,12 @@ void Cpx_StackOverflowHandler ()
 #define STACK_CONSUMER sizeof (size_t) * 60
 #endif
 
+
+
+CoreThread* ppThreadList [10];
+
+uint8_t nStaticContext [3][Cpx_GetContextSize (STACK_CONSUMER)];
+
 void setup ()
 {
     // Initialize serial and wait for port to open:
@@ -197,7 +203,7 @@ void setup ()
     Serial.println ("Starting up Thread....");
     Serial.flush ();
 
-    if (Cpx_Start (10) == false)
+    if (Cpx_StaticStart ((sizeof (ppThreadList) / sizeof (CoreThread**)), ppThreadList) == false)
     {
         Serial.println ("Fail to start CorePartition.");
         exit (0);
@@ -219,11 +225,11 @@ void setup ()
 
     /* --------------------------------------------------------------------- */
 
-    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 1000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (void*) nStaticContext[0], sizeof (nStaticContext [0]), 1000));
 
-    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 1400));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (void*) nStaticContext[1], sizeof (nStaticContext [1]), 1400));
 
-    assert (Cpx_CreateThread (Consumer, NULL, STACK_CONSUMER, 5000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (void*) nStaticContext[2], sizeof (nStaticContext [2]), 5000));
 
     Cpx_Join ();
 

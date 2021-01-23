@@ -106,7 +106,7 @@ void ShowRunningThreads ()
     Serial.println ();
     Serial.println (F ("Listing all running threads"));
     Serial.println (F ("--------------------------------------"));
-    Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime\tName"));
+    Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
     for (nThreadID = 0; nThreadID < Cpx_GetMaxNumberOfThreads (); nThreadID++)
     {
@@ -128,8 +128,7 @@ void ShowRunningThreads ()
             Serial.print (Cpx_GetMaxStackSizeByID (nThreadID) + Cpx_GetThreadContextSize ());
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
-            Serial.print ("ms\t\t");
-            Serial.print (Cpx_GetThreadNameByID (nThreadID));
+            Serial.print ("ms");
         }
         Serial.println ("\e[0K");
     }
@@ -141,8 +140,6 @@ void CounterThread (void* pValue)
 {
     // no c++ cast added to support AVR c++ 98
     uint32_t nValue = (uint32_t) ((size_t) (pValue));
-
-    Cpx_SetThreadName ("Counter", 7);
 
     while (true)
     {
@@ -190,8 +187,6 @@ void eventualThread (void* pValue)
 
     uint32_t nLast = Cpx_GetCurrentTick ();
 
-    Cpx_SetThreadName ("Eventual", 8);
-
     SetLocation (6, 5);
 
     Serial.print (">> Eventual Thread");
@@ -229,6 +224,8 @@ void eventualThread (void* pValue)
     Cpx_Yield ();
 }
 
+uint8_t nStaticStack [Cpx_GetContextSize (40 * sizeof (size_t))];
+
 void Thread (void* pValue)
 {
     Cpx_EnableBroker ((void*)nValues, 1, ThreadCounterMessageHandler);
@@ -238,8 +235,6 @@ void Thread (void* pValue)
     unsigned long nLast = millis ();
 
     uint32_t* pnValues = (uint32_t*)pValue;
-
-    Cpx_SetThreadName ("Display", 7);
 
     int nCount = 0;
     int nFail = 0;
@@ -284,7 +279,7 @@ void Thread (void* pValue)
 
         if (Cpx_GetStatusByID (4) == THREADL_NONE)
         {
-            Cpx_CreateThread (eventualThread, NULL, 40 * sizeof (size_t), 100);
+            Cpx_CreateStaticThread (eventualThread, NULL, (void*) nStaticStack, sizeof (nStaticStack), 100);
             nCount = 1;
             nFail = 0;
         }
@@ -324,7 +319,7 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
     delay (nSleepTime);
 }
 
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     while (!Serial)
         ;
@@ -367,8 +362,6 @@ void setup ()
         Serial.println ("Fail to start CorePartition.");
         exit (0);
     }
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (Cpx_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 1));
 

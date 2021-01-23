@@ -67,16 +67,6 @@ extern "C"
 
 #define THREAD_NAME_MAX 8
 
-    typedef struct Subscription Subscription;
-    struct Subscription
-    {
-        TopicCallback callback;
-        void* pContext;
-        uint8_t nMaxTopics;
-        uint8_t nTopicCount;
-        uint32_t nTopicList;
-    };
-
     enum __cp_lock_type
     {
         CP_LOCK_NONE = 0,
@@ -84,36 +74,11 @@ extern "C"
         CP_LOCK_SHARED
     };
 
-    typedef struct
+    enum __cpx_thread_controller_type
     {
-        void* pLastStack;
-        Subscription* pSubscriptions;
-
-        union
-        {
-            jmp_buf jmpRegisterBuffer;
-
-            struct
-            {
-                void (*pFunction) (void* pStart);
-                void* pValue;
-            } func;
-        } mem;
-
-        size_t nStackMaxSize;
-        size_t nStackSize;
-
-        uint32_t nNice;
-        uint32_t nLastMomentun;
-        uint32_t nExecTime;
-
-        uint32_t nNotifyUID;
-        void* pnVariableLockID;
-        CpxMsgPayload payload;
-
-        uint8_t nStatus;
-        uint8_t stackPage;
-    } CoreThread;
+        CPX_CTRL_TYPE_STATIC = 1,
+        CPX_CTRL_BROKER_STATIC = 2
+    };
 
     static volatile size_t nMaxThreads = 0;
     static volatile size_t nThreadCount = 0;
@@ -195,14 +160,16 @@ extern "C"
         {
             if ((pLCoreThread = pCoreThread[nCount]) != NULL)
             {
-                YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zx\n",
+                YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zx static Thread: [%u], Broker: [%u]\n",
                          nCurrentThread == nCount ? '*' : ' ',
                          nCount,
                          pLCoreThread->nStatus,
                          pLCoreThread->nStackSize,
                          pLCoreThread->nStackMaxSize,
                          pLCoreThread->nNice,
-                         (size_t)pLCoreThread->pnVariableLockID);
+                         (size_t)pLCoreThread->pnVariableLockID,
+                         pLCoreThread->nThreadController & CPX_CTRL_TYPE_STATIC ? true : false,
+                         pLCoreThread->nThreadController & CPX_CTRL_BROKER_STATIC ? true : false);
             }
         }
 
@@ -248,15 +215,25 @@ extern "C"
         return (nCRC);
     }
 
-    bool Cpx_Start (size_t nThreadPartitions)
+
+    static bool Cpx_CommonStart (size_t nThreadPartitions, CoreThread** ppStaticCoreThread)
     {
-        if (pCoreThread != NULL || nThreadPartitions == 0) return false;
+        VERIFY (pCoreThread == NULL && nThreadCount == 0, false);
 
         nMaxThreads = nThreadPartitions;
 
-        if ((pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)) == NULL)
+        pCoreThread = ppStaticCoreThread;
+
+        if (pCoreThread == NULL)
         {
+#ifndef _CPX_NO_MALLOC_
+            if ((pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)) == NULL)
+            {
+                return false;
+            }
+#else
             return false;
+#endif
         }
 
         if (memset ((void*)pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
@@ -265,9 +242,20 @@ extern "C"
         }
 
         return true;
+
     }
 
-    bool Cpx_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+    bool Cpx_StaticStart (size_t nThreadPartitions, CoreThread** ppStaticCoreThread)
+    {
+        return Cpx_CommonStart (nThreadPartitions, ppStaticCoreThread);
+    }
+
+    bool Cpx_Start (size_t nThreadPartitions)
+    {
+        return Cpx_CommonStart (nThreadPartitions, NULL);
+    }
+
+    static bool Cpx_CreateThreadInit (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, void* pStaticContext)
     {
         size_t nThread;
 
@@ -282,10 +270,22 @@ extern "C"
         /* If it leaves here it means a serious bug */
         if (nThread == nMaxThreads) return false;
 
-        if ((pCoreThread[nThread] = (CoreThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CoreThread))) == NULL)
+        if (pStaticContext == NULL)
         {
-            return false;
+            if ((pCoreThread[nThread] = (CoreThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CoreThread))) == NULL)
+            {
+                return false;
+            }
+
+            pCoreThread[nThread]->nThreadController = 0;
         }
+        else
+        {
+            pCoreThread[nThread] = (CoreThread*) pStaticContext;
+
+            pCoreThread[nThread]->nThreadController = CPX_CTRL_TYPE_STATIC;
+        }
+        
 
         pCoreThread[nThread]->nStackMaxSize = nStackMaxSize;
 
@@ -316,6 +316,18 @@ extern "C"
         nThreadCount++;
 
         return true;
+    }
+
+    bool Cpx_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice)
+    {
+        return Cpx_CreateThreadInit (pFunction, pValue, nStackMaxSize, nNice, NULL);
+    }
+
+    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, void* pStaticContext, size_t nContextSize, uint32_t nNice)
+    {
+        VERIFY (nContextSize > sizeof (CoreThread), false);
+
+        return Cpx_CreateThreadInit (pFunction, pValue, (nContextSize - sizeof (CoreThread)), nNice, pStaticContext);
     }
 
     static void BackupStack (void)
@@ -402,12 +414,19 @@ extern "C"
     {
         if (pCurrentThread != NULL)
         {
-            if (pCurrentThread->pSubscriptions != NULL)
+            if ((pCurrentThread->nThreadController & CPX_CTRL_BROKER_STATIC) == 0 && pCurrentThread->pSubscriptions != NULL)
             {
+#ifndef _CPX_NO_MALLOC_
                 free (pCurrentThread->pSubscriptions);
+#endif
             }
 
-            free (pCurrentThread);
+            if ((pCurrentThread->nThreadController & CPX_CTRL_TYPE_STATIC) == 0)
+            {
+#ifndef _CPX_NO_MALLOC_
+                free (pCurrentThread);
+#endif
+            } 
 
             pCurrentThread = NULL;
             pCoreThread[nCurrentThread] = NULL;
@@ -627,27 +646,54 @@ extern "C"
      * -------------------------------------------------- 
      */
 
-    bool Cpx_EnableBroker (void* pContext, uint8_t nMaxTopics, TopicCallback callback)
+    static bool Cpx_CommonEnableBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
     {
         if (pCurrentThread->pSubscriptions == NULL)
         {
-            Subscription* pSub = NULL;
             size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
 
-            if ((pSub = malloc (nMemorySize)) != NULL)
+            if (pStaticSubscription == NULL)
             {
-                pSub->nTopicCount = 0;
-                pSub->callback = callback;
-                pSub->nMaxTopics = nMaxTopics;
-                pSub->pContext = pContext;
+#ifndef _CPX_NO_MALLOC
+                VERIFY ((pStaticSubscription = malloc (nMemorySize)) != NULL, false);
 
-                pCurrentThread->pSubscriptions = pSub;
-
-                return true;
+                /*
+                 * Set Static broker bit to 0 (disable)
+                 */
+                pCurrentThread->nThreadController &= (~CPX_CTRL_BROKER_STATIC);
+#else
+                return false;
+#endif
             }
+            else
+            {
+                /*
+                * Set Static broker bit to 1 (disable)
+                */
+                pCurrentThread->nThreadController |= CPX_CTRL_BROKER_STATIC;
+            }
+
+            pStaticSubscription->nTopicCount = 0;
+            pStaticSubscription->callback = callback;
+            pStaticSubscription->nMaxTopics = nMaxTopics;
+            pStaticSubscription->pContext = pUserContext;
+
+            pCurrentThread->pSubscriptions = pStaticSubscription;
+
+            return true;
         }
 
         return false;
+    }
+
+    bool Cpx_StaticEnableBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
+    {
+        return Cpx_CommonEnableBroker (pUserContext, nMaxTopics, callback, pStaticSubscription);
+    }
+    
+    bool Cpx_StaticBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback)
+    {
+        return Cpx_CommonEnableBroker (pUserContext, nMaxTopics, callback, NULL);
     }
 
     static int32_t Cpx_GetTopicID (const char* pszTopic, size_t length)
