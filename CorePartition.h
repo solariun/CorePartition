@@ -115,7 +115,7 @@ extern "C"
     {
         void* pLastStack;
         Subscription* pSubscriptions;
-
+        
         union
         {
             jmp_buf jmpRegisterBuffer;

@@ -226,7 +226,7 @@ extern "C"
 
         if (pCoreThread == NULL)
         {
-#ifndef _CPX_NO_MALLOC_
+#ifndef _CPX_NO_HEAP_
             if ((pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)) == NULL)
             {
                 return false;
@@ -416,14 +416,14 @@ extern "C"
         {
             if ((pCurrentThread->nThreadController & CPX_CTRL_BROKER_STATIC) == 0 && pCurrentThread->pSubscriptions != NULL)
             {
-#ifndef _CPX_NO_MALLOC_
+#ifndef _CPX_NO_HEAP_
                 free (pCurrentThread->pSubscriptions);
 #endif
             }
 
             if ((pCurrentThread->nThreadController & CPX_CTRL_TYPE_STATIC) == 0)
             {
-#ifndef _CPX_NO_MALLOC_
+#ifndef _CPX_NO_HEAP_
                 free (pCurrentThread);
 #endif
             } 
@@ -690,9 +690,7 @@ extern "C"
     {
         VERIFY (nStaticSubsSize >= sizeof (Subscription), false);
         
-        YYTRACE ("%s:Enabling static buffer: nStaticSubsSize: [%zu], Max: (%zu)\n", __FUNCTION__,nStaticSubsSize, Cpx_GetMaxTopicsFromStaticSubsSize (nStaticSubsSize));
-        
-        return Cpx_CommonEnableBroker (pUserContext, (nStaticSubsSize - sizeof (Subscription)) / sizeof (uint32_t), callback, pStaticSubs);
+        return Cpx_CommonEnableBroker (pUserContext, Cpx_GetMaxTopicsFromStaticSubsSize (nStaticSubsSize), callback, pStaticSubs);
     }
     
     bool Cpx_EnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback)

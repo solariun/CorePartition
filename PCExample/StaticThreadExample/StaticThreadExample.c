@@ -81,7 +81,7 @@ const char topicExecTime[] = "thread/execTime";
 
 void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payload)
 {
-    printf (">>> %s: context: [%s] Topic: [%s]\n", __FUNCTION__, (const char*) pContext, pszTopic);
+    printf (">>> %s [Thread #%zu]: context: [%s] Topic: [%s] - Value: [%zu][%u]\n", __FUNCTION__, Cpx_GetID (), (const char*) pContext, pszTopic, payload.nAttribute, (uint32_t) payload.nValue);
 
     if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
     {
@@ -131,19 +131,9 @@ void ThreadProducer (void* pValue)
     uint32_t nValue = 0;
     uint32_t nSleepTime = Cpx_GetCurrentTick ();
     uint32_t nReturnedSleep = Cpx_GetCurrentTick ();
-    int32_t nFactor = 0;
 
     while (1)
-    {
-        /*
-        nFactor = ((nReturnedSleep - nSleepTime) - Cpx_GetNice ());
-        printf (">> %lu:  Value: [%u], Nice: [%u] : Precision:[%d]\n",
-                Cpx_GetID (),
-                nValue,
-                Cpx_GetNice (),
-                nFactor);
-        */
-        
+    {        
         nValue = nValue + 1;
 
         Cpx_PublishTopic (topicValues, sizeof (topicValues) - 1, (size_t)Cpx_GetID (), (size_t)&nValue);
@@ -226,7 +216,7 @@ int main (int nArgs, const char* pszArg[])
     assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [1], sizeof (nStaticThreadContext [1]), 323));
     assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [2], sizeof (nStaticThreadContext [2]), 764));
     assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [3], sizeof (nStaticThreadContext [3]), 1500));
-    assert (Cpx_CreateStaticThread (kernel, NULL, (CoreThread*) nStaticThreadContext [4], sizeof (nStaticThreadContext [4]), 1000§));
+    assert (Cpx_CreateStaticThread (kernel, NULL, (CoreThread*) nStaticThreadContext [4], sizeof (nStaticThreadContext [4]), 1000));
 
     Cpx_Join ();
 
