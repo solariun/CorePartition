@@ -81,7 +81,9 @@ const char topicExecTime[] = "thread/execTime";
 
 void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payload)
 {
+    /*
     printf (">>> %s [Thread #%zu]: context: [%s] Topic: [%s] - Value: [%zu][%u]\n", __FUNCTION__, Cpx_GetID (), (const char*) pContext, pszTopic, payload.nAttribute, (uint32_t) payload.nValue);
+    */
 
     if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
     {
@@ -199,24 +201,24 @@ void Cpx_StackOverflowHandler ()
 
 /* ------------------------------------ */
 
-CoreThread* coreThreadList [10];
+CpxThread* coreThreadList [10];
 
 /* Static stack pages */
 uint8_t nStaticThreadContext [5][Cpx_GetStaticContextSize(256)];
 
 int main (int nArgs, const char* pszArg[])
 {
-    if (Cpx_StaticStart (sizeof (coreThreadList) / sizeof (CoreThread*), coreThreadList) == false)
+    if (Cpx_StaticStart (sizeof (coreThreadList) / sizeof (CpxThread*), coreThreadList) == false)
     {
         printf ("Error starting up Thread.");
         return (1);
     }
     
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [0], sizeof (nStaticThreadContext [0]), 150));
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [1], sizeof (nStaticThreadContext [1]), 323));
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [2], sizeof (nStaticThreadContext [2]), 764));
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CoreThread*) nStaticThreadContext [3], sizeof (nStaticThreadContext [3]), 1500));
-    assert (Cpx_CreateStaticThread (kernel, NULL, (CoreThread*) nStaticThreadContext [4], sizeof (nStaticThreadContext [4]), 1000));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [0], sizeof (nStaticThreadContext [0]), 0));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [1], sizeof (nStaticThreadContext [1]), 323));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [2], sizeof (nStaticThreadContext [2]), 764));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [3], sizeof (nStaticThreadContext [3]), 1500));
+    assert (Cpx_CreateStaticThread (kernel, NULL, (CpxThread*) nStaticThreadContext [4], sizeof (nStaticThreadContext [4]), 1000));
 
     Cpx_Join ();
 

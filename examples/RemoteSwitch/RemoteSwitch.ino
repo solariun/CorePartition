@@ -453,7 +453,7 @@ void setup ()
 
     LocalEcho (Serial, false);
 
-    Serial.print ("CoreThread ");
+    Serial.print ("CpxThread ");
     Serial.println (Cpx_version);
     Serial.println ("");
 

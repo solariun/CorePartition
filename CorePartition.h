@@ -109,7 +109,7 @@ extern "C"
     };
 
     /*
-     *  Global definition for CoreThread
+     *  Global definition for CpxThread
      */
     typedef struct
     {
@@ -141,7 +141,7 @@ extern "C"
         uint8_t nThreadController;
         uint8_t nStatus;
         uint8_t stackPage;
-    } CoreThread;
+    } CpxThread;
 
     extern uint32_t Cpx_GetCurrentTick (void);
     extern void Cpx_SleepTicks (uint32_t);
@@ -162,11 +162,11 @@ extern "C"
      * @brief Start CorePartition thread provisioning
      *
      * @param nThreadPartitions     Number of threads to be provisioned
-     * @param ppStaticCoreThread    The CoreThread** static list provided.
+     * @param ppStaticCpxThread    The CpxThread** static list provided.
      * 
      * @return true  true if successfully created all provisioned threads
      */
-    bool Cpx_StaticStart (size_t nThreadPartitions, CoreThread** ppStaticCoreThread);
+    bool Cpx_StaticStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread);
 
     /**
      * @brief  Create a non-Isolated context Thread
@@ -187,9 +187,9 @@ extern "C"
  *
  * @param nStackMaxSize    The size (in bytes) of the stack memory
  *
- * @return the size of the context baed on CoreThread structure size + stack
+ * @return the size of the context baed on CpxThread structure size + stack
  */
-#define Cpx_GetStaticContextSize(nStackMaxSize) (sizeof (CoreThread) + nStackMaxSize)
+#define Cpx_GetStaticContextSize(nStackMaxSize) (sizeof (CpxThread) + nStackMaxSize)
 
     /**
      * @brief   Create a Thread using a static Context + virtual stack page
@@ -205,7 +205,7 @@ extern "C"
      * @return false    In case of parameter error
      */
 
-    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CoreThread* pStaticContext, size_t nContextSize, uint32_t nNice);
+    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CpxThread* pStaticContext, size_t nContextSize, uint32_t nNice);
 
     /**
      * @brief This will start all the threads

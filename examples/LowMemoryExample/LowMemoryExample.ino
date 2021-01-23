@@ -349,7 +349,7 @@ void setup ()
     HideCursor ();
     SetLocation (1, 1);
 
-    Serial.print ("CoreThread ");
+    Serial.print ("CpxThread ");
     Serial.println (Cpx_version);
     Serial.println ("");
 

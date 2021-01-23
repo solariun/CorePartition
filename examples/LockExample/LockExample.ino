@@ -181,9 +181,9 @@ void Cpx_StackOverflowHandler ()
 
 
 
-CoreThread* ppThreadList [10];
+CpxThread* ppThreadList [10];
 
-uint8_t nStaticContext [3][Cpx_GetContextSize (STACK_CONSUMER)];
+uint8_t nStaticContext [3][Cpx_GetStaticContextSize (STACK_CONSUMER)];
 
 void setup ()
 {
@@ -196,14 +196,14 @@ void setup ()
 
     delay (1000);
 
-    Serial.print ("CoreThread ");
+    Serial.print ("CpxThread ");
     Serial.println (Cpx_version);
     Serial.println ("");
 
     Serial.println ("Starting up Thread....");
     Serial.flush ();
 
-    if (Cpx_StaticStart ((sizeof (ppThreadList) / sizeof (CoreThread**)), ppThreadList) == false)
+    if (Cpx_StaticStart ((sizeof (ppThreadList) / sizeof (CpxThread**)), ppThreadList) == false)
     {
         Serial.println ("Fail to start CorePartition.");
         exit (0);
@@ -225,11 +225,11 @@ void setup ()
 
     /* --------------------------------------------------------------------- */
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (void*) nStaticContext[0], sizeof (nStaticContext [0]), 1000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*) nStaticContext[0], sizeof (nStaticContext [0]), 1000));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (void*) nStaticContext[1], sizeof (nStaticContext [1]), 1400));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*) nStaticContext[1], sizeof (nStaticContext [1]), 1400));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (void*) nStaticContext[2], sizeof (nStaticContext [2]), 5000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*) nStaticContext[2], sizeof (nStaticContext [2]), 5000));
 
     Cpx_Join ();
 

@@ -419,7 +419,7 @@ void setup ()
     HideCursor ();
     ClearConsole ();
 
-    Serial.print ("CoreThread ");
+    Serial.print ("CpxThread ");
     Serial.println (Cpx_version);
     Serial.println ("");
 

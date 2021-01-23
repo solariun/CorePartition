@@ -85,8 +85,8 @@ extern "C"
     static volatile size_t nRunningThreads = 0;
     static volatile size_t nCurrentThread;
 
-    CoreThread** pCoreThread = NULL;
-    CoreThread* pCurrentThread = NULL;
+    CpxThread** pCpxThread = NULL;
+    CpxThread* pCurrentThread = NULL;
     void* pStartStck = NULL;
 
     jmp_buf jmpJoinPointer;
@@ -98,10 +98,6 @@ extern "C"
         Cpx_Yield ();                   \
         Cpx_SetState (THREADL_RUNNING); \
     }
-
-    bool bCpxPreemptionState = false;
-    bool bCpxPLockQuest = false;
-    bool bCpxPLock = false;
 
     /*
      * WEAK FUNCTION TO BE OVERLOADED BY APPLICATIONS
@@ -148,7 +144,7 @@ extern "C"
     {
 #ifdef __EXTRA__
         size_t nCount = 0;
-        CoreThread* pLCoreThread = NULL;
+        CpxThread* pLCpxThread = NULL;
 
         YYTRACE ("------------------------------------------------\n");
         YYTRACE ("Context size: [%zu], size_t: [%zu] in bytes\n", Cpx_GetThreadContextSize(), sizeof (size_t));
@@ -158,18 +154,18 @@ extern "C"
 
         for (nCount = 0; nCount < nMaxThreads; nCount++)
         {
-            if ((pLCoreThread = pCoreThread[nCount]) != NULL)
+            if ((pLCpxThread = pCpxThread[nCount]) != NULL)
             {
                 YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zx static Thread: [%u], Broker: [%u]\n",
                          nCurrentThread == nCount ? '*' : ' ',
                          nCount,
-                         pLCoreThread->nStatus,
-                         pLCoreThread->nStackSize,
-                         pLCoreThread->nStackMaxSize,
-                         pLCoreThread->nNice,
-                         (size_t)pLCoreThread->pnVariableLockID,
-                         pLCoreThread->nThreadController & CPX_CTRL_TYPE_STATIC ? true : false,
-                         pLCoreThread->nThreadController & CPX_CTRL_BROKER_STATIC ? true : false);
+                         pLCpxThread->nStatus,
+                         pLCpxThread->nStackSize,
+                         pLCpxThread->nStackMaxSize,
+                         pLCpxThread->nNice,
+                         (size_t)pLCpxThread->pnVariableLockID,
+                         pLCpxThread->nThreadController & CPX_CTRL_TYPE_STATIC ? true : false,
+                         pLCpxThread->nThreadController & CPX_CTRL_BROKER_STATIC ? true : false);
             }
         }
 
@@ -216,18 +212,18 @@ extern "C"
     }
 
 
-    static bool Cpx_CommonStart (size_t nThreadPartitions, CoreThread** ppStaticCoreThread)
+    static bool Cpx_CommonStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread)
     {
-        VERIFY (pCoreThread == NULL && nThreadCount == 0, false);
+        VERIFY (pCpxThread == NULL && nThreadCount == 0, false);
 
         nMaxThreads = nThreadPartitions;
 
-        pCoreThread = ppStaticCoreThread;
+        pCpxThread = ppStaticCpxThread;
 
-        if (pCoreThread == NULL)
+        if (pCpxThread == NULL)
         {
 #ifndef _CPX_NO_HEAP_
-            if ((pCoreThread = (CoreThread**)malloc (sizeof (CoreThread**) * nThreadPartitions)) == NULL)
+            if ((pCpxThread = (CpxThread**)malloc (sizeof (CpxThread**) * nThreadPartitions)) == NULL)
             {
                 return false;
             }
@@ -236,7 +232,7 @@ extern "C"
 #endif
         }
 
-        if (memset ((void*)pCoreThread, 0, sizeof (CoreThread**) * nThreadPartitions) == NULL)
+        if (memset ((void*)pCpxThread, 0, sizeof (CpxThread**) * nThreadPartitions) == NULL)
         {
             return false;
         }
@@ -245,9 +241,9 @@ extern "C"
 
     }
 
-    bool Cpx_StaticStart (size_t nThreadPartitions, CoreThread** ppStaticCoreThread)
+    bool Cpx_StaticStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread)
     {
-        return Cpx_CommonStart (nThreadPartitions, ppStaticCoreThread);
+        return Cpx_CommonStart (nThreadPartitions, ppStaticCpxThread);
     }
 
     bool Cpx_Start (size_t nThreadPartitions)
@@ -255,7 +251,7 @@ extern "C"
         return Cpx_CommonStart (nThreadPartitions, NULL);
     }
 
-    static bool Cpx_CreateThreadInit (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, CoreThread* pStaticContext)
+    static bool Cpx_CreateThreadInit (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, CpxThread* pStaticContext)
     {
         size_t nThread;
 
@@ -264,7 +260,7 @@ extern "C"
         /* Determine free threads */
         for (nThread = 0; nThread < nMaxThreads; nThread++)
         {
-            if (pCoreThread[nThread] == NULL) break;
+            if (pCpxThread[nThread] == NULL) break;
         }
 
         /* If it leaves here it means a serious bug */
@@ -272,46 +268,46 @@ extern "C"
 
         if (pStaticContext == NULL)
         {
-            if ((pCoreThread[nThread] = (CoreThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CoreThread))) == NULL)
+            if ((pCpxThread[nThread] = (CpxThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CpxThread))) == NULL)
             {
                 return false;
             }
 
-            pCoreThread[nThread]->nThreadController = 0;
+            pCpxThread[nThread]->nThreadController = 0;
         }
         else
         {
-            pCoreThread[nThread] = (CoreThread*) pStaticContext;
+            pCpxThread[nThread] = (CpxThread*) pStaticContext;
 
-            pCoreThread[nThread]->nThreadController = CPX_CTRL_TYPE_STATIC;
+            pCpxThread[nThread]->nThreadController = CPX_CTRL_TYPE_STATIC;
         }
         
 
-        pCoreThread[nThread]->nStackMaxSize = nStackMaxSize;
+        pCpxThread[nThread]->nStackMaxSize = nStackMaxSize;
 
-        pCoreThread[nThread]->mem.func.pValue = pValue;
+        pCpxThread[nThread]->mem.func.pValue = pValue;
 
-        pCoreThread[nThread]->nStatus = THREADL_START;
+        pCpxThread[nThread]->nStatus = THREADL_START;
 
-        pCoreThread[nThread]->nStackSize = 0;
+        pCpxThread[nThread]->nStackSize = 0;
 
-        pCoreThread[nThread]->mem.func.pFunction = pFunction;
+        pCpxThread[nThread]->mem.func.pFunction = pFunction;
 
-        pCoreThread[nThread]->nNice = 1;
+        pCpxThread[nThread]->nNice = 1;
 
-        pCoreThread[nThread]->nExecTime = 0;
+        pCpxThread[nThread]->nExecTime = 0;
 
-        pCoreThread[nThread]->nNice = nNice;
+        pCpxThread[nThread]->nNice = nNice;
 
-        pCoreThread[nThread]->nLastMomentun = Cpx_GetCurrentTick ();
+        pCpxThread[nThread]->nLastMomentun = Cpx_GetCurrentTick ();
 
-        pCoreThread[nThread]->pSubscriptions = NULL;
+        pCpxThread[nThread]->pSubscriptions = NULL;
 
-        pCoreThread[nThread]->nNotifyUID = 0;
+        pCpxThread[nThread]->nNotifyUID = 0;
 
-        pCoreThread[nThread]->payload = (CpxMsgPayload){0, 0, 0};
+        pCpxThread[nThread]->payload = (CpxMsgPayload){0, 0, 0};
 
-        pCoreThread[nThread]->pnVariableLockID = 0;
+        pCpxThread[nThread]->pnVariableLockID = 0;
 
         nThreadCount++;
 
@@ -323,11 +319,11 @@ extern "C"
         return Cpx_CreateThreadInit (pFunction, pValue, nStackMaxSize, nNice, NULL);
     }
 
-    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CoreThread* pStaticContext, size_t nContextSize, uint32_t nNice)
+    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CpxThread* pStaticContext, size_t nContextSize, uint32_t nNice)
     {
-        VERIFY (nContextSize > sizeof (CoreThread), false);
+        VERIFY (nContextSize > sizeof (CpxThread), false);
 
-        return Cpx_CreateThreadInit (pFunction, pValue, (nContextSize - sizeof (CoreThread)), nNice, pStaticContext);
+        return Cpx_CreateThreadInit (pFunction, pValue, (nContextSize - sizeof (CpxThread)), nNice, pStaticContext);
     }
 
     static void BackupStack (void)
@@ -342,10 +338,10 @@ extern "C"
 
     static uint32_t Cpx_GetNextTime (size_t nThreadID)
     {
-        return (uint32_t) (pCoreThread[nThreadID]->nLastMomentun + pCoreThread[nThreadID]->nNice);
+        return (uint32_t) (pCpxThread[nThreadID]->nLastMomentun + pCpxThread[nThreadID]->nNice);
     }
 
-#define _CPTHREAD(T) pCoreThread[T]
+#define _CPTHREAD(T) pCpxThread[T]
 
     static size_t Momentum_Scheduler (void)
     {
@@ -355,7 +351,7 @@ extern "C"
         uint32_t nMin = 0xFFFFFFFF;
         size_t nCThread = nCurrentThread + 1;
         static size_t nCount = 0;
-        CoreThread* pThread = NULL;
+        CpxThread* pThread = NULL;
 
         nCount = 0;
 
@@ -364,7 +360,7 @@ extern "C"
          */
         for (nCount = 0; nCount < nMaxThreads; nCount++)
         {
-            if (pCoreThread[nCount] != NULL && pCoreThread[nCount]->nStatus >= THREADL_RUNNING)
+            if (pCpxThread[nCount] != NULL && pCpxThread[nCount]->nStatus >= THREADL_RUNNING)
             {
                 break;
             }
@@ -386,7 +382,7 @@ extern "C"
                     nCThread = 0;
                 }
 
-                if (NULL != (pThread = pCoreThread[nCThread]) && pThread->nStatus >= THREADL_RUNNING)
+                if (NULL != (pThread = pCpxThread[nCThread]) && pThread->nStatus >= THREADL_RUNNING)
                 {
                     nNextTime = pThread->nLastMomentun + pThread->nNice;
 
@@ -429,7 +425,7 @@ extern "C"
             } 
 
             pCurrentThread = NULL;
-            pCoreThread[nCurrentThread] = NULL;
+            pCpxThread[nCurrentThread] = NULL;
 
             nRunningThreads--;
         }
@@ -440,7 +436,7 @@ extern "C"
     {
         if (nThreadCount == 0) return;
 
-        pCurrentThread = pCoreThread[0];
+        pCurrentThread = pCpxThread[0];
 
         do
         {
@@ -477,7 +473,7 @@ extern "C"
             }
 
             nCurrentThread = Momentum_Scheduler ();
-            pCurrentThread = pCoreThread[nCurrentThread];
+            pCurrentThread = pCpxThread[nCurrentThread];
             /*(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1); */
 
         } while (nRunningThreads);
@@ -585,34 +581,34 @@ extern "C"
 
     size_t Cpx_GetStackSizeByID (size_t nID)
     {
-        VERIFY (nID < nMaxThreads || pCoreThread[nID] != NULL, 0);
+        VERIFY (nID < nMaxThreads || pCpxThread[nID] != NULL, 0);
 
-        return pCoreThread[nID]->nStackSize;
+        return pCpxThread[nID]->nStackSize;
     }
 
     size_t Cpx_GetMaxStackSizeByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStackMaxSize;
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStackMaxSize;
     }
 
     uint32_t Cpx_GetNiceByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nNice;
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nNice;
     }
 
     uint8_t Cpx_GetStatusByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nStatus;
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStatus;
     }
 
     uint32_t Cpx_GetLastDutyCycleByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nExecTime;
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nExecTime;
     }
 
     uint32_t Cpx_GetLastMomentumByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->nLastMomentun;
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nLastMomentun;
     }
 
     size_t Cpx_GetNumberOfActiveThreads (void)
@@ -627,7 +623,7 @@ extern "C"
 
     size_t Cpx_GetThreadContextSize (void)
     {
-        return sizeof (CoreThread);
+        return sizeof (CpxThread);
     }
 
     bool Cpx_IsCoreRunning (void)
@@ -751,14 +747,14 @@ extern "C"
 
         for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
         {
-            if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->pSubscriptions != NULL)
+            if (pCpxThread[nThreadID] != NULL && pCpxThread[nThreadID]->pSubscriptions != NULL)
             {
-                for (nSubID = 0; nSubID < pCoreThread[nThreadID]->pSubscriptions->nTopicCount; nSubID++)
+                for (nSubID = 0; nSubID < pCpxThread[nThreadID]->pSubscriptions->nTopicCount; nSubID++)
                 {
-                    if ((&pCoreThread[nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
+                    if ((&pCpxThread[nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
                     {
-                        pCoreThread[nThreadID]->pSubscriptions->callback (
-                                pCoreThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, payload);
+                        pCpxThread[nThreadID]->pSubscriptions->callback (
+                                pCpxThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, payload);
                         bReturn = true;
                     }
                 }
@@ -821,12 +817,12 @@ extern "C"
         {
             for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
             {
-                if (pCoreThread[nThreadID] != NULL && pCoreThread[nThreadID]->nStatus == THREADL_WAITTAG &&
-                    pCoreThread[nThreadID]->nNotifyUID == nTopicID)
+                if (pCpxThread[nThreadID] != NULL && pCpxThread[nThreadID]->nStatus == THREADL_WAITTAG &&
+                    pCpxThread[nThreadID]->nNotifyUID == nTopicID)
                 {
-                    pCoreThread[nThreadID]->nStatus = THREADL_NOW;
-                    pCoreThread[nThreadID]->payload = (CpxMsgPayload){nCurrentThread, nAttribute, nValue};
-                    pCoreThread[nThreadID]->nNotifyUID = 0;
+                    pCpxThread[nThreadID]->nStatus = THREADL_NOW;
+                    pCpxThread[nThreadID]->payload = (CpxMsgPayload){nCurrentThread, nAttribute, nValue};
+                    pCpxThread[nThreadID]->nNotifyUID = 0;
 
                     bReturn = true;
 
@@ -921,14 +917,14 @@ extern "C"
 
             for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
             {
-                if (pCoreThread[nThreadID] != NULL)
+                if (pCpxThread[nThreadID] != NULL)
                 {
-                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    if (pCpxThread[nThreadID]->pnVariableLockID == pnLockID && pCpxThread[nThreadID]->nStatus == THREADL_LOCK)
                     {
                         TRACE ("%s: TID#%-4zu (%-16zx) Notifying  -> Thread #%zu\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID, nThreadID);
 
-                        pCoreThread[nThreadID]->pnVariableLockID = (void*)nStatus;
-                        pCoreThread[nThreadID]->nStatus = THREADL_NOW;
+                        pCpxThread[nThreadID]->pnVariableLockID = (void*)nStatus;
+                        pCpxThread[nThreadID]->nStatus = THREADL_NOW;
 
                         nNotifiedCount++;
 
@@ -958,9 +954,9 @@ extern "C"
 
             for (nThreadID = 0; nThreadID < nMaxThreads; nThreadID++)
             {
-                if (pCoreThread[nThreadID] != NULL)
+                if (pCpxThread[nThreadID] != NULL)
                 {
-                    if (pCoreThread[nThreadID]->pnVariableLockID == pnLockID && pCoreThread[nThreadID]->nStatus == THREADL_LOCK)
+                    if (pCpxThread[nThreadID]->pnVariableLockID == pnLockID && pCpxThread[nThreadID]->nStatus == THREADL_LOCK)
                     {
                         nNotifiedCount++;
                     }
@@ -1097,7 +1093,7 @@ extern "C"
 
     void* Cpx_GetLockIDByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCoreThread[nID]) ? 0 : pCoreThread[nID]->pnVariableLockID;
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->pnVariableLockID;
     }
 
 #ifdef __cplusplus

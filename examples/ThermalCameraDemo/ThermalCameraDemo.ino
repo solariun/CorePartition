@@ -524,7 +524,7 @@ void setup ()
     SetLocation (1, 1);
     HideCursor ();
 
-    Serial.print ("CoreThread ");
+    Serial.print ("CpxThread ");
     Serial.println (Cpx_version);
     Serial.println ("");
 
