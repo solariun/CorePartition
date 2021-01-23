@@ -81,7 +81,7 @@ void Cpx_StackOverflowHandler ()
 
 uint8_t nConsumerContexts [4][Cpx_GetContextSize (300)];
 
-uint8_t nProducerContexts [4][Cpx_GetContextSize (300)];
+uint8_t nProducerContexts [10][Cpx_GetContextSize (300)];
 
 int main ()
 {

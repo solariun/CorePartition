@@ -103,8 +103,8 @@ extern "C"
     {
         TopicCallback callback;
         void* pContext;
-        uint8_t nMaxTopics;
-        uint8_t nTopicCount;
+        uint16_t nMaxTopics;
+        uint16_t nTopicCount;
         uint32_t nTopicList;
     };
 
@@ -189,23 +189,23 @@ extern "C"
  *
  * @return the size of the context baed on CoreThread structure size + stack
  */
-#define Cpx_GetContextSize(nStackMaxSize) (sizeof (CoreThread) + nStackMaxSize)
+#define Cpx_GetStaticContextSize(nStackMaxSize) (sizeof (CoreThread) + nStackMaxSize)
 
     /**
      * @brief   Create a Thread using a static Context + virtual stack page
      *
      * @param pFunction         Function (void Function (void* dataPointer)) as thread main
      * @param pValue            data that will be injected on Thread creation
-     * @param nStackMaxSize     Size of the Stack to be used
-     * @param nNice             When in time it is good to be used
      * @param pStaticContext    The Static context + virtual stack pointer
+     * @param nContextSize     Size of the Stack context i bytes
+     * @param nNice             When in time it is good to be used
      *
      * @note    No memory will be created.
      *
      * @return false    In case of parameter error
      */
 
-    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, void* pStaticContext, size_t nContextSize, uint32_t nNice);
+    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CoreThread* pStaticContext, size_t nContextSize, uint32_t nNice);
 
     /**
      * @brief This will start all the threads
@@ -390,38 +390,43 @@ extern "C"
      *
      * @return  false       failed to create the broker context for the current thread
      *
-     * @note    The default context must not be part of the thread stack, or it will be invalid
-     *          on callback time, please use global variables or from heap (new or malloc memory),
-     *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
-     *          A ALLOCATED MEMORY.
-     */
-    bool Cpx_EnableBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback);
-
-    /**
-     * @brief   Return the size of a static Broker Context Size for a Thread
-     * 
-     * @param   nMaxTopics  Max number of Topics
-     * 
-     * @return  The struct + topic list in bytes to be used
-     */
-#define Cpx_GetStaticBrokerContextSize(nMaxTopics) (sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1)))
-
-    /**
-     * @brief   Enable Broker for the current thread
-     *
-     * @param   pUserContext    The default context to be ejected if needed
-     * @param   nMaxTopics  Max topics to be handled by the current thread
-     * @param   callback    Call back to be used to process thread Synchronously
-     * @param   pStaticSubscription Poiter for a static Broker Context list (Subscription)
-     *
-     * @return  false       failed to create the broker context for the current thread
-     *
      * @note    The default context must not be part of the thread§ stack, or it will be invalid
      *          on callback time, please use global variables or from heap (new or malloc memory),
      *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
      *          A ALLOCATED MEMORY.
      */
-    bool Cpx_EnableStaticBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription);
+    bool Cpx_EnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback);
+
+    /**
+     * @brief   Return the size of a static Broker Context Size for a Thread
+     * 
+     * @param   nMaxTopics  Max number of Topics (minimal 1, smaller will be automatically set to 1)
+     * 
+     * @return  The struct + topic list in bytes to be used
+     */
+#define Cpx_GetBrokerSubscriptionSize(nMaxTopics) (sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? sizeof (uint32_t) : nMaxTopics - 1)))
+
+    /*
+     * Calculate how much subscription a broker size can do.
+     */
+#define Cpx_GetMaxTopicsFromStaticSubsSize(nStaticSubsSize) (nStaticSubsSize <= sizeof (Subscription) ? 0 : ((nStaticSubsSize - sizeof (Subscription)) / sizeof (uint32_t))+1)
+
+    /**
+     * @brief   Enable Broker for the current thread
+     *
+     * @param   pUserContext            The default context to be ejected if needed
+     * @param   pStaticSubs              Static Broker Subscription pointer
+     * @param   nStaticSubsSize     Static Broker Subscription pointer size in bytes
+     * @param   callback                    Call back to be used to process thread Synchronously
+     *
+     * @return  false       failed to create the broker context for the current thread
+     *
+     * @note    The default context must not be part of the thread stack, or it will be invalid
+     *          on callback time, please use global variables or from heap (new or malloc memory),
+     *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
+     *          A ALLOCATED MEMORY.
+     */
+bool Cpx_EnableStaticBroker (void* pUserContext, Subscription* pStaticSubs, size_t nStaticSubsSize, TopicCallback callback);
 
     /**
      * @brief   Subscribe for a specific topic

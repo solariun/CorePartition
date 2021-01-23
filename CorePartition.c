@@ -255,7 +255,7 @@ extern "C"
         return Cpx_CommonStart (nThreadPartitions, NULL);
     }
 
-    static bool Cpx_CreateThreadInit (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, void* pStaticContext)
+    static bool Cpx_CreateThreadInit (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice, CoreThread* pStaticContext)
     {
         size_t nThread;
 
@@ -323,7 +323,7 @@ extern "C"
         return Cpx_CreateThreadInit (pFunction, pValue, nStackMaxSize, nNice, NULL);
     }
 
-    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, void* pStaticContext, size_t nContextSize, uint32_t nNice)
+    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CoreThread* pStaticContext, size_t nContextSize, uint32_t nNice)
     {
         VERIFY (nContextSize > sizeof (CoreThread), false);
 
@@ -646,7 +646,7 @@ extern "C"
      * -------------------------------------------------- 
      */
 
-    static bool Cpx_CommonEnableBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
+    static bool Cpx_CommonEnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
     {
         if (pCurrentThread->pSubscriptions == NULL)
         {
@@ -686,12 +686,16 @@ extern "C"
         return false;
     }
 
-    bool Cpx_StaticEnableBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
+    bool Cpx_EnableStaticBroker (void* pUserContext, Subscription* pStaticSubs, size_t nStaticSubsSize, TopicCallback callback)
     {
-        return Cpx_CommonEnableBroker (pUserContext, nMaxTopics, callback, pStaticSubscription);
+        VERIFY (nStaticSubsSize >= sizeof (Subscription), false);
+        
+        YYTRACE ("%s:Enabling static buffer: nStaticSubsSize: [%zu], Max: (%zu)\n", __FUNCTION__,nStaticSubsSize, Cpx_GetMaxTopicsFromStaticSubsSize (nStaticSubsSize));
+        
+        return Cpx_CommonEnableBroker (pUserContext, (nStaticSubsSize - sizeof (Subscription)) / sizeof (uint32_t), callback, pStaticSubs);
     }
     
-    bool Cpx_StaticBroker (void* pUserContext, uint8_t nMaxTopics, TopicCallback callback)
+    bool Cpx_EnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback)
     {
         return Cpx_CommonEnableBroker (pUserContext, nMaxTopics, callback, NULL);
     }
@@ -706,7 +710,7 @@ extern "C"
         if (pCurrentThread != NULL && pCurrentThread->pSubscriptions != NULL)
         {
             Subscription* pSub = pCurrentThread->pSubscriptions;
-            int nCount = 0;
+            uint16_t nCount = 0;
             uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
 
             for (nCount = 0; nCount < pSub->nTopicCount; nCount++)
@@ -743,7 +747,7 @@ extern "C"
 
         size_t nThreadID = 0;
         uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
-        size_t nSubID = 0;
+        uint16_t nSubID = 0;
 
         CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
 
