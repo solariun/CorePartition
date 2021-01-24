@@ -80,15 +80,28 @@ extern "C"
         CPX_CTRL_BROKER_STATIC = 2
     };
 
+    /* Max thread allowed  */
     static volatile size_t nMaxThreads = 0;
+
+    /* Threads instiated */
     static volatile size_t nThreadCount = 0;
+
+    /* Threads in running state */
     static volatile size_t nRunningThreads = 0;
+
+    /* ID for the current thread */
     static volatile size_t nCurrentThread;
 
+    /* Thread execution pointer list */
     CpxThread** pCpxThread = NULL;
+
+    /* The current thread context pointer */
     CpxThread* pCurrentThread = NULL;
+
+    /* The stack start point */
     void* pStartStck = NULL;
 
+    /* The kernal jump back point */
     jmp_buf jmpJoinPointer;
 
 #define Cpx_SetState(nNewState) pCurrentThread->nStatus = nNewState
