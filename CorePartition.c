@@ -431,7 +431,6 @@ extern "C"
         }
     }
 
-    size_t nNextThread = 0;
     void Cpx_Join (void)
     {
         if (nThreadCount == 0) return;
@@ -477,6 +476,8 @@ extern "C"
             /*(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1); */
 
         } while (nRunningThreads);
+
+        pCurrentThread = NULL;
 
         TRACE ("Leaving...  running: %zu\n", nRunningThreads);
 
@@ -948,7 +949,7 @@ extern "C"
     {
         size_t nNotifiedCount = 0;
 
-        if (nRunningThreads > 0 && pnLockID > 0)
+        if (pCurrentThread != NULL && nRunningThreads > 0 && pnLockID != NULL)
         {
             size_t nThreadID = 0;
 
@@ -969,7 +970,7 @@ extern "C"
 
     bool Cpx_LockInit (CpxSmartLock* pLock)
     {
-        if (pLock == false) return false;
+        if (pCurrentThread == NULL || pLock == false) return false;
 
         pLock->nSharedLockCount = 0;
         pLock->bExclusiveLock = false;
@@ -979,7 +980,7 @@ extern "C"
 
     bool Cpx_TryLock (CpxSmartLock* pLock)
     {
-        if (pLock == false) return false;
+        if (pCurrentThread == NULL || pLock == false) return false;
 
         /* Wait all the locks to be done */
         if (pLock->nSharedLockCount > 0 || pLock->bExclusiveLock == true) return false;
@@ -1000,7 +1001,7 @@ extern "C"
 
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
-        if (pLock == NULL) return false;
+        if (pCurrentThread == NULL || pLock == NULL) return false;
 
         Cpx_PrintLock (pLock);
 
@@ -1029,7 +1030,7 @@ extern "C"
 
     bool Cpx_SharedLock (CpxSmartLock* pLock)
     {
-        if (pLock == NULL) return false;
+        if (pCurrentThread == NULL || pLock == NULL) return false;
 
         Cpx_PrintLock (pLock);
 
@@ -1051,7 +1052,7 @@ extern "C"
 
     bool Cpx_SharedUnlock (CpxSmartLock* pLock)
     {
-        if (pLock == NULL) return false;
+        if (pCurrentThread == NULL || pLock == NULL) return false;
 
         Cpx_PrintLock (pLock);
 
@@ -1069,7 +1070,7 @@ extern "C"
 
     bool Cpx_Unlock (CpxSmartLock* pLock)
     {
-        if (pLock == NULL) return false;
+        if (pCurrentThread == NULL || pLock == NULL) return false;
 
         Cpx_PrintLock (pLock);
 
@@ -1088,12 +1089,12 @@ extern "C"
 
     void* Cpx_GetLockID ()
     {
-        return pCurrentThread->pnVariableLockID;
+        return (pCurrentThread == NULL) ? NULL : pCurrentThread->pnVariableLockID;
     }
 
     void* Cpx_GetLockIDByID (size_t nID)
     {
-        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->pnVariableLockID;
+        return (pCurrentThread == NULL || nID >= nMaxThreads || NULL == pCpxThread[nID]) ? NULL : pCpxThread[nID]->pnVariableLockID;
     }
 
 #ifdef __cplusplus
