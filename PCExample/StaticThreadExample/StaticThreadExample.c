@@ -84,6 +84,8 @@ void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, Cp
     /*
     printf (">>> %s [Thread #%zu]: context: [%s] Topic: [%s] - Value: [%zu][%u]\n", __FUNCTION__, Cpx_GetID (), (const char*) pContext, pszTopic, payload.nAttribute, (uint32_t) payload.nValue);
     */
+    (void) pContext;
+    (void) nSize;
 
     if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
     {
@@ -104,6 +106,8 @@ uint8_t pKernelSubscription [Cpx_GetBrokerSubscriptionSize (2)];
 
 void kernel (void* pValue)
 {
+    (void) pValue;
+
     Cpx_EnableStaticBroker ((void*) messageTest, (void*) pKernelSubscription, sizeof (pKernelSubscription), KernelBrokerHandler);
 
     Cpx_SubscribeTopic (topicValues, strlen (topicValues));
@@ -133,6 +137,8 @@ void ThreadProducer (void* pValue)
     uint32_t nValue = 0;
     uint32_t nSleepTime = Cpx_GetCurrentTick ();
     uint32_t nReturnedSleep = Cpx_GetCurrentTick ();
+
+    (void) pValue;
 
     while (1)
     {        
@@ -206,7 +212,7 @@ CpxThread* coreThreadList [10];
 /* Static stack pages */
 uint8_t nStaticThreadContext [5][Cpx_GetStaticContextSize(256)];
 
-int main (int nArgs, const char* pszArg[])
+int main ()
 {
     if (Cpx_StaticStart (sizeof (coreThreadList) / sizeof (CpxThread*), coreThreadList) == false)
     {

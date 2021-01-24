@@ -79,6 +79,8 @@ const char topicExecTime[] = "thread/execTime";
 
 void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, CpxMsgPayload payload)
 {
+    (void) nSize;
+
     printf (">>> %s: context: [%s] Topic: [%s]\n", __FUNCTION__, (const char*) pContext, pszTopic);
 
     if (strncmp (pszTopic, topicValues, sizeof (topicValues) - 1) == 0)
@@ -97,6 +99,8 @@ const char* messageTest = "Context";
 
 void kernel (void* pValue)
 {
+    (void) pValue; 
+    
     Cpx_EnableBroker ((void*) messageTest, 2, KernelBrokerHandler);
 
     Cpx_SubscribeTopic (topicValues, strlen (topicValues));
@@ -127,6 +131,8 @@ void Thread1 (void* pValue)
     uint32_t nSleepTime = Cpx_GetCurrentTick ();
     uint32_t nReturnedSleep = Cpx_GetCurrentTick ();
     int32_t nFactor = 0;
+
+    (void) pValue;
 
     while (1)
     {
@@ -202,7 +208,7 @@ void Cpx_StackOverflowHandler ()
 
 /* ------------------------------------ */
 
-int main (int nArgs, const char* pszArg[])
+int main ()
 {
     if (Cpx_Start (10) == false)
     {

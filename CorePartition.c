@@ -273,12 +273,16 @@ extern "C"
         /* Starts to assign the appropriate thread context and set type */
         if (pStaticContext == NULL)
         {
+#ifndef _CPX_NO_HEAP_
             if ((pCpxThread[nThread] = (CpxThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CpxThread))) == NULL)
             {
                 return false;
             }
 
             pCpxThread[nThread]->nThreadController = 0;
+#else
+            return false;
+#endif
         }
         else
         {
@@ -671,7 +675,7 @@ extern "C"
 
             if (pStaticSubscription == NULL)
             {
-#ifndef _CPX_NO_MALLOC
+#ifndef _CPX_NO_HEAP_
                 VERIFY ((pStaticSubscription = malloc (nMemorySize)) != NULL, false);
 
                 /*
@@ -938,7 +942,7 @@ extern "C"
 
         VERIFY (Cpx_IsCoreRunning (), false);
 
-        if (pCurrentThread != NULL && pnLockID > 0)
+        if (pCurrentThread != NULL && pnLockID != NULL)
         {
             TRACE ("%s: ThreadID: [%zu], nLockID: [%zx]\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID);
 
@@ -971,7 +975,7 @@ extern "C"
 
         VERIFY (pCpxThread != NULL, 0);
 
-        if (pCurrentThread != NULL && nRunningThreads > 0 && pnLockID > 0)
+        if (pCurrentThread != NULL && nRunningThreads > 0 && pnLockID != NULL)
         {
             size_t nThreadID = 0;
 

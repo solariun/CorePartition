@@ -13,6 +13,8 @@ void Procuder (void* pValue)
     size_t nID = Cpx_GetID ();
     uint32_t nLastDuty = 0;
 
+    (void) pValue;
+    
     nProducers[nID] = 0;
 
     do
@@ -35,6 +37,8 @@ void Procuder (void* pValue)
 void Consumer (void* pValue)
 {
     int nCount = 0;
+
+    (void) pValue;
 
     do
     {

@@ -33,7 +33,7 @@
 CC = gcc
 
 # define any compile-time flags
-CFLAGS = -Wall -g --std=c89 -D_CPX_NO_HEAP_
+CFLAGS = -Wall -g --std=c89 -Wall -Wextra -Werror -D_CPX_NO_HEAP_
 
 # define any directories containing header files other than /usr/include
 #

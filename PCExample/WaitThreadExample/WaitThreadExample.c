@@ -56,13 +56,13 @@ char szTagName[] = "kernel/notify";
 
 void PrintThreads ()
 {
-    int nCount = 0;
+    size_t nCount = 0;
 
     printf ("------------------------------------\n");
 
     for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
-        printf ("%c %-4u %-10u %-10u  %u ms\n",
+        printf ("%c %-4zu %-10u %-10u  %u ms\n",
                 nCount == Cpx_GetID () ? '*' : ' ',
                 nCount,
                 Cpx_GetNiceByID (nCount),
@@ -78,6 +78,8 @@ void kernel (void* pValue)
     uint32_t nCurTime = Cpx_GetCurrentTick ();
 
     size_t nCounter = 0;
+
+    (void) pValue;
 
     while (Cpx_Yield ())
     {
@@ -96,6 +98,8 @@ void kernel (void* pValue)
 void Thread1 (void* pValue)
 {
     CpxMsgPayload payload={0,0,0};
+
+    (void) pValue;
 
     while (true)
     {
@@ -146,7 +150,7 @@ void Cpx_StackOverflowHandler ()
 
 /* ------------------------------------ */
 
-int main (int nArgs, const char* pszArg[])
+int main ()
 {
     if (Cpx_Start (10) == false)
     {
