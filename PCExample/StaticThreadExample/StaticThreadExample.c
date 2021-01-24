@@ -214,7 +214,7 @@ int main (int nArgs, const char* pszArg[])
         return (1);
     }
     
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [0], sizeof (nStaticThreadContext [0]), 0));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [0], sizeof (nStaticThreadContext [0]), 100));
     assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [1], sizeof (nStaticThreadContext [1]), 323));
     assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [2], sizeof (nStaticThreadContext [2]), 764));
     assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [3], sizeof (nStaticThreadContext [3]), 1500));
