@@ -150,7 +150,7 @@ int main (int nArgs, const char* pszArg[])
 {
     if (Cpx_Start (10) == false)
     {
-        printf ("Error starting up Thread.");
+        printf ("Error starting up Thread.\n");
         return (1);
     }
 
