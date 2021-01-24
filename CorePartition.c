@@ -133,7 +133,11 @@ extern "C"
      * --------------------------------------------------
      */
 
-
+    bool Cpx_IsCoreRunning (void)
+    {
+        return (pCurrentThread != NULL && nRunningThreads > 0) ? true : false;
+    }
+    
     /*
      * -------------------------------------------------- 
      * KERNEL FUNCTIONS ---------------------------------
@@ -263,9 +267,10 @@ extern "C"
             if (pCpxThread[nThread] == NULL) break;
         }
 
-        /* If it leaves here it means a serious bug */
+        /* determine if no free threads here*/
         if (nThread == nMaxThreads) return false;
 
+        /* Starts to assign the appropriate thread context and set type */
         if (pStaticContext == NULL)
         {
             if ((pCpxThread[nThread] = (CpxThread*)malloc ((sizeof (uint8_t) * nStackMaxSize) + sizeof (CpxThread))) == NULL)
@@ -430,7 +435,7 @@ extern "C"
 
     void Cpx_Join (void)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, );
+        VERIFY (pCpxThread != NULL, );
         VERIFY (nThreadCount > 0, );
 
         pCurrentThread = pCpxThread[0];
@@ -554,7 +559,7 @@ extern "C"
     {
         uint32_t nBkpNice = 0;
 
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, );
+        VERIFY (Cpx_IsCoreRunning (), );
     
         VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, );
 
@@ -577,43 +582,50 @@ extern "C"
 
     size_t Cpx_GetID (void)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, 0);
+        VERIFY (Cpx_IsCoreRunning (), 0);
 
         return nCurrentThread;
     }
 
     size_t Cpx_GetStackSizeByID (size_t nID)
     {
-        VERIFY (pCpxThread != NULL || nID < nMaxThreads || pCpxThread[nID] != NULL, 0);
+        VERIFY (Cpx_IsCoreRunning (), 0);
+        VERIFY (nID < nMaxThreads || pCpxThread[nID] != NULL, 0);
 
         return pCpxThread[nID]->nStackSize;
     }
 
     size_t Cpx_GetMaxStackSizeByID (size_t nID)
     {
-        return (pCpxThread != NULL || nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStackMaxSize;
+        VERIFY (Cpx_IsCoreRunning (), 0);
+        
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStackMaxSize;
     }
 
     uint32_t Cpx_GetNiceByID (size_t nID)
     {
-        return (pCpxThread != NULL || nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nNice;
+        VERIFY (Cpx_IsCoreRunning (), 0);
+        
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nNice;
     }
 
     uint8_t Cpx_GetStatusByID (size_t nID)
     {
-        return (pCpxThread != NULL || nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStatus;
+        VERIFY (Cpx_IsCoreRunning (), 0);
+        
+        return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStatus;
     }
 
     uint32_t Cpx_GetLastDutyCycleByID (size_t nID)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, 0);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         return (pCpxThread != NULL || nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nExecTime;
     }
 
     uint32_t Cpx_GetLastMomentumByID (size_t nID)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, 0);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         return (pCpxThread != NULL || nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nLastMomentun;
     }
@@ -627,7 +639,8 @@ extern "C"
 
     size_t Cpx_GetMaxNumberOfThreads (void)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, 0);
+        VERIFY (Cpx_IsCoreRunning (), false);
+
 
         return nMaxThreads;
     }
@@ -637,14 +650,9 @@ extern "C"
         return sizeof (CpxThread);
     }
 
-    bool Cpx_IsCoreRunning (void)
-    {
-        return (pCurrentThread != NULL && nRunningThreads > 0) ? true : false;
-    }
-
     void Cpx_SetNice (uint32_t nNice)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, );
+        VERIFY (Cpx_IsCoreRunning (), );
 
         pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
     }
@@ -657,8 +665,6 @@ extern "C"
 
     static bool Cpx_CommonEnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
-        
         if (pCurrentThread->pSubscriptions == NULL)
         {
             size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
@@ -699,15 +705,15 @@ extern "C"
 
     bool Cpx_EnableStaticBroker (void* pUserContext, Subscription* pStaticSubs, size_t nStaticSubsSize, TopicCallback callback)
     {
-        VERIFY (pCurrentThread != NULL, false);
         VERIFY (nStaticSubsSize >= sizeof (Subscription), false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         
         return Cpx_CommonEnableBroker (pUserContext, Cpx_GetMaxTopicsFromStaticSubsSize (nStaticSubsSize), callback, pStaticSubs);
     }
     
     bool Cpx_EnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback)
     {
-        VERIFY (pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         return Cpx_CommonEnableBroker (pUserContext, nMaxTopics, callback, NULL);
     }
@@ -719,7 +725,7 @@ extern "C"
 
     bool Cpx_IsSubscribed (const char* pszTopic, size_t length)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         if (pCurrentThread->pSubscriptions != NULL)
         {
@@ -743,7 +749,7 @@ extern "C"
     {
         Subscription* pSub = pCurrentThread->pSubscriptions;
         
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         if (Cpx_IsSubscribed (pszTopic, length) == false)
         {
@@ -765,7 +771,7 @@ extern "C"
         uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
         uint16_t nSubID = 0;
 
-       VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+       VERIFY (Cpx_IsCoreRunning (), false);
 
         CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
 
@@ -790,9 +796,9 @@ extern "C"
 
     bool Cpx_WaitMessage (const char* pszTag, size_t nTagLength, CpxMsgPayload* payload)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
-
         VERIFY (pszTag != NULL && nTagLength > 0, false);
+
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, false);
 
@@ -808,9 +814,9 @@ extern "C"
 
     bool Cpx_Wait (const char* pszTag, size_t nTagLength)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
-
         VERIFY (pszTag != NULL && nTagLength > 0, false);
+
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, false);
 
@@ -825,7 +831,7 @@ extern "C"
 
     bool Cpx_SetTopicID (const char* pszTag, size_t nTagLength, uint32_t* pnTopicID)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         if (pnTopicID != NULL && (*pnTopicID = Cpx_GetTopicID (pszTag, nTagLength)) > 0)
         {
@@ -840,7 +846,7 @@ extern "C"
         uint32_t nTopicID = 0;
         size_t nThreadID = 0;
         bool bReturn = false;
-                
+        
         /* Go through thread lists */
         if (pszTag == NULL || nTagLength == 0 || (nTopicID = Cpx_GetTopicID (pszTag, nTagLength)) == 0)
         {
@@ -872,7 +878,7 @@ extern "C"
     {
         bool bResult = false;
 
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         
         bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
 
@@ -885,7 +891,7 @@ extern "C"
     {
         bool bResult = false;
 
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         
         bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
 
@@ -898,7 +904,7 @@ extern "C"
     {
         bool bResult = false;
 
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
 
@@ -911,7 +917,7 @@ extern "C"
     {
         bool bResult = false;
 
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, false);
 
@@ -930,7 +936,7 @@ extern "C"
     {
         uint8_t nReturn = false;
 
-        VERIFY (pCpxThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         if (pCurrentThread != NULL && pnLockID > 0)
         {
@@ -1002,7 +1008,7 @@ extern "C"
     {
         size_t nNotifiedCount = 0;
 
-        VERIFY (pCpxThread != NULL, 0);
+        VERIFY (Cpx_IsCoreRunning (), 0);
 
         if (pCurrentThread != NULL && nRunningThreads > 0 && pnLockID != NULL)
         {
@@ -1025,7 +1031,7 @@ extern "C"
 
     bool Cpx_LockInit (CpxSmartLock* pLock)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
         pLock->nSharedLockCount = 0;
@@ -1036,7 +1042,7 @@ extern "C"
 
     bool Cpx_TryLock (CpxSmartLock* pLock)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
         /* Wait all the locks to be done */
@@ -1058,7 +1064,7 @@ extern "C"
 
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
         Cpx_PrintLock (pLock);
@@ -1088,7 +1094,7 @@ extern "C"
 
     bool Cpx_SharedLock (CpxSmartLock* pLock)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
         Cpx_PrintLock (pLock);
@@ -1111,7 +1117,7 @@ extern "C"
 
     bool Cpx_SharedUnlock (CpxSmartLock* pLock)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
         Cpx_PrintLock (pLock);
@@ -1130,7 +1136,7 @@ extern "C"
 
     bool Cpx_Unlock (CpxSmartLock* pLock)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         VERIFY (pLock != NULL, false);
 
@@ -1151,12 +1157,14 @@ extern "C"
 
     void* Cpx_GetLockID ()
     {
+        VERIFY (Cpx_IsCoreRunning (), NULL);
+        
         return (pCurrentThread == NULL) ? NULL : pCurrentThread->pnVariableLockID;
     }
 
     void* Cpx_GetLockIDByID (size_t nID)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, NULL);
+        VERIFY (Cpx_IsCoreRunning (), NULL);
 
         return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? NULL : pCpxThread[nID]->pnVariableLockID;
     }
