@@ -62,6 +62,10 @@ extern "C"
 
 #endif
 
+#define Cpx_SetBit(var, bitValue) (var |= bitBValue)
+#define Cpx_UnsetBit(var, bitValue) (var &= (~bitValue))
+#define Cpx_ToggleBit(var, bitValue) (var ^= bitValue)
+
 #define THREADL_ER_STACKOVFLW 1 /* Stack Overflow */
 #define THREAD_FACTOR_MAXBYTES 8
 
@@ -90,19 +94,19 @@ extern "C"
     static volatile size_t nRunningThreads = 0;
 
     /* ID for the current thread */
-    static volatile size_t nCurrentThread;
+    static volatile size_t nCurrentThread = 0;
 
     /* Thread execution pointer list */
-    CpxThread** pCpxThread = NULL;
+    static CpxThread** pCpxThread = NULL;
 
     /* The current thread context pointer */
-    CpxThread* pCurrentThread = NULL;
+    static CpxThread* pCurrentThread = NULL;
 
     /* The stack start point */
-    void* pStartStck = NULL;
+    static void* pStartStck = NULL;
 
     /* The kernal jump back point */
-    jmp_buf jmpJoinPointer;
+    static jmp_buf jmpJoinPointer;
 
 #define Cpx_SetState(nNewState) pCurrentThread->nStatus = nNewState
 #define Cpx_NowYield()                  \
@@ -255,7 +259,6 @@ extern "C"
         }
 
         return true;
-
     }
 
     bool Cpx_StaticStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread)
@@ -684,11 +687,11 @@ extern "C"
     {
         if (pCurrentThread->pSubscriptions == NULL)
         {
-            size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
-
             if (pStaticSubscription == NULL)
             {
 #ifndef _CPX_NO_HEAP_
+                size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
+                
                 VERIFY ((pStaticSubscription = malloc (nMemorySize)) != NULL, false);
 
                 /*
