@@ -150,7 +150,6 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (nCount);
         Serial.print (F ("\t"));
         Serial.print (Cpx_GetStatusByID (nCount));
-        Serial.print (Cpx_IsSecureByID (nCount));
         Serial.print (F ("\t"));
         Serial.print (Cpx_GetNiceByID (nCount));
         Serial.print (F ("\t"));
@@ -284,6 +283,8 @@ public:
                     (uint8_t)nOffset);
 
             nIndex = (int)nIndex + 1;
+
+            Cpx_Sleep (0);
         }
 
         nIndex = (int)nIndex - (nCount - (nSpeed / 8));
@@ -357,7 +358,9 @@ void Thread1 (void* pValue)
     }
 }
 
+CpxSmartLock lock;
 
+char szPixel [20] = "";
 void Thread2 (void* pValue)
 {
     unsigned long start = millis ();
@@ -382,6 +385,7 @@ void Thread2 (void* pValue)
         Serial.println (F ("ms\n"));
 
         fMin = 1000, fMax = 0;
+        Cpx_SharedLock (&lock);
 
         for (int i = AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
         {
@@ -389,7 +393,7 @@ void Thread2 (void* pValue)
             fMax = MAX (fMax, pixels[i - 1]);
         }
 
-        Cpx_Sleep (10);
+        Cpx_Sleep (0);
 
         SetLocation (1, 1);
 
@@ -397,15 +401,12 @@ void Thread2 (void* pValue)
 
         for (int i = AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
         {
-            Serial.print (F ("\033[48;5;"));
-            // Serial.print (nHotColor [map (pixels[i-1], fMin, fMin + 8, 0, sizeof (nHotColor)-1)]);
-            Serial.print (map (pixels[i - 1], fMin, fMax, 232, 255));
-            Serial.print (F ("m  \033[0m"));
-
-            if ((i - 1) % 8 == 0) Serial.println ();
+            snprintf (szPixel, sizeof (szPixel)-1, "\033[48;5;%um", map (pixels[i - 1], fMin, fMax, 232, 255));
+            Serial.print (szPixel);
+            if ((i - 1) % 8 == 0) { Cpx_Sleep(0); SetLocation ((i-1) / 8, 1); }
         }
 
-        Serial.flush ();
+        Cpx_SharedUnlock (&lock);
 
         Cpx_Yield ();
     }
@@ -429,10 +430,13 @@ void Thread3 (void* pValue)
         Serial.println (F ("ms\n"));
 
         Serial.flush ();
+        
+        Cpx_Lock (&lock);
 
         // read all the pixels
         amg.readPixels (pixels);
 
+        Cpx_Unlock (&lock);
 
         Cpx_Yield ();
     }
@@ -498,10 +502,12 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
     delay (nSleepTime);
 }
 
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     while (!Serial)
         ;
+
+    ClearConsole ();
 
     Serial.print (F ("[ERROR] - Stack Overflow - Thread #"));
     Serial.println (Cpx_GetID ());
@@ -564,21 +570,20 @@ void setup ()
     /* To test interrupts jump port 2 and 5 */
     // pinMode(nPinOutput, OUTPUT);
 
+    Cpx_LockInit (&lock);
 
     // pinMode(nPinInput, INPUT_PULLUP);
     // attachInterrupt(digitalPinToInterrupt(nPinInput), Cpx_YieldPreemptive, CHANGE);
 
     assert (Cpx_Start (5));
 
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
+    assert (Cpx_CreateThread (Thread1, NULL, sizeof (size_t) * 60, 0));
 
-    assert (Cpx_CreateThread (Thread1, NULL, sizeof (size_t) * 30, 0));
+    assert (Cpx_CreateThread (Thread2, NULL, sizeof (size_t) * 20, 220));
 
-    assert (Cpx_CreateThread (Thread2, NULL, sizeof (size_t) * 15, 0));
+    assert (Cpx_CreateThread (Thread3, NULL, sizeof (size_t) * 18, 100));
 
-    assert (Cpx_CreateThread (Thread3, NULL, sizeof (size_t) * 15, 0));
-
-    assert (Cpx_CreateThread (Thread4, NULL, sizeof (size_t) * 10, 0));
+    assert (Cpx_CreateThread (Thread4, NULL, sizeof (size_t) * 10, 200));
 
     // assert (Cpx_CreateThread (Thread5, NULL, 11, 0));
 }
