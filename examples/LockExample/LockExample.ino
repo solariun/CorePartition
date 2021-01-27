@@ -143,6 +143,7 @@ void Consumer (void* pValue)
 
 uint32_t Cpx_GetCurrentTick ()
 {
+    yield ();
     return (uint32_t)millis ();
 }
 

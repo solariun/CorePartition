@@ -120,11 +120,17 @@ extern "C"
      * WEAK FUNCTION TO BE OVERLOADED BY APPLICATIONS
      */
 
+#pragma weak yield
+    void yield()
+    {
+        (void)0;
+    }
+
 #pragma weak Cpx_GetCurrentTick
     uint32_t Cpx_GetCurrentTick (void)
     {
         static uint32_t nSleepTime;
-
+        yield ();
         return (uint32_t)nSleepTime++;
     }
 
