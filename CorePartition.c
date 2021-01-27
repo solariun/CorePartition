@@ -113,7 +113,6 @@ extern "C"
     {                                   \
         Cpx_SetState (THREADL_NOW);     \
         Cpx_Yield ();                   \
-        Cpx_SetState (THREADL_RUNNING); \
     }
 
     /*
@@ -596,7 +595,6 @@ extern "C"
 
         Cpx_Yield ();
 
-        pCurrentThread->nStatus = THREADL_RUNNING;
         pCurrentThread->nNice = nBkpNice;
     }
 
@@ -984,8 +982,6 @@ extern "C"
 
                 nReturn = true;
             }
-
-            pCurrentThread->nStatus = THREADL_RUNNING;
         }
 
         return nReturn;

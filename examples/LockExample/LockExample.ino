@@ -143,7 +143,11 @@ void Consumer (void* pValue)
 
 uint32_t Cpx_GetCurrentTick ()
 {
+    //This yield is added here to deal with 
+    //Watchdog ISRs, if a compilation error
+    //occur please comment it out
     yield ();
+    
     return (uint32_t)millis ();
 }
 
