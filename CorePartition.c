@@ -36,6 +36,7 @@ extern "C"
 
 #include "CorePartition.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #define NOTRACE 1 ? (void)0 : (void)printf
@@ -401,7 +402,7 @@ extern "C"
             nCount = 0;
             nCThread = nCurrentThread + 1;
 
-            while (nCount < nMaxThreads  && (nCurTime = Cpx_GetCurrentTick ()))
+            while (nCount < nMaxThreads && (nCurTime = Cpx_GetCurrentTick ()))
             {
                 if (nCThread >= nMaxThreads)
                 {
@@ -468,11 +469,9 @@ extern "C"
 
         do
         {
-            volatile uint8_t nValue = 0xAA;
-            Cpx_GetCurrentTick ();
-
             if (pCurrentThread != NULL)
             {
+                volatile uint8_t nValue = 0xAA;
                 pStartStck = (void*)&nValue;
 
                 if (setjmp (jmpJoinPointer) == 0) switch (pCurrentThread->nStatus)
@@ -505,7 +504,7 @@ extern "C"
             nCurrentThread = Momentum_Scheduler ();
             pCurrentThread = pCpxThread[nCurrentThread];
             /*(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1); */
-            
+
         } while (nRunningThreads);
 
         pCurrentThread = NULL;
@@ -564,10 +563,15 @@ extern "C"
                 longjmp (jmpJoinPointer, 1);
             }
 
-            pCurrentThread->pLastStack = (void*)&nValue;
-            pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
+            if (((uint8_t*)pCurrentThread->pLastStack)[pCurrentThread->nStackSize] != 0xAA)
+            {
+                pCurrentThread->pLastStack = (void*)&nValue;
+                pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
+            }
 
             RestoreStack ();
+
+            assert (((uint8_t*)pCurrentThread->pLastStack)[pCurrentThread->nStackSize] == 0xAA && ((uint8_t*)pCurrentThread->pLastStack)[0] == 0xBB);
 
             Cpx_SetMomentun ();
 
@@ -592,11 +596,11 @@ extern "C"
         nBkpNice = pCurrentThread->nNice;
 
         pCurrentThread->nStatus = THREADL_SLEEP;
-        pCurrentThread->nNice = nDelayTickTime;
+        Cpx_SetNice (nDelayTickTime);
 
         Cpx_Yield ();
 
-        pCurrentThread->nNice = nBkpNice;
+        Cpx_SetNice (nBkpNice);
     }
 
     /*
