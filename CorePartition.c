@@ -157,7 +157,6 @@ extern "C"
 
     bool Cpx_IsCoreRunning (void)
     {
-        Cpx_GetCurrentTick (); /* For helping Watchdogs based environments */
         return (pCurrentThread != NULL && nRunningThreads > 0) ? true : false;
     }
 
@@ -397,12 +396,12 @@ extern "C"
 
         if (nCount == nMaxThreads) nRunningThreads = 0;
 
-        if (nRunningThreads > 0 && (nCurTime = Cpx_GetCurrentTick ()))
+        if (nRunningThreads > 0)
         {
             nCount = 0;
             nCThread = nCurrentThread + 1;
 
-            while (nCount < nMaxThreads)
+            while (nCount < nMaxThreads  && (nCurTime = Cpx_GetCurrentTick ()))
             {
                 if (nCThread >= nMaxThreads)
                 {
@@ -429,7 +428,6 @@ extern "C"
                 nCount++;
             } /* code */
         }
-        
 
         return nThread;
     }
@@ -467,11 +465,11 @@ extern "C"
         pCurrentThread = pCpxThread[0];
 
         /* Porting for dealing with watchdogs */
-        Cpx_GetCurrentTick ();
 
         do
         {
             volatile uint8_t nValue = 0xAA;
+            Cpx_GetCurrentTick ();
 
             if (pCurrentThread != NULL)
             {
@@ -486,8 +484,6 @@ extern "C"
                             pCurrentThread->nStatus = THREADL_RUNNING;
 
                             /* Porting for dealing with watchdogs */
-                            Cpx_GetCurrentTick ();
-
                             pCurrentThread->mem.func.pFunction (pCurrentThread->mem.func.pValue);
 
                             Cpx_StopThread ();
@@ -509,7 +505,7 @@ extern "C"
             nCurrentThread = Momentum_Scheduler ();
             pCurrentThread = pCpxThread[nCurrentThread];
             /*(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1); */
-
+            
         } while (nRunningThreads);
 
         pCurrentThread = NULL;
