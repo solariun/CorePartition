@@ -145,14 +145,19 @@ uint32_t Cpx_GetCurrentTick ()
 {
     //This yield is added here to deal with 
     //Watchdog ISRs, if a compilation error
-    //occur please comment it out
+    //occur please comment it out    
     yield ();
-    
+
     return (uint32_t)millis ();
 }
 
 void Cpx_SleepTicks (uint32_t nSleepTime)
 {
+    //This yield is added here to deal with 
+    //Watchdog ISRs, if a compilation error
+    //occur please comment it out
+    yield ();
+
     delay (nSleepTime);
 }
 

@@ -109,10 +109,10 @@ extern "C"
     static jmp_buf jmpJoinPointer;
 
 #define Cpx_SetState(nNewState) pCurrentThread->nStatus = nNewState
-#define Cpx_NowYield()                  \
-    {                                   \
-        Cpx_SetState (THREADL_NOW);     \
-        Cpx_Yield ();                   \
+#define Cpx_NowYield()              \
+    {                               \
+        Cpx_SetState (THREADL_NOW); \
+        Cpx_Yield ();               \
     }
 
     /*
@@ -120,7 +120,7 @@ extern "C"
      */
 
 #pragma weak yield
-    void yield()
+    void yield ()
     {
         (void)0;
     }
@@ -157,11 +157,12 @@ extern "C"
 
     bool Cpx_IsCoreRunning (void)
     {
+        Cpx_GetCurrentTick (); /* For helping Watchdogs based environments */
         return (pCurrentThread != NULL && nRunningThreads > 0) ? true : false;
     }
-    
+
     /*
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      * KERNEL FUNCTIONS ---------------------------------
      * --------------------------------------------------
      */
@@ -173,7 +174,7 @@ extern "C"
         CpxThread* pLCpxThread = NULL;
 
         YYTRACE ("------------------------------------------------\n");
-        YYTRACE ("Context size: [%zu], size_t: [%zu] in bytes\n", Cpx_GetThreadContextSize(), sizeof (size_t));
+        YYTRACE ("Context size: [%zu], size_t: [%zu] in bytes\n", Cpx_GetThreadContextSize (), sizeof (size_t));
         YYTRACE ("------------------------------------------------\n");
         YYTRACE ("  %-4s  %-4s  %5s/%-5s  %-8s  %-8s\n", "TID", "Stat", " Stack", "Max", "Nice", " VarLock");
         YYTRACE ("------------------------------------------------\n");
@@ -237,7 +238,6 @@ extern "C"
         return (nCRC);
     }
 
-
     static bool Cpx_CommonStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread)
     {
         VERIFY (pCpxThread == NULL && nThreadCount == 0, false);
@@ -254,7 +254,7 @@ extern "C"
                 return false;
             }
 #else
-            return false;
+        return false;
 #endif
         }
 
@@ -302,12 +302,12 @@ extern "C"
 
             pCpxThread[nThread]->nThreadController = 0;
 #else
-            return false;
+        return false;
 #endif
         }
         else
         {
-            pCpxThread[nThread] = (CpxThread*) pStaticContext;
+            pCpxThread[nThread] = (CpxThread*)pStaticContext;
 
             pCpxThread[nThread]->nThreadController = CPX_CTRL_TYPE_STATIC;
         }
@@ -375,7 +375,7 @@ extern "C"
     static size_t Momentum_Scheduler (void)
     {
         size_t nThread = nCurrentThread;
-        uint32_t nCurTime = Cpx_GetCurrentTick ();
+        uint32_t nCurTime = 0;
         uint32_t nNextTime = 0;
         uint32_t nMin = 0xFFFFFFFF;
         size_t nCThread = nCurrentThread + 1;
@@ -397,7 +397,7 @@ extern "C"
 
         if (nCount == nMaxThreads) nRunningThreads = 0;
 
-        if (nRunningThreads > 0)
+        if (nRunningThreads > 0 && (nCurTime = Cpx_GetCurrentTick ()))
         {
             nCount = 0;
             nCThread = nCurrentThread + 1;
@@ -429,6 +429,7 @@ extern "C"
                 nCount++;
             } /* code */
         }
+        
 
         return nThread;
     }
@@ -449,7 +450,7 @@ extern "C"
 #ifndef _CPX_NO_HEAP_
                 free (pCurrentThread);
 #endif
-            } 
+            }
 
             pCurrentThread = NULL;
             pCpxThread[nCurrentThread] = NULL;
@@ -464,6 +465,9 @@ extern "C"
         VERIFY (nThreadCount > 0, );
 
         pCurrentThread = pCpxThread[0];
+
+        /* Porting for dealing with watchdogs */
+        Cpx_GetCurrentTick ();
 
         do
         {
@@ -480,6 +484,9 @@ extern "C"
                             nRunningThreads++;
 
                             pCurrentThread->nStatus = THREADL_RUNNING;
+
+                            /* Porting for dealing with watchdogs */
+                            Cpx_GetCurrentTick ();
 
                             pCurrentThread->mem.func.pFunction (pCurrentThread->mem.func.pValue);
 
@@ -514,18 +521,14 @@ extern "C"
 
     static void Cpx_SetMomentun (void)
     {
-        uint32_t nCurTime = Cpx_GetCurrentTick ();
-
         if (NULL != pCurrentThread)
         {
             if ((THREADL_RUNNING == pCurrentThread->nStatus || THREADL_SLEEP == pCurrentThread->nStatus) &&
-                Cpx_GetNextTime (nCurrentThread) > nCurTime)
+                Cpx_GetNextTime (nCurrentThread) > Cpx_GetCurrentTick ())
             {
                 Cpx_SleepTicks (Cpx_GetNextTime (nCurrentThread) - Cpx_GetCurrentTick ());
             }
         }
-
-        pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
     }
 
     static void Cpx_UpdateExecTime (void)
@@ -574,6 +577,8 @@ extern "C"
 
             pCurrentThread->nStatus = THREADL_RUNNING;
 
+            pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
+
             return 1;
         }
 
@@ -585,7 +590,7 @@ extern "C"
         uint32_t nBkpNice = 0;
 
         VERIFY (Cpx_IsCoreRunning (), );
-    
+
         VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, );
 
         nBkpNice = pCurrentThread->nNice;
@@ -599,9 +604,9 @@ extern "C"
     }
 
     /*
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      *   GET/SET'S FOR MANAGING THREADS -----------------
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      */
 
     size_t Cpx_GetID (void)
@@ -622,21 +627,21 @@ extern "C"
     size_t Cpx_GetMaxStackSizeByID (size_t nID)
     {
         VERIFY (Cpx_IsCoreRunning (), 0);
-        
+
         return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStackMaxSize;
     }
 
     uint32_t Cpx_GetNiceByID (size_t nID)
     {
         VERIFY (Cpx_IsCoreRunning (), 0);
-        
+
         return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nNice;
     }
 
     uint8_t Cpx_GetStatusByID (size_t nID)
     {
         VERIFY (Cpx_IsCoreRunning (), 0);
-        
+
         return (nID >= nMaxThreads || NULL == pCpxThread[nID]) ? 0 : pCpxThread[nID]->nStatus;
     }
 
@@ -665,7 +670,6 @@ extern "C"
     {
         VERIFY (Cpx_IsCoreRunning (), false);
 
-
         return nMaxThreads;
     }
 
@@ -682,9 +686,9 @@ extern "C"
     }
 
     /*
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      *  BROKER BASED IPC IMPLEMENTATION -----------------
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      */
 
     static bool Cpx_CommonEnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback, Subscription* pStaticSubscription)
@@ -695,7 +699,7 @@ extern "C"
             {
 #ifndef _CPX_NO_HEAP_
                 size_t nMemorySize = sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? 0 : nMaxTopics - 1));
-                
+
                 VERIFY ((pStaticSubscription = malloc (nMemorySize)) != NULL, false);
 
                 /*
@@ -703,14 +707,14 @@ extern "C"
                  */
                 pCurrentThread->nThreadController &= (~CPX_CTRL_BROKER_STATIC);
 #else
-                return false;
+            return false;
 #endif
             }
             else
             {
                 /*
-                * Set Static broker bit to 1 (disable)
-                */
+                 * Set Static broker bit to 1 (disable)
+                 */
                 pCurrentThread->nThreadController |= CPX_CTRL_BROKER_STATIC;
             }
 
@@ -731,10 +735,10 @@ extern "C"
     {
         VERIFY (nStaticSubsSize >= sizeof (Subscription), false);
         VERIFY (Cpx_IsCoreRunning (), false);
-        
+
         return Cpx_CommonEnableBroker (pUserContext, Cpx_GetMaxTopicsFromStaticSubsSize (nStaticSubsSize), callback, pStaticSubs);
     }
-    
+
     bool Cpx_EnableBroker (void* pUserContext, uint16_t nMaxTopics, TopicCallback callback)
     {
         VERIFY (Cpx_IsCoreRunning (), false);
@@ -772,7 +776,7 @@ extern "C"
     bool Cpx_SubscribeTopic (const char* pszTopic, size_t length)
     {
         Subscription* pSub = pCurrentThread->pSubscriptions;
-        
+
         VERIFY (Cpx_IsCoreRunning (), false);
 
         if (Cpx_IsSubscribed (pszTopic, length) == false)
@@ -795,7 +799,7 @@ extern "C"
         uint32_t nTopicID = Cpx_GetTopicID (pszTopic, length);
         uint16_t nSubID = 0;
 
-       VERIFY (Cpx_IsCoreRunning (), false);
+        VERIFY (Cpx_IsCoreRunning (), false);
 
         CpxMsgPayload payload = {nCurrentThread, nAttribute, nValue};
 
@@ -807,8 +811,7 @@ extern "C"
                 {
                     if ((&pCpxThread[nThreadID]->pSubscriptions->nTopicList)[nSubID] == nTopicID)
                     {
-                        pCpxThread[nThreadID]->pSubscriptions->callback (
-                                pCpxThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, payload);
+                        pCpxThread[nThreadID]->pSubscriptions->callback (pCpxThread[nThreadID]->pSubscriptions->pContext, pszTopic, length, payload);
                         bReturn = true;
                     }
                 }
@@ -870,7 +873,7 @@ extern "C"
         uint32_t nTopicID = 0;
         size_t nThreadID = 0;
         bool bReturn = false;
-        
+
         /* Go through thread lists */
         if (pszTag == NULL || nTagLength == 0 || (nTopicID = Cpx_GetTopicID (pszTag, nTagLength)) == 0)
         {
@@ -903,7 +906,7 @@ extern "C"
         bool bResult = false;
 
         VERIFY (Cpx_IsCoreRunning (), false);
-        
+
         bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
 
         Cpx_NowYield ();
@@ -916,7 +919,7 @@ extern "C"
         bool bResult = false;
 
         VERIFY (Cpx_IsCoreRunning (), false);
-        
+
         bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
 
         Cpx_NowYield ();
@@ -951,9 +954,9 @@ extern "C"
     }
 
     /*
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      *  THREAD SYNC FUNCTION (SMART LOCK / VARIABLELOCK)-
-     * -------------------------------------------------- 
+     * --------------------------------------------------
      */
 
     bool Cpx_WaitVariableLock (void* pnLockID, size_t* pnStatus)
@@ -966,7 +969,7 @@ extern "C"
         {
             TRACE ("%s: ThreadID: [%zu], nLockID: [%zx]\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID);
 
-            pCurrentThread->pnVariableLockID = (void*) pnLockID;
+            pCurrentThread->pnVariableLockID = (void*)pnLockID;
 
             pCurrentThread->nStatus = THREADL_LOCK;
 
@@ -1180,7 +1183,7 @@ extern "C"
     void* Cpx_GetLockID ()
     {
         VERIFY (Cpx_IsCoreRunning (), NULL);
-        
+
         return (pCurrentThread == NULL) ? NULL : pCurrentThread->pnVariableLockID;
     }
 
