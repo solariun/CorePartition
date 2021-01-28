@@ -115,7 +115,7 @@ extern "C"
     {
         void* pLastStack;
         Subscription* pSubscriptions;
-        
+
         union
         {
             jmp_buf jmpRegisterBuffer;
@@ -131,10 +131,11 @@ extern "C"
         size_t nStackSize;
 
         uint32_t nNice;
+        uint32_t nSleepTime;
         uint32_t nLastMomentun;
         uint32_t nExecTime;
 
-        /* 
+        /*
          * This will be, also, used as
          * buffer for sleep.
          */
@@ -158,7 +159,7 @@ extern "C"
      * @brief Start CorePartition thread provisioning
      *
      * @param nThreadPartitions     Number of threads to be provisioned
-     * 
+     *
      * @return true  true if successfully created all provisioned threads
      */
     bool Cpx_Start (size_t nThreadPartitions);
@@ -168,7 +169,7 @@ extern "C"
      *
      * @param nThreadPartitions     Number of threads to be provisioned
      * @param ppStaticCpxThread    The CpxThread** static list provided.
-     * 
+     *
      * @return true  true if successfully created all provisioned threads
      */
     bool Cpx_StaticStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread);
@@ -230,15 +231,29 @@ extern "C"
      */
     uint8_t Cpx_Yield (void);
 
+/**
+ * @brief  Will set the thread to a special sleep state
+ *
+ * @param nDelayTickTime    How much ticks to sleep
+ *
+ * @note    if Time has been overridden it tick will  correspond
+ *          to the time frame used by sleep overridden function
+ */
+#define Cpx_Sleep(nDelayTickTime)      \
+    {                                  \
+        Cpx_SetSleep (nDelayTickTime); \
+        Cpx_Yield ();                  \
+    }
+
     /**
-     * @brief  Will set the thread to a special sleep state
+     * @brief  Will set the thread sleep parameter before Yield
      *
      * @param nDelayTickTime    How much ticks to sleep
      *
      * @note    if Time has been overridden it tick will  correspond
      *          to the time frame used by sleep overridden function
      */
-    void Cpx_Sleep (uint32_t nDelayTickTime);
+    void Cpx_SetSleep (uint32_t nDelayTickTime);
 
     /**
      * @brief Get Current Thread ID
@@ -404,17 +419,19 @@ extern "C"
 
     /**
      * @brief   Return the size of a static Broker Context Size for a Thread
-     * 
+     *
      * @param   nMaxTopics  Max number of Topics (minimal 1, smaller will be automatically set to 1)
-     * 
+     *
      * @return  The struct + topic list in bytes to be used
      */
-#define Cpx_GetBrokerSubscriptionSize(nMaxTopics) (sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? sizeof (uint32_t) : nMaxTopics - 1)))
+#define Cpx_GetBrokerSubscriptionSize(nMaxTopics) \
+    (sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? sizeof (uint32_t) : nMaxTopics - 1)))
 
     /*
      * Calculate how much subscription a broker size can do.
      */
-#define Cpx_GetMaxTopicsFromStaticSubsSize(nStaticSubsSize) (nStaticSubsSize <= sizeof (Subscription) ? 0 : ((nStaticSubsSize - sizeof (Subscription)) / sizeof (uint32_t))+1)
+#define Cpx_GetMaxTopicsFromStaticSubsSize(nStaticSubsSize) \
+    (nStaticSubsSize <= sizeof (Subscription) ? 0 : ((nStaticSubsSize - sizeof (Subscription)) / sizeof (uint32_t)) + 1)
 
     /**
      * @brief   Enable Broker for the current thread
@@ -431,7 +448,7 @@ extern "C"
      *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
      *          A ALLOCATED MEMORY.
      */
-bool Cpx_EnableStaticBroker (void* pUserContext, Subscription* pStaticSubs, size_t nStaticSubsSize, TopicCallback callback);
+    bool Cpx_EnableStaticBroker (void* pUserContext, Subscription* pStaticSubs, size_t nStaticSubsSize, TopicCallback callback);
 
     /**
      * @brief   Subscribe for a specific topic

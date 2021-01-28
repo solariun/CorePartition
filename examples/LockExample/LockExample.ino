@@ -79,7 +79,7 @@ void ShowRunningThreads ()
 
 CpxSmartLock lock;
 
-int nProducers[7];
+int nProducers[6];
 
 void Producer (void* pValue)
 {
@@ -118,6 +118,7 @@ void Consumer_print ()
             Serial.print (nProducers[nCount]);
             Serial.print (F ("]"));
             Serial.print (F (") "));
+            yield ();
         }
 
         Serial.print (", ");
@@ -145,22 +146,13 @@ void Consumer (void* pValue)
 
 uint32_t Cpx_GetCurrentTick ()
 {
-    //This yield is added here to deal with 
-    //Watchdog ISRs, if a compilation error
-    //occur please comment it out    
-    yield ();
-
+    yield(); 
     return (uint32_t)millis ();
 }
 
 void Cpx_SleepTicks (uint32_t nSleepTime)
 {
-    //This yield is added here to deal with 
-    //Watchdog ISRs, if a compilation error
-    //occur please comment it out
-    yield ();
-
-    delay (nSleepTime);
+   delay (nSleepTime);
 }
 
 void Cpx_StackOverflowHandler ()
@@ -180,7 +172,7 @@ void Cpx_StackOverflowHandler ()
 
     Serial.println (F ("----------------------------------------"));
 
-    while (true) delay (1000);
+    while (true) { delay (1000); yield (); }
 }
 
 #ifdef __AVR__
@@ -231,8 +223,6 @@ void setup ()
         Serial.println ("Fail to start CorePartition.");
         exit (0);
     }
-
-    assert (Cpx_CreateThread (ShowThreads, NULL, STACK_PRODUCER, 1000));
     
 
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 0));
@@ -247,6 +237,8 @@ void setup ()
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 1000));
 
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 60000));
+
+    assert (Cpx_CreateThread (ShowThreads, NULL, STACK_PRODUCER, 1000));
 
     /* --------------------------------------------------------------------- */
 

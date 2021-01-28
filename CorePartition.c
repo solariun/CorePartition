@@ -119,18 +119,10 @@ extern "C"
     /*
      * WEAK FUNCTION TO BE OVERLOADED BY APPLICATIONS
      */
-
-#pragma weak yield
-    void yield ()
-    {
-        (void)0;
-    }
-
 #pragma weak Cpx_GetCurrentTick
     uint32_t Cpx_GetCurrentTick (void)
     {
         static uint32_t nSleepTime;
-        yield ();
         return (uint32_t)nSleepTime++;
     }
 
@@ -343,6 +335,8 @@ extern "C"
 
         pCpxThread[nThread]->nNice = nNice;
 
+        pCpxThread[nThread]->nSleepTime = 0;
+
         pCpxThread[nThread]->nLastMomentun = Cpx_GetCurrentTick ();
 
         pCpxThread[nThread]->pSubscriptions = NULL;
@@ -382,7 +376,7 @@ extern "C"
 
     static uint32_t Cpx_GetNextTime (size_t nThreadID)
     {
-        return (uint32_t) (pCpxThread[nThreadID]->nLastMomentun + pCpxThread[nThreadID]->nNice);
+        return (uint32_t) (pCpxThread[nThreadID]->nLastMomentun + ((THREADL_SLEEP != pCpxThread[nThreadID]->nStatus) ? pCpxThread[nThreadID]->nNice : pCpxThread[nThreadID]->nSleepTime));
     }
 
 #define _CPTHREAD(T) pCpxThread[T]
@@ -417,10 +411,10 @@ extern "C"
             nCount = 0;
             nCThread = nCurrentThread + 1;
 
+            nCurTime = Cpx_GetCurrentTick ();
+
             while (nCount < nMaxThreads)
             {
-                nCurTime = Cpx_GetCurrentTick ();
-
                 if (nCThread >= nMaxThreads)
                 {
                     nCThread = 0;
@@ -428,7 +422,7 @@ extern "C"
 
                 if (NULL != (pThread = pCpxThread[nCThread]) && pThread->nStatus >= THREADL_RUNNING)
                 {
-                    nNextTime = pThread->nLastMomentun + pThread->nNice;
+                    nNextTime = pThread->nLastMomentun + ((THREADL_SLEEP != pThread->nStatus) ? pThread->nNice : pThread->nSleepTime);
 
                     if (nNextTime < nCurTime || (THREADL_START == pThread->nStatus || THREADL_NOW == pThread->nStatus))
                     {
@@ -583,11 +577,8 @@ extern "C"
                 longjmp (jmpJoinPointer, 1);
             }
 
-            if (((uint8_t*)pCurrentThread->pLastStack)[pCurrentThread->nStackSize] != 0xAA)
-            {
-                pCurrentThread->pLastStack = (void*)&nValue;
-                pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
-            }
+            pCurrentThread->pLastStack = (void*)&nValue;
+            pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
 
             RestoreStack ();
 
@@ -596,26 +587,21 @@ extern "C"
 
         Cpx_SetMomentun ();
 
-        Cpx_InternalSetStatus (THREADL_RUNNING);
-
+        pCurrentThread->nStatus = THREADL_RUNNING;
+        
+        pCurrentThread->nSleepTime = 0;
+        
         pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
         
         return 1;
     }
 
-    void Cpx_Sleep (uint32_t nDelayTickTime)
+    void Cpx_SetSleep (uint32_t nDelayTickTime)
     {
         if (Cpx_IsCoreRunning ())
         {
-            uint32_t nBkpNice = pCurrentThread->nNice;
-
-            Cpx_InternalSetStatus (THREADL_SLEEP);
-
-            Cpx_InternalSetNice ((uint32_t) nDelayTickTime);
-
-            nDelayTickTime = Cpx_Yield ();
-
-            Cpx_InternalSetNice ((uint32_t) nBkpNice);
+            pCurrentThread->nSleepTime = nDelayTickTime;
+            pCurrentThread->nStatus = THREADL_SLEEP;
         }
     }
 
@@ -848,7 +834,7 @@ extern "C"
         pCurrentThread->nStatus = THREADL_WAITTAG;
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-        Cpx_Yield ();
+        Cpx_NowYield ();
 
         *payload = pCurrentThread->payload;
 
@@ -867,7 +853,7 @@ extern "C"
 
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-        Cpx_Yield ();
+        Cpx_NowYield ();
 
         return true;
     }
