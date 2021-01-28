@@ -157,8 +157,23 @@ extern "C"
      */
 
     bool Cpx_IsCoreRunning (void)
+    {   
+        if (pCurrentThread != NULL && nRunningThreads > 0)
+        {
+            return true;
+        }
+
+        return  false;
+    }
+
+    void Cpx_InternalSetNice (uint32_t nNice)
     {
-        return (pCurrentThread != NULL && nRunningThreads > 0) ? true : false;
+        pCurrentThread->nNice = nNice;
+    }
+
+    void Cpx_InternalSetStatus (uint8_t nStatus)
+    {
+        pCurrentThread->nStatus = nStatus;
     }
 
     /*
@@ -401,9 +416,11 @@ extern "C"
         {
             nCount = 0;
             nCThread = nCurrentThread + 1;
-
-            while (nCount < nMaxThreads && (nCurTime = Cpx_GetCurrentTick ()))
+            
+            while (nCount < nMaxThreads)
             {
+                nCurTime = Cpx_GetCurrentTick ();
+                
                 if (nCThread >= nMaxThreads)
                 {
                     nCThread = 0;
@@ -467,11 +484,12 @@ extern "C"
 
         /* Porting for dealing with watchdogs */
 
+        volatile uint8_t nValue = 0xAA;
+
         do
         {
             if (pCurrentThread != NULL)
             {
-                volatile uint8_t nValue = 0xAA;
                 pStartStck = (void*)&nValue;
 
                 if (setjmp (jmpJoinPointer) == 0) switch (pCurrentThread->nStatus)
@@ -524,6 +542,8 @@ extern "C"
                 Cpx_SleepTicks (Cpx_GetNextTime (nCurrentThread) - Cpx_GetCurrentTick ());
             }
         }
+
+        pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
     }
 
     static void Cpx_UpdateExecTime (void)
@@ -575,9 +595,7 @@ extern "C"
 
             Cpx_SetMomentun ();
 
-            pCurrentThread->nStatus = THREADL_RUNNING;
-
-            pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
+            Cpx_InternalSetStatus (THREADL_RUNNING);
 
             return 1;
         }
@@ -595,10 +613,10 @@ extern "C"
 
         nBkpNice = pCurrentThread->nNice;
 
-        pCurrentThread->nStatus = THREADL_SLEEP;
+        Cpx_InternalSetStatus (THREADL_SLEEP);
         Cpx_SetNice (nDelayTickTime);
 
-        Cpx_Yield ();
+        (void) Cpx_Yield ();
 
         Cpx_SetNice (nBkpNice);
     }
@@ -682,7 +700,7 @@ extern "C"
     {
         VERIFY (Cpx_IsCoreRunning (), );
 
-        pCurrentThread->nNice = nNice == 0 ? 1 : nNice;
+        pCurrentThread->nNice = nNice;
     }
 
     /*

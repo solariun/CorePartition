@@ -51,7 +51,9 @@ void ShowRunningThreads ()
 
     for (nThreadID = 0; nThreadID < Cpx_GetMaxNumberOfThreads (); nThreadID++)
     {
-        Serial.print (F ("\e[K"));
+        
+        //Serial.print (F ("\e[K"));
+
         if (Cpx_GetStatusByID (nThreadID) != THREADL_NONE)
         {
             Serial.print (nThreadID);
@@ -71,7 +73,7 @@ void ShowRunningThreads ()
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
             Serial.print ("ms");
         }
-        Serial.println ("\e[0K");
+        Serial.println ("");
     }
 }
 
@@ -190,6 +192,17 @@ void Cpx_StackOverflowHandler ()
 #endif
 
 
+void ShowThreads (void* nValue)
+{
+    (void) nValue;
+
+    while (Cpx_Yield ())
+    {
+        Serial.println ("");
+        Serial.println ("....PING....");
+    }
+}
+
 
 CpxThread* ppThreadList [10];
 
@@ -219,13 +232,15 @@ void setup ()
         exit (0);
     }
 
+    assert (Cpx_CreateThread (ShowThreads, NULL, STACK_PRODUCER, 1000));
+    
+
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 0));
 
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 700));
 
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 700));
 
-    assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 800));
 
     assert (Cpx_CreateThread (Producer, NULL, STACK_PRODUCER, 500));
 
