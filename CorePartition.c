@@ -157,13 +157,13 @@ extern "C"
      */
 
     bool Cpx_IsCoreRunning (void)
-    {   
+    {
         if (pCurrentThread != NULL && nRunningThreads > 0)
         {
             return true;
         }
 
-        return  false;
+        return false;
     }
 
     void Cpx_InternalSetNice (uint32_t nNice)
@@ -416,11 +416,11 @@ extern "C"
         {
             nCount = 0;
             nCThread = nCurrentThread + 1;
-            
+
             while (nCount < nMaxThreads)
             {
                 nCurTime = Cpx_GetCurrentTick ();
-                
+
                 if (nCThread >= nMaxThreads)
                 {
                     nCThread = 0;
@@ -542,8 +542,6 @@ extern "C"
                 Cpx_SleepTicks (Cpx_GetNextTime (nCurrentThread) - Cpx_GetCurrentTick ());
             }
         }
-
-        pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
     }
 
     static void Cpx_UpdateExecTime (void)
@@ -565,11 +563,13 @@ extern "C"
 
     uint8_t Cpx_Yield (void)
     {
-        if (nRunningThreads > 0)
+
+        VERIFY (nRunningThreads > 0, 0);
+
+        Cpx_UpdateExecTime ();
+
         {
             volatile uint8_t nValue = 0xBB;
-
-            Cpx_UpdateExecTime ();
 
             pCurrentThread->pLastStack = (void*)&nValue;
             pCurrentThread->nStackSize = (size_t)pStartStck - (size_t)pCurrentThread->pLastStack;
@@ -592,33 +592,31 @@ extern "C"
             RestoreStack ();
 
             assert (((uint8_t*)pCurrentThread->pLastStack)[pCurrentThread->nStackSize] == 0xAA && ((uint8_t*)pCurrentThread->pLastStack)[0] == 0xBB);
-
-            Cpx_SetMomentun ();
-
-            Cpx_InternalSetStatus (THREADL_RUNNING);
-
-            return 1;
         }
 
-        return 0;
+        Cpx_SetMomentun ();
+
+        Cpx_InternalSetStatus (THREADL_RUNNING);
+
+        pCurrentThread->nLastMomentun = Cpx_GetCurrentTick ();
+        
+        return 1;
     }
 
     void Cpx_Sleep (uint32_t nDelayTickTime)
     {
-        uint32_t nBkpNice = 0;
+        if (Cpx_IsCoreRunning ())
+        {
+            uint32_t nBkpNice = pCurrentThread->nNice;
 
-        VERIFY (Cpx_IsCoreRunning (), );
+            Cpx_InternalSetStatus (THREADL_SLEEP);
 
-        VERIFY (pCurrentThread->nStatus == THREADL_RUNNING, );
+            Cpx_InternalSetNice ((uint32_t) nDelayTickTime);
 
-        nBkpNice = pCurrentThread->nNice;
+            nDelayTickTime = Cpx_Yield ();
 
-        Cpx_InternalSetStatus (THREADL_SLEEP);
-        Cpx_SetNice (nDelayTickTime);
-
-        (void) Cpx_Yield ();
-
-        Cpx_SetNice (nBkpNice);
+            Cpx_InternalSetNice ((uint32_t) nBkpNice);
+        }
     }
 
     /*

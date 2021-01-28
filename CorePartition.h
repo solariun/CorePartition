@@ -133,6 +133,11 @@ extern "C"
         uint32_t nNice;
         uint32_t nLastMomentun;
         uint32_t nExecTime;
+
+        /* 
+         * This will be, also, used as
+         * buffer for sleep.
+         */
         uint32_t nNotifyUID;
 
         void* pnVariableLockID;
