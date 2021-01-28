@@ -139,7 +139,7 @@ extern "C"
 #pragma weak Cpx_StackOverflowHandler
     void Cpx_StackOverflowHandler (void)
     {
-        TRACE ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
+        (void) 0;
     }
 
     /*
@@ -173,40 +173,6 @@ extern "C"
      * KERNEL FUNCTIONS ---------------------------------
      * --------------------------------------------------
      */
-
-    static void Cpx_PrintDebugInfo ()
-    {
-#ifdef __EXTRA__
-        size_t nCount = 0;
-        CpxThread* pLCpxThread = NULL;
-
-        YYTRACE ("------------------------------------------------\n");
-        YYTRACE ("Context size: [%zu], size_t: [%zu] in bytes\n", Cpx_GetThreadContextSize (), sizeof (size_t));
-        YYTRACE ("------------------------------------------------\n");
-        YYTRACE ("  %-4s  %-4s  %5s/%-5s  %-8s  %-8s\n", "TID", "Stat", " Stack", "Max", "Nice", " VarLock");
-        YYTRACE ("------------------------------------------------\n");
-
-        for (nCount = 0; nCount < nMaxThreads; nCount++)
-        {
-            if ((pLCpxThread = pCpxThread[nCount]) != NULL)
-            {
-                YYTRACE ("%1c %-4zu  %-4u  %5zu/%-5zu  %-8u  %-8zx static Thread: [%u], Broker: [%u]\n",
-                         nCurrentThread == nCount ? '*' : ' ',
-                         nCount,
-                         pLCpxThread->nStatus,
-                         pLCpxThread->nStackSize,
-                         pLCpxThread->nStackMaxSize,
-                         pLCpxThread->nNice,
-                         (size_t)pLCpxThread->pnVariableLockID,
-                         pLCpxThread->nThreadController & CPX_CTRL_TYPE_STATIC ? true : false,
-                         pLCpxThread->nThreadController & CPX_CTRL_BROKER_STATIC ? true : false);
-            }
-        }
-
-        YYTRACE ("------------------------------------------------\n");
-#endif
-        (void)0;
-    }
 
 #define POLY 0x8408
     /*
@@ -520,8 +486,6 @@ extern "C"
         } while (nRunningThreads);
 
         pCurrentThread = NULL;
-
-        TRACE ("Leaving...  running: %zu\n", nRunningThreads);
 
         Cpx_PrintDebugInfo ();
     }
@@ -969,8 +933,6 @@ extern "C"
 
         if (pCurrentThread != NULL && pnLockID != NULL)
         {
-            TRACE ("%s: ThreadID: [%zu], nLockID: [%zx]\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID);
-
             pCurrentThread->pnVariableLockID = (void*)pnLockID;
 
             pCurrentThread->nStatus = THREADL_LOCK;
@@ -982,8 +944,6 @@ extern "C"
                     *pnStatus = (size_t)pCurrentThread->pnVariableLockID;
                     pCurrentThread->payload.nAttribute = 0;
                 }
-
-                TRACE ("%s: Thread #%zu, Received trap variable [%zx]\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID);
 
                 nReturn = true;
             }
@@ -1008,8 +968,6 @@ extern "C"
                 {
                     if (pCpxThread[nThreadID]->pnVariableLockID == pnLockID && pCpxThread[nThreadID]->nStatus == THREADL_LOCK)
                     {
-                        TRACE ("%s: TID#%-4zu (%-16zx) Notifying  -> Thread #%zu\n", __FUNCTION__, nCurrentThread, (size_t)pnLockID, nThreadID);
-
                         pCpxThread[nThreadID]->pnVariableLockID = (void*)nStatus;
                         pCpxThread[nThreadID]->nStatus = THREADL_NOW;
 
@@ -1019,8 +977,6 @@ extern "C"
                     }
                 }
             }
-
-            TRACE ("%s: Thread #%zu Notified (%zu] from ID [%zx] \n", __FUNCTION__, nCurrentThread, nNotifiedCount, (size_t)pnLockID);
 
             if (nNotifiedCount > 0)
             {
@@ -1079,15 +1035,6 @@ extern "C"
 
         return true;
     }
-
-#define Cpx_PrintLock(pLock)                                                              \
-    TRACE ("%s: Thread #%zu Lock: [%c](waiting: [%zu]), Shared: [%zu](waiting: [%zu])\n", \
-           __FUNCTION__,                                                                  \
-           nCurrentThread,                                                                \
-           pLock->bExclusiveLock ? 'T' : 'F',                                             \
-           Cpx_WaitingVariableLock ((void*)&pLock->bExclusiveLock),                       \
-           pLock->nSharedLockCount,                                                       \
-           Cpx_WaitingVariableLock ((void*)&pLock->nSharedLockCount));
 
     bool Cpx_Lock (CpxSmartLock* pLock)
     {
