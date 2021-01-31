@@ -98,9 +98,7 @@ void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, Cp
     }
 }
 
-
 const char* messageTest = "Context";
-
 
 CpxStaticBroker pKernelSubscription [Cpx_GetStaticBrokerSize (2)];
 
@@ -214,7 +212,7 @@ CpxStaticThread nStaticThreadContext [5][Cpx_GetStaticThreadSize(256)];
 
 int main ()
 {
-    if (Cpx_StaticStart (sizeof (coreThreadList) / sizeof (CpxThread*), coreThreadList) == false)
+    if (Cpx_StaticStart (coreThreadList, sizeof (coreThreadList)) == false)
     {
         printf ("Error starting up Thread.");
         return (1);

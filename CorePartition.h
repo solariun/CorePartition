@@ -131,7 +131,6 @@ extern "C"
         size_t nStackSize;
 
         uint32_t nNice;
-        uint32_t nSleepTime;
         uint32_t nLastMomentun;
         uint32_t nExecTime;
 
@@ -141,8 +140,12 @@ extern "C"
          */
         uint32_t nNotifyUID;
 
-        void* pnVariableLockID;
-        CpxMsgPayload payload;
+        union 
+        {
+            uint32_t nSleepTime;
+            void* pnVariableLockID;
+            CpxMsgPayload payload;  /* data */
+        } control;                
 
         uint8_t nThreadController;
         uint8_t nStatus;

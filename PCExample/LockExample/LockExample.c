@@ -28,7 +28,7 @@ void Procuder (void* pValue)
          */
         Cpx_Sleep(0);
 
-        Cpx_SharedUnlock (&lock);
+        /*Cpx_SharedUnlock (&lock);*/
 
         nLastDuty = Cpx_GetCurrentTick ();
     } while (Cpx_Yield ());
@@ -60,7 +60,7 @@ void Consumer (void* pValue)
          */
         Cpx_Sleep(0);
 
-        Cpx_Unlock (&lock);
+        /*Cpx_Unlock (&lock);*/
 
     } while (Cpx_Yield ());
 }
@@ -83,9 +83,9 @@ void Cpx_StackOverflowHandler ()
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
 }
 
-uint8_t nConsumerContexts [4][Cpx_GetStaticThreadSize (300)];
+CpxStaticThread nConsumerContexts [4][Cpx_GetStaticThreadSize (300)];
 
-uint8_t nProducerContexts [10][Cpx_GetStaticThreadSize (300)];
+CpxStaticThread nProducerContexts [10][Cpx_GetStaticThreadSize (300)];
 
 int main ()
 {
@@ -95,37 +95,37 @@ int main ()
      * PRODUCERS
      */
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [0], sizeof (nProducerContexts [0]), 10));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [0], sizeof (nProducerContexts [0]), 10));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [1], sizeof (nProducerContexts [1]), 333));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [1], sizeof (nProducerContexts [1]), 333));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [2], sizeof (nProducerContexts [2]), 444));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [2], sizeof (nProducerContexts [2]), 444));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [3], sizeof (nProducerContexts [3]), 555));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [3], sizeof (nProducerContexts [3]), 555));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [4], sizeof (nProducerContexts [4]), 280));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [4], sizeof (nProducerContexts [4]), 280));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [5], sizeof (nProducerContexts [5]), 160));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [5], sizeof (nProducerContexts [5]), 160));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [6], sizeof (nProducerContexts [6]), 777));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [6], sizeof (nProducerContexts [6]), 777));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [7], sizeof (nProducerContexts [7]), 777));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [7], sizeof (nProducerContexts [7]), 777));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [8], sizeof (nProducerContexts [8]), 1000));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [8], sizeof (nProducerContexts [8]), 1000));
 
-    assert (Cpx_CreateStaticThread (Procuder, NULL, (CpxThread*) nProducerContexts [9], sizeof (nProducerContexts [9]), 60000));
+    assert (Cpx_CreateStaticThread (Procuder, NULL, nProducerContexts [9], sizeof (nProducerContexts [9]), 60000));
 
     /*
      * CONSUMERS
      */
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*)nConsumerContexts [0], sizeof (nConsumerContexts [0]), 2000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [0], sizeof (nConsumerContexts [0]), 2000));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*)nConsumerContexts [1], sizeof (nConsumerContexts [0]), 1000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [1], sizeof (nConsumerContexts [0]), 1000));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*)nConsumerContexts [2], sizeof (nConsumerContexts [0]), 1000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [2], sizeof (nConsumerContexts [0]), 1000));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*)nConsumerContexts [3], sizeof (nConsumerContexts [0]), 3000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [3], sizeof (nConsumerContexts [0]), 3000));
 
     Cpx_LockInit (&lock);
 
