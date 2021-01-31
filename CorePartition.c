@@ -98,16 +98,16 @@ extern "C"
     static volatile size_t nCurrentThread = 0;
 
     /* Thread execution pointer list */
-    static CpxThread** pCpxThread = NULL;
+    CpxThread** pCpxThread = NULL;
 
     /* The current thread context pointer */
-    static CpxThread* pCurrentThread = NULL;
+    CpxThread* pCurrentThread = NULL;
 
     /* The stack start point */
-    static void* pStartStck = NULL;
+    void* pStartStck = NULL;
 
     /* The kernal jump back point */
-    static jmp_buf jmpJoinPointer;
+    jmp_buf jmpJoinPointer;
 
 #define Cpx_SetState(nNewState) pCurrentThread->nStatus = nNewState
 #define Cpx_NowYield()              \
@@ -214,9 +214,7 @@ extern "C"
 
         nMaxThreads = nThreadPartitions;
 
-        pCpxThread = ppStaticCpxThread;
-
-        if (pCpxThread == NULL)
+        if (ppStaticCpxThread == NULL)
         {
 #ifndef _CPX_NO_HEAP_
             if ((pCpxThread = (CpxThread**)malloc (sizeof (CpxThread**) * nThreadPartitions)) == NULL)
@@ -227,10 +225,20 @@ extern "C"
         return false;
 #endif
         }
-
-        if (memset ((void*)pCpxThread, 0, sizeof (CpxThread**) * nThreadPartitions) == NULL)
+        else
         {
-            return false;
+            pCpxThread = ppStaticCpxThread;
+        }
+
+        /* Initiating all reserved threads */
+        {
+            size_t nCount = 0;
+
+            for (nCount=0; nCount < nMaxThreads; nCount++)
+            {   
+                printf ("Initiating: %zu... \n", nCount);
+                pCpxThread [nCount] = NULL;
+            }
         }
 
         return true;
@@ -283,6 +291,7 @@ extern "C"
             /* Static initializations */
 
             pCpxThread[nThread] = (CpxThread*)pStaticContext;
+            
             pCpxThread[nThread]->nThreadController = CPX_CTRL_TYPE_STATIC;
         }
 
@@ -581,35 +590,35 @@ extern "C"
 
     size_t Cpx_GetMaxStackSizeByID (size_t nID)
     {
-        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads && NULL != pCpxThread[nID], 0);
 
         return pCpxThread[nID]->nStackMaxSize;
     }
 
     uint32_t Cpx_GetNiceByID (size_t nID)
     {
-        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads && NULL != pCpxThread[nID], 0);
 
         return pCpxThread[nID]->nNice;
     }
 
     uint8_t Cpx_GetStatusByID (size_t nID)
     {
-        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads && NULL != pCpxThread[nID], 0);
 
         return pCpxThread[nID]->nStatus;
     }
 
     uint32_t Cpx_GetLastDutyCycleByID (size_t nID)
     {
-        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads && NULL != pCpxThread[nID], 0);
 
         return pCpxThread[nID]->nExecTime;
     }
 
     uint32_t Cpx_GetLastMomentumByID (size_t nID)
     {
-        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads && NULL != pCpxThread[nID], 0);
 
         return pCpxThread[nID]->nLastMomentun;
     }

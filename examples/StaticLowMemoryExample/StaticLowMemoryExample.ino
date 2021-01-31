@@ -36,10 +36,9 @@
 #include "Arduino.h"
 #include "CorePartition.h"
 
-
 #define THREAD_VALUES_ATTRB 1
 
-/* 
+/*
  * Static Initializations f
  */
 
@@ -50,12 +49,12 @@ CpxStaticThread pStaticCounter[3][Cpx_GetStaticThreadSize (25 * sizeof (size_t))
 CpxStaticThread pStaticConsumer[1][Cpx_GetStaticThreadSize (30 * sizeof (size_t))];
 
 /* Eventual Thread */
-CpxStaticThread pStaticStack[1][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
+CpxStaticThread pStaticStack[1][Cpx_GetStaticThreadSize (30 * sizeof (size_t))];
 
 /* Broker static memory */
 CpxStaticBroker brokerSubscriptions[Cpx_GetStaticBrokerSize (1)];
 
-/* 
+/*
  * Implementation
  */
 
@@ -71,9 +70,9 @@ void ShowRunningThreads ()
 
     for (nThreadID = 0; nThreadID < Cpx_GetMaxNumberOfThreads (); nThreadID++)
     {
-        Serial.print (F ("\e[K"));
         if (Cpx_GetStatusByID (nThreadID) != THREADL_NONE)
         {
+            Serial.print (F ("\e[K"));
             Serial.print (nThreadID);
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetStatusByID (nThreadID));
@@ -89,20 +88,19 @@ void ShowRunningThreads ()
             Serial.print (Cpx_GetContextSizeByID (nThreadID));
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
-            Serial.print ("ms");
-            Serial.print ("Static: ");
+            Serial.print ("ms, Static: ");
             Serial.print ((pThreadContexts[nThreadID]->nThreadController & 1) ? "Y" : "N");
             Serial.print ("Broker: ");
             Serial.print ((pThreadContexts[nThreadID]->nThreadController & 2) ? "Y" : "N");
-
+            Serial.println ();
             nTotalMemory += Cpx_GetContextSizeByID (nThreadID);
+            
         }
-        Serial.println ("\e[0K");
     }
 
-    Serial.print ("\e[0KTotal Context + stack: ");
+    Serial.print ("\e[KTotal Context + stack: ");
     Serial.println (nTotalMemory);
-    Serial.println ("\e[0K");
+    Serial.flush ();
 }
 // Global context for async access
 uint32_t nValues[3] = {0, 0, 0};
@@ -145,8 +143,8 @@ uint32_t WaitForData ()
         Serial.print ("    Error Waiting for messages.   ");
         return 0;
     }
-    
-    return (uint32_t) payload.nValue;
+
+    return (uint32_t)payload.nValue;
 }
 
 void eventualThread (void* pValue)
@@ -176,19 +174,18 @@ void eventualThread (void* pValue)
         nLast = Cpx_GetLastMomentum ();
         Serial.println (F ("ms\e[0K\n"));
         Serial.flush ();
-                    
+
         Cpx_Yield ();
     }
 
     Serial.println ("------------------------------------------");
-    Serial.print ("Thread #"); 
+    Serial.print ("Thread #");
     Serial.print (Cpx_GetID ());
     Serial.println (" eventual thread DONE!");
     Serial.println ("------------------------------------------");
     Serial.flush ();
-    
-    Cpx_Yield ();
 
+    Cpx_Yield ();
 }
 
 void ConsumerThread (void* pValue)
@@ -233,6 +230,7 @@ void ConsumerThread (void* pValue)
         Serial.print (Cpx_GetLastDutyCycle ());
         Serial.println ("ms\e[0k\n\n");
 
+        ShowRunningThreads ();
         Serial.flush ();
 
         Cpx_Yield ();
@@ -240,20 +238,20 @@ void ConsumerThread (void* pValue)
         if (Cpx_GetStatusByID (4) == THREADL_NONE)
         {
             Cpx_CreateStaticThread (eventualThread, NULL, pStaticStack [0], sizeof (pStaticStack [0]), 100);
+
             nCount = 1;
             nFail = 0;
         }
-
-        if (nCount)
+        else 
         {
-            if (nCount == 15)
+            if (nCount >= 15)
             {
                 if (Cpx_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag) - 1, 0, 0) == false)
                 {
                     nFail++;
                 }
                 {
-                   nCount = 0;
+                    nCount = 0;
                 }
             }
             else
@@ -268,7 +266,6 @@ void ConsumerThread (void* pValue)
                 }
             }
         }
- 
     }
 }
 
@@ -315,7 +312,7 @@ void setup ()
     Serial.flush ();
     Serial.flush ();
 
-#if 1
+#if 0
     if (Cpx_StaticStart (pThreadContexts, sizeof (pThreadContexts)) == false)
     {
         Serial.println ("Fail to start CorePartition.");
@@ -337,7 +334,7 @@ void setup ()
     assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[2], sizeof (pStaticCounter[2]), 1000));
 
     /* Consumer Threads */
-    assert (Cpx_CreateStaticThread (ConsumerThread, (void*)nValues, pStaticConsumer[0], sizeof (pStaticConsumer[0]), 100));
+    assert (Cpx_CreateStaticThread (ConsumerThread, (void*)nValues, pStaticConsumer[0], sizeof (pStaticConsumer[0]), 1000));
 }
 
 void loop ()
