@@ -239,9 +239,11 @@ extern "C"
         return true;
     }
 
-    bool Cpx_StaticStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread)
+    bool Cpx_StaticStart (CpxThread** ppStaticThread, size_t nStaticThreadSize)
     {
-        return Cpx_CommonStart (nThreadPartitions, ppStaticCpxThread);
+        VERIFY (nStaticThreadSize > sizeof (CpxThread), false);
+        
+        return Cpx_CommonStart (Cpx_GetStaticContextSize (nStaticThreadSize), ppStaticThread);
     }
 
     bool Cpx_Start (size_t nThreadPartitions)

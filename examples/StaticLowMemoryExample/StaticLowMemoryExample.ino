@@ -179,9 +179,9 @@ void eventualThread (void* pValue)
 
 void ConsumerThread (void* pValue)
 {
-    Cpx_EnableStaticBroker ((void*)nValues, brokerSubscriptions, sizeof (brokerSubscriptions), ThreadCounterMessageHandler);
+    //Cpx_EnableStaticBroker ((void*)nValues, brokerSubscriptions, sizeof (brokerSubscriptions), ThreadCounterMessageHandler);
 
-    Cpx_SubscribeTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1);
+    //Cpx_SubscribeTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1);
 
     unsigned long nLast = millis ();
 
@@ -222,7 +222,7 @@ void ConsumerThread (void* pValue)
         Serial.flush ();
 
         Cpx_Yield ();
-
+/*
         if (Cpx_GetStatusByID (2) == THREADL_NONE)
         {
             Cpx_CreateStaticThread (eventualThread, NULL, pStaticStack [0], sizeof (pStaticStack [0]), 100);
@@ -252,6 +252,7 @@ void ConsumerThread (void* pValue)
                 }
             }
         }
+ */
     }
 }
 
@@ -298,12 +299,19 @@ void setup ()
     Serial.flush ();
     Serial.flush ();
 
+#if 1
     if (Cpx_StaticStart (pThreadContexts, sizeof (pThreadContexts)) == false)
     {
         Serial.println ("Fail to start CorePartition.");
         exit (0);
     }
-
+#else
+    if (Cpx_Start (5) == false)
+    {
+        Serial.println ("Fail to start CorePartition.");
+        exit (0);
+    }
+#endif
 
     /* Producer Threads */
     assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[0], sizeof (pStaticCounter[0]), 1));
@@ -318,5 +326,6 @@ void setup ()
 
 void loop ()
 {
+    Serial.print ("Joining");
     Cpx_Join ();
 }

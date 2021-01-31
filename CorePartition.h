@@ -173,12 +173,12 @@ extern "C"
     /**
      * @brief Start CorePartition thread provisioning
      *
-     * @param nThreadPartitions     Number of threads to be provisioned
-     * @param ppStaticCpxThread    The CpxThread** static list provided.
+     * @param ppStaticThread     Static Thread pointer type CpxThread**
+     * @param nStaticThreadSize  Static Thread size in bytes
      *
      * @return true  true if successfully created all provisioned threads
      */
-    bool Cpx_StaticStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread);
+    bool Cpx_StaticStart (CpxThread** ppStaticThread, size_t nStaticThreadSize);
 
     /**
      * @brief  Create a non-Isolated context Thread
