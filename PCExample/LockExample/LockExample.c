@@ -28,7 +28,7 @@ void Procuder (void* pValue)
          */
         Cpx_Sleep(0);
 
-        /*Cpx_SharedUnlock (&lock);*/
+        Cpx_SharedUnlock (&lock);
 
         nLastDuty = Cpx_GetCurrentTick ();
     } while (Cpx_Yield ());
@@ -60,7 +60,7 @@ void Consumer (void* pValue)
          */
         Cpx_Sleep(0);
 
-        /*Cpx_Unlock (&lock);*/
+        Cpx_Unlock (&lock);
 
     } while (Cpx_Yield ());
 }
@@ -123,7 +123,7 @@ int main ()
 
     assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [1], sizeof (nConsumerContexts [0]), 1000));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [2], sizeof (nConsumerContexts [0]), 1000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [2], sizeof (nConsumerContexts [0]), 823));
 
     assert (Cpx_CreateStaticThread (Consumer, NULL, nConsumerContexts [3], sizeof (nConsumerContexts [0]), 3000));
 

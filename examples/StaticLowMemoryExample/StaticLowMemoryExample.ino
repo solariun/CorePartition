@@ -36,13 +36,17 @@
 #include "Arduino.h"
 #include "CorePartition.h"
 
-#define THREAD_VALUES_ATTRB 1
-/* Static Contexts */
 
-CpxThread* pThreadContexts[3];
+#define THREAD_VALUES_ATTRB 1
+
+/* 
+ * Static Initializations f
+ */
+
+CpxThread* pThreadContexts[5];
 
 /* Consummer and producer threads */
-CpxStaticThread pStaticCounter[1][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
+CpxStaticThread pStaticCounter[3][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
 CpxStaticThread pStaticConsumer[1][Cpx_GetStaticThreadSize (30 * sizeof (size_t))];
 
 /* Eventual Thread */
@@ -50,6 +54,10 @@ CpxStaticThread pStaticStack[1][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
 
 /* Broker static memory */
 CpxStaticBroker brokerSubscriptions[Cpx_GetStaticBrokerSize (1)];
+
+/* 
+ * Implementation
+ */
 
 void ShowRunningThreads ()
 {
@@ -229,7 +237,7 @@ void ConsumerThread (void* pValue)
 
         Cpx_Yield ();
 
-        if (Cpx_GetStatusByID (2) == THREADL_NONE)
+        if (Cpx_GetStatusByID (4) == THREADL_NONE)
         {
             Cpx_CreateStaticThread (eventualThread, NULL, pStaticStack [0], sizeof (pStaticStack [0]), 100);
             nCount = 1;
@@ -322,11 +330,11 @@ void setup ()
 #endif
 
     /* Producer Threads */
-    assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[0], sizeof (pStaticCounter[0]), 1));
+    assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[0], sizeof (pStaticCounter[0]), 0));
 
-    // assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[1], sizeof (pStaticCounter[1]), 500));
+    assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[1], sizeof (pStaticCounter[1]), 500));
 
-    // assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[2], sizeof (pStaticCounter[2]), 1000));
+    assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[2], sizeof (pStaticCounter[2]), 1000));
 
     /* Consumer Threads */
     assert (Cpx_CreateStaticThread (ConsumerThread, (void*)nValues, pStaticConsumer[0], sizeof (pStaticConsumer[0]), 100));
