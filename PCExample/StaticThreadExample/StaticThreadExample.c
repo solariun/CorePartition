@@ -102,7 +102,7 @@ void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, Cp
 const char* messageTest = "Context";
 
 
-uint8_t pKernelSubscription [Cpx_GetStaticBrokerSize (2)];
+CpxStaticBroker pKernelSubscription [Cpx_GetStaticBrokerSize (2)];
 
 void kernel (void* pValue)
 {
@@ -210,7 +210,7 @@ void Cpx_StackOverflowHandler ()
 CpxThread* coreThreadList [10];
 
 /* Static stack pages */
-uint8_t nStaticThreadContext [5][Cpx_GetStaticThreadSize(256)];
+CpxStaticThread nStaticThreadContext [5][Cpx_GetStaticThreadSize(256)];
 
 int main ()
 {
@@ -220,11 +220,11 @@ int main ()
         return (1);
     }
     
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [0], sizeof (nStaticThreadContext [0]), 100));
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [1], sizeof (nStaticThreadContext [1]), 323));
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [2], sizeof (nStaticThreadContext [2]), 764));
-    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, (CpxThread*) nStaticThreadContext [3], sizeof (nStaticThreadContext [3]), 1500));
-    assert (Cpx_CreateStaticThread (kernel, NULL, (CpxThread*) nStaticThreadContext [4], sizeof (nStaticThreadContext [4]), 1000));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, nStaticThreadContext [0], sizeof (nStaticThreadContext [0]), 100));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, nStaticThreadContext [1], sizeof (nStaticThreadContext [1]), 323));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL, nStaticThreadContext [2], sizeof (nStaticThreadContext [2]), 764));
+    assert (Cpx_CreateStaticThread (ThreadProducer, NULL,  nStaticThreadContext [3], sizeof (nStaticThreadContext [3]), 1500));
+    assert (Cpx_CreateStaticThread (kernel, NULL, nStaticThreadContext [4], sizeof (nStaticThreadContext [4]), 1000));
 
     Cpx_Join ();
 

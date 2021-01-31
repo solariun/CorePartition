@@ -373,8 +373,6 @@ extern "C"
             }
         }
 
-        if (nCount == nMaxThreads) nRunningThreads = 0;
-
         if (nRunningThreads > 0)
         {
             nCount = 0;
@@ -433,8 +431,7 @@ extern "C"
 
             pCurrentThread = NULL;
             pCpxThread[nCurrentThread] = NULL;
-
-            nRunningThreads--;
+            
             nThreadCount--;
         }
     }
@@ -826,7 +823,7 @@ extern "C"
         pCurrentThread->nStatus = THREADL_WAITTAG;
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-        Cpx_NowYield ();
+        Cpx_Yield ();
 
         *payload = pCurrentThread->payload;
 
@@ -845,7 +842,7 @@ extern "C"
 
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
 
-        Cpx_NowYield ();
+        Cpx_Yield ();
 
         return true;
     }
