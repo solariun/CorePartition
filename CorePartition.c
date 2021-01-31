@@ -486,8 +486,6 @@ extern "C"
         } while (nRunningThreads);
 
         pCurrentThread = NULL;
-
-        Cpx_PrintDebugInfo ();
     }
 
     static void Cpx_SetMomentun (void)
@@ -1041,8 +1039,6 @@ extern "C"
         VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
-        Cpx_PrintLock (pLock);
-
         /* Get exclusive lock */
         while (pLock->bExclusiveLock)
         {
@@ -1071,8 +1067,6 @@ extern "C"
         VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
-        Cpx_PrintLock (pLock);
-
         while (pLock->bExclusiveLock > 0)
         {
             if (pLock->bExclusiveLock > 0)
@@ -1094,8 +1088,6 @@ extern "C"
         VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
-        Cpx_PrintLock (pLock);
-
         if (pLock->nSharedLockCount)
         {
             pLock->nSharedLockCount--;
@@ -1113,8 +1105,6 @@ extern "C"
         VERIFY (Cpx_IsCoreRunning (), false);
 
         VERIFY (pLock != NULL, false);
-
-        Cpx_PrintLock (pLock);
 
         if (pLock->bExclusiveLock == true)
         {
