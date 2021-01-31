@@ -37,71 +37,24 @@
 #include "CorePartition.h"
 
 #define THREAD_VALUES_ATTRB 1
+/* Static Contexts */
 
-void SetLocation (uint16_t nY, uint16_t nX)
-{
-    Serial.print ("\e[");
-    Serial.print (nY);
-    Serial.print (";");
-    Serial.print (nX);
-    Serial.print ("H");
-}
+CpxThread* pThreadContexts[3];
 
-// works with 256 colors
-void SetColor (const uint8_t nFgColor, const uint8_t nBgColor)
-{
-    Serial.print ("\e[");
-    Serial.print (nFgColor + 30);
-    Serial.print (";");
-    Serial.print (nBgColor + 40);
-    Serial.print ("m");
-}
+/* Consummer and producer threads */
+CpxStaticThread pStaticCounter[1][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
+CpxStaticThread pStaticConsumer[1][Cpx_GetStaticThreadSize (30 * sizeof (size_t))];
 
-void ClearCurrentLine ()
-{
-    Serial.print ("\e[K");
-}
+/* Eventual Thread */
+CpxStaticThread pStaticStack[1][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
 
-void ResetColor ()
-{
-    Serial.print (F ("\033[0m"));
-}
-
-void HideCursor ()
-{
-    Serial.print (F ("\033[?25l"));
-}
-
-void ShowCursor ()
-{
-    Serial.print (F ("\033[?25h"));
-}
-
-void ClearConsole ()
-{
-    Serial.print (F ("\033[2J"));
-}
-
-void ReverseColor ()
-{
-    Serial.print (F ("\033[7m"));
-}
-
-void Delay (uint64_t nSleep)
-{
-    uint32_t nMomentum = millis ();
-
-    // delay (nSleep); return;
-
-    do
-    {
-        Cpx_Yield ();
-    } while ((millis () - nMomentum) < nSleep);
-}
+/* Broker static memory */
+CpxStaticBroker brokerSubscriptions[Cpx_GetStaticBrokerSize (1)];
 
 void ShowRunningThreads ()
 {
     size_t nThreadID = 0;
+    size_t nTotalMemory = 0;
 
     Serial.println ();
     Serial.println (F ("Listing all running threads"));
@@ -123,20 +76,32 @@ void ShowRunningThreads ()
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetMaxStackSizeByID (nThreadID));
             Serial.print (F ("\t"));
-            Serial.print (Cpx_GetThreadContextSize ());
+            Serial.print (Cpx_GetStructContextSize ());
             Serial.print (F ("\t"));
-            Serial.print (Cpx_GetMaxStackSizeByID (nThreadID) + Cpx_GetThreadContextSize ());
+            Serial.print (Cpx_GetContextSizeByID (nThreadID));
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
             Serial.print ("ms");
+            Serial.print ("Static: ");
+            Serial.print ((pThreadContexts[nThreadID]->nThreadController & 1) ? "Y" : "N");
+            Serial.print ("Broker: ");
+            Serial.print ((pThreadContexts[nThreadID]->nThreadController & 2) ? "Y" : "N");
+
+            nTotalMemory += Cpx_GetContextSizeByID (nThreadID);
         }
         Serial.println ("\e[0K");
     }
+
+    Serial.print ("\e[0KTotal Context + stack: ");
+    Serial.println (nTotalMemory);
+    Serial.println ("\e[0K");
 }
+// Global context for async access
+uint32_t nValues[3] = {0, 0, 0};
 
 char pszNotificationTag[] = "thread/proc/value";
 
-void CounterThread (void* pValue)
+void ProducerThread (void* pValue)
 {
     // no c++ cast added to support AVR c++ 98
     uint32_t nValue = (uint32_t) ((size_t) (pValue));
@@ -161,19 +126,15 @@ void ThreadCounterMessageHandler (void* pContext, const char* pszTopic, size_t n
     }
 }
 
-// Global context for async access
-uint32_t nValues[3] = {0, 0, 0};
-
 const char pszEventualTag[] = "eventual";
 
 uint32_t WaitForData ()
 {
-    CpxMsgPayload payload = {0,0,0};
+    CpxMsgPayload payload = {0, 0, 0};
 
     if (Cpx_WaitMessage (pszEventualTag, sizeof (pszEventualTag) - 1, &payload) == false)
     {
         Serial.print ("    Error Waiting for messages.   ");
-        Cpx_Yield ();
         return 0;
     }
 
@@ -187,18 +148,12 @@ void eventualThread (void* pValue)
 
     uint32_t nLast = Cpx_GetCurrentTick ();
 
-    SetLocation (6, 5);
-
     Serial.print (">> Eventual Thread");
     Serial.print (Cpx_GetID ());
     Serial.print (": Requested, Starting Up...");
 
-    Cpx_Yield ();
-
-    while (nRemoteValue)
+    while (nRemoteValue && Cpx_Yield ())
     {
-        SetLocation (6, 5);
-
         Serial.print (">> Eventual Thread");
         Serial.print (Cpx_GetID ());
         Serial.print (": ");
@@ -214,35 +169,29 @@ void eventualThread (void* pValue)
         nRemoteValue = WaitForData ();
     }
 
-    SetLocation (6, 5);
-    ClearCurrentLine ();
-
     Serial.print (">> Eventual Thread");
     Serial.print (Cpx_GetID ());
     Serial.print (": Thread done!");
+    Serial.flush ();
 
     Cpx_Yield ();
 }
 
-uint8_t nStaticStack [Cpx_GetContextSize (40 * sizeof (size_t))];
-
-void Thread (void* pValue)
+void ConsumerThread (void* pValue)
 {
-    Cpx_EnableBroker ((void*)nValues, 1, ThreadCounterMessageHandler);
+    Cpx_EnableStaticBroker ((void*)nValues, brokerSubscriptions, sizeof (brokerSubscriptions), ThreadCounterMessageHandler);
 
     Cpx_SubscribeTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1);
 
     unsigned long nLast = millis ();
 
-    uint32_t* pnValues = (uint32_t*)pValue;
+    uint32_t* pnValues = (uint32_t*)&nValues;
 
     int nCount = 0;
     int nFail = 0;
 
     while (1)
     {
-        SetLocation (5, 5);
-
         Serial.print (">>Thread");
         Serial.print (Cpx_GetID () + 1);
         Serial.print (": [");
@@ -259,7 +208,7 @@ void Thread (void* pValue)
         Serial.print ("ms, Nice: ");
         Serial.print (Cpx_GetNice ());
         Serial.print (", CTX: ");
-        Serial.print (Cpx_GetThreadContextSize ());
+        Serial.print (Cpx_GetStructContextSize ());
         Serial.print ("b, Stack: ");
         Serial.print (Cpx_GetStackSize ());
         Serial.print ("/");
@@ -270,16 +219,13 @@ void Thread (void* pValue)
         Serial.print (Cpx_GetLastDutyCycle ());
         Serial.println ("ms\e[0k\n\n");
 
-        SetLocation (10, 1);
-        ShowRunningThreads ();
-
         Serial.flush ();
 
         Cpx_Yield ();
 
-        if (Cpx_GetStatusByID (4) == THREADL_NONE)
+        if (Cpx_GetStatusByID (2) == THREADL_NONE)
         {
-            Cpx_CreateStaticThread (eventualThread, NULL, (void*) nStaticStack, sizeof (nStaticStack), 100);
+            Cpx_CreateStaticThread (eventualThread, NULL, pStaticStack [0], sizeof (pStaticStack [0]), 100);
             nCount = 1;
             nFail = 0;
         }
@@ -344,11 +290,6 @@ void setup ()
 
     delay (1000);
 
-    ResetColor ();
-    ClearConsole ();
-    HideCursor ();
-    SetLocation (1, 1);
-
     Serial.print ("CpxThread ");
     Serial.println (CpxVersion);
     Serial.println ("");
@@ -357,19 +298,22 @@ void setup ()
     Serial.flush ();
     Serial.flush ();
 
-    if (Cpx_Start (5) == false)
+    if (Cpx_StaticStart (pThreadContexts, sizeof (pThreadContexts)) == false)
     {
         Serial.println ("Fail to start CorePartition.");
         exit (0);
     }
 
-    assert (Cpx_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 1));
 
-    assert (Cpx_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 500));
+    /* Producer Threads */
+    assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[0], sizeof (pStaticCounter[0]), 1));
 
-    assert (Cpx_CreateThread (CounterThread, (void*)1, 30 * sizeof (size_t), 1000));
+    // assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[1], sizeof (pStaticCounter[1]), 500));
 
-    assert (Cpx_CreateThread (Thread, (void*)nValues, 50 * sizeof (size_t), 500));
+    // assert (Cpx_CreateStaticThread (ProducerThread, (void*)1, pStaticCounter[2], sizeof (pStaticCounter[2]), 1000));
+
+    /* Consumer Threads */
+    assert (Cpx_CreateStaticThread (ConsumerThread, (void*)nValues, pStaticConsumer[0], sizeof (pStaticConsumer[0]), 100));
 }
 
 void loop ()

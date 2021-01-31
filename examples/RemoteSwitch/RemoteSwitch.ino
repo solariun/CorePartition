@@ -147,9 +147,9 @@ void ShowRunningThreads (Stream& client)
             client.print (F ("\t"));
             client.print (Cpx_GetMaxStackSizeByID (nCount));
             client.print (F ("\t"));
-            client.print (Cpx_GetThreadContextSize ());
+            client.print (Cpx_GetStructContextSize ());
             client.print (F ("\t"));
-            client.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetThreadContextSize ());
+            client.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetStructContextSize ());
             client.print (F ("\t"));
             client.print (Cpx_GetLastDutyCycleByID (nCount));
             client.println ("ms");
@@ -454,7 +454,7 @@ void setup ()
     LocalEcho (Serial, false);
 
     Serial.print ("CpxThread ");
-    Serial.println (Cpx_version);
+    Serial.println (CpxVersion);
     Serial.println ("");
 
     Serial.println ("Starting up Thread....");

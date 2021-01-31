@@ -84,7 +84,7 @@ bool Terminal::ExecuteMOTD ()
     m_client.println ("*                                       *");
     m_client.println ("* Welcome to the future                 *");
     m_client.println ("*****************************************");
-    // m_client.println (Cpx_version);
+    // m_client.println (CpxVersion);
 
     return true;
 }

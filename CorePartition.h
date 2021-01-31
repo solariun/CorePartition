@@ -98,8 +98,8 @@ extern "C"
     /*
      * Defining subscription structure
      */
-    typedef struct Subscription Subscription;
-    struct Subscription
+    typedef struct CpxSubscriptions CpxSubscriptions;
+    struct CpxSubscriptions
     {
         TopicCallback callback;
         void* pContext;
@@ -114,7 +114,7 @@ extern "C"
     typedef struct
     {
         void* pLastStack;
-        Subscription* pSubscriptions;
+        CpxSubscriptions* pSubscriptions;
 
         union
         {
@@ -149,11 +149,17 @@ extern "C"
         uint8_t stackPage;
     } CpxThread;
 
+    /* Static Memory types */ 
+    typedef uint8_t CpxStaticThread;
+    typedef uint8_t CpxStaticBroker;
+
+    /* External prototypes for functions overloading */
     extern uint32_t Cpx_GetCurrentTick (void);
     extern void Cpx_SleepTicks (uint32_t);
     extern void Cpx_StackOverflowHandler (void);
 
-    static const char Cpx_version[] = "V2.7.0 from  " __TIMESTAMP__;
+    /* Official version */
+    static const char CpxVersion[] = "V2.7.0 from  " __TIMESTAMP__;
 
     /**
      * @brief Start CorePartition thread provisioning
@@ -189,21 +195,30 @@ extern "C"
     bool Cpx_CreateThread (void (*pFunction) (void*), void* pValue, size_t nStackMaxSize, uint32_t nNice);
 
 /**
- * @brief   Return Context size + stack memory
+ * @brief   Return Context size (Stack Memory page) from a Static Memory size
  *
- * @param nStackMaxSize    The size (in bytes) of the stack memory
+ * @param nStaticThreadSize    The size (in bytes) of the stack memory
  *
- * @return the size of the context baed on CpxThread structure size + stack
+ * @return  the size of the context
  */
-#define Cpx_GetStaticContextSize(nStackMaxSize) (sizeof (CpxThread) + nStackMaxSize)
+#define Cpx_GetStaticContextSize(nStaticThreadSize) (nStaticThreadSize >= sizeof (CpxThread) ? (nStaticThreadSize - sizeof (CpxThread)) : 0)
+
+/**
+ * @brief   Return the full Static Thread context in bytes
+ * 
+ * @param   nStackMaxSize   Stack memory page size
+ * 
+ * @return  The size of the full Static Thread (context + stak memory page)
+ */
+#define Cpx_GetStaticThreadSize(nStackMaxSize) (sizeof (CpxThread) + nStackMaxSize)
 
     /**
      * @brief   Create a Thread using a static Context + virtual stack page
      *
      * @param pFunction         Function (void Function (void* dataPointer)) as thread main
      * @param pValue            data that will be injected on Thread creation
-     * @param pStaticContext    The Static context + virtual stack pointer
-     * @param nContextSize     Size of the Stack context i bytes
+     * @param pStaticThread     The Static context + virtual stack pointer
+     * @param nStaticThreadSize Size of the Static Thread in bytes
      * @param nNice             When in time it is good to be used
      *
      * @note    No memory will be created.
@@ -211,7 +226,7 @@ extern "C"
      * @return false    In case of parameter error
      */
 
-    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CpxThread* pStaticContext, size_t nContextSize, uint32_t nNice);
+    bool Cpx_CreateStaticThread (void (*pFunction) (void*), void* pValue, CpxStaticThread* pStaticThread, size_t nStaticThreadSize, uint32_t nNice);
 
     /**
      * @brief This will start all the threads
@@ -297,7 +312,19 @@ extern "C"
      *
      * @return size_t total size of the thread context
      */
-    size_t Cpx_GetThreadContextSize (void);
+    size_t Cpx_GetStructContextSize (void);
+
+    /**
+     * @brief   Get Full context size (Contex + stack + Broker)
+     * 
+     * @return size_t 
+     */
+    size_t Cpx_GetContextSizeByID (size_t nID);
+
+/**
+ * @brief Return Full context size from current thread 
+ */
+#define Cpx_GetContexSize() (Cpx_GetContextSizeByID (Cpx_GetID ()))
 
     /**
      * @brief  Get a thread status for a thread ID
@@ -424,22 +451,22 @@ extern "C"
      *
      * @return  The struct + topic list in bytes to be used
      */
-#define Cpx_GetBrokerSubscriptionSize(nMaxTopics) \
-    (sizeof (Subscription) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? sizeof (uint32_t) : nMaxTopics - 1)))
+#define Cpx_GetStaticBrokerSize(nMaxTopics) \
+    (sizeof (CpxSubscriptions) + (sizeof (uint32_t) * ((nMaxTopics <= 1) ? sizeof (uint32_t) : nMaxTopics - 1)))
 
     /*
      * Calculate how much subscription a broker size can do.
      */
-#define Cpx_GetMaxTopicsFromStaticSubsSize(nStaticSubsSize) \
-    (nStaticSubsSize <= sizeof (Subscription) ? 0 : ((nStaticSubsSize - sizeof (Subscription)) / sizeof (uint32_t)) + 1)
+#define Cpx_GetStaticBrokerMaxTopics(nStaticSubsSize) \
+    (nStaticSubsSize <= sizeof (CpxSubscriptions) ? 0 : ((nStaticSubsSize - sizeof (CpxSubscriptions)) / sizeof (uint32_t)) + 1)
 
     /**
      * @brief   Enable Broker for the current thread
      *
-     * @param   pUserContext            The default context to be ejected if needed
-     * @param   pStaticSubs              Static Broker Subscription pointer
-     * @param   nStaticSubsSize     Static Broker Subscription pointer size in bytes
-     * @param   callback                    Call back to be used to process thread Synchronously
+     * @param   pUserContext        The default context to be ejected if needed
+     * @param   pStaticBroker       Static Broker CpxSubscriptions pointer
+     * @param   nStaticBrokerSize   Static Broker CpxSubscriptions pointer size in bytes
+     * @param   callback            Call back to be used to process thread Synchronously
      *
      * @return  false       failed to create the broker context for the current thread
      *
@@ -448,7 +475,7 @@ extern "C"
      *          AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR
      *          A ALLOCATED MEMORY.
      */
-    bool Cpx_EnableStaticBroker (void* pUserContext, Subscription* pStaticSubs, size_t nStaticSubsSize, TopicCallback callback);
+    bool Cpx_EnableStaticBroker (void* pUserContext, CpxStaticBroker* pStaticBroker, size_t nStaticBrokerSize, TopicCallback callback);
 
     /**
      * @brief   Subscribe for a specific topic

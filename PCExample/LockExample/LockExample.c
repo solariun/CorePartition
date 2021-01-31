@@ -83,9 +83,9 @@ void Cpx_StackOverflowHandler ()
     printf ("Error, Thread#%zu Stack %zu / %zu max\n", Cpx_GetID (), Cpx_GetStackSize (), Cpx_GetMaxStackSize ());
 }
 
-uint8_t nConsumerContexts [4][Cpx_GetStaticContextSize (300)];
+uint8_t nConsumerContexts [4][Cpx_GetStaticThreadSize (300)];
 
-uint8_t nProducerContexts [10][Cpx_GetStaticContextSize (300)];
+uint8_t nProducerContexts [10][Cpx_GetStaticThreadSize (300)];
 
 int main ()
 {

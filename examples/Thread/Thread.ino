@@ -256,9 +256,9 @@ void ShowRunningThreads ()
         Serial.print (F ("\t"));
         Serial.print (Cpx_GetMaxStackSizeByID (nCount));
         Serial.print (F ("\t"));
-        Serial.print (Cpx_GetThreadContextSize ());
+        Serial.print (Cpx_GetStructContextSize ());
         Serial.print (F ("\t"));
-        Serial.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetThreadContextSize ());
+        Serial.print (Cpx_GetMaxStackSizeByID (nCount) + Cpx_GetStructContextSize ());
         Serial.print (F ("\t"));
         Serial.print (Cpx_GetLastDutyCycleByID (nCount));
         Serial.println ("ms");
@@ -420,7 +420,7 @@ void setup ()
     ClearConsole ();
 
     Serial.print ("CpxThread ");
-    Serial.println (Cpx_version);
+    Serial.println (CpxVersion);
     Serial.println ("");
 
     Serial.println ("Starting up Thread....");

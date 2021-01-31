@@ -102,7 +102,7 @@ void KernelBrokerHandler (void* pContext, const char* pszTopic, size_t nSize, Cp
 const char* messageTest = "Context";
 
 
-uint8_t pKernelSubscription [Cpx_GetBrokerSubscriptionSize (2)];
+uint8_t pKernelSubscription [Cpx_GetStaticBrokerSize (2)];
 
 void kernel (void* pValue)
 {
@@ -210,7 +210,7 @@ void Cpx_StackOverflowHandler ()
 CpxThread* coreThreadList [10];
 
 /* Static stack pages */
-uint8_t nStaticThreadContext [5][Cpx_GetStaticContextSize(256)];
+uint8_t nStaticThreadContext [5][Cpx_GetStaticThreadSize(256)];
 
 int main ()
 {
