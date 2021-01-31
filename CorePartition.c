@@ -360,20 +360,19 @@ extern "C"
         static size_t nCount = 0;
         CpxThread* pThread = NULL;
 
-        printf ("----------------------------------\n");
-        for (nCount=0; nCount < nMaxThreads; nCount++)
-        {
-            if (pCpxThread [nCount] != NULL)
-            {
-                printf ("%zu\t\t%u\n", nCount, pCpxThread [nCount]->nStatus);
-            }
-        }
-        printf ("----------------------------------\n");
+//        printf ("----------------------------------\n");
+//        for (nCount=0; nCount < nMaxThreads; nCount++)
+//        {
+//            if (pCpxThread [nCount] != NULL)
+//            {
+//                printf ("%zu\t\t%u\n", nCount, pCpxThread [nCount]->nStatus);
+//            }
+//        }
+//        printf ("----------------------------------\n");
+//        printf ("%s:(%zu): Status: [%u] nRunningThreads: [%zu]\n", __FUNCTION__, nCurrentThread, pCurrentThread->nStatus, nRunningThreads);
+//        printf ("----------------------------------\n");
 
         nCount = 0;
-        
-        printf ("%s:(%zu): Status: [%u] nRunningThreads: [%zu]\n", __FUNCTION__, nCurrentThread, pCurrentThread->nStatus, nRunningThreads);
-        printf ("----------------------------------\n");
 
         if (nRunningThreads > 0)
         {
@@ -409,7 +408,8 @@ extern "C"
                 nCount++;
             } /* code */
         }
-
+        
+        printf ("%s:(%zu)leaving....\n", __FUNCTION__, nCurrentThread);
         return nThread;
     }
 
@@ -1079,24 +1079,12 @@ extern "C"
         VERIFY (pLock != NULL, false);
 
         /* Get exclusive lock */
-        while (pLock->bExclusiveLock)
-        {
-            if (pLock->bExclusiveLock == true)
-            {
-                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
-            }
-        }
+        while (pLock->bExclusiveLock && Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL));
 
         pLock->bExclusiveLock = true;
 
         /* Wait all shared locks to be done */
-        while (pLock->nSharedLockCount)
-        {
-            if (pLock->nSharedLockCount)
-            {
-                Cpx_WaitVariableLock ((void*)&pLock->nSharedLockCount, NULL);
-            }
-        }
+        while (pLock->nSharedLockCount && Cpx_WaitVariableLock ((void*)&pLock->nSharedLockCount, NULL));
 
         return true;
     }
@@ -1106,14 +1094,7 @@ extern "C"
         VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
-        while (pLock->bExclusiveLock > 0)
-        {
-            if (pLock->bExclusiveLock > 0)
-            {
-                Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL);
-            }
-        }
-
+        while (pLock->bExclusiveLock > 0 && Cpx_WaitVariableLock ((void*)&pLock->bExclusiveLock, NULL));
         pLock->nSharedLockCount++;
 
         Cpx_NotifyVariableLock ((void*)&pLock->nSharedLockCount, 0, false);
