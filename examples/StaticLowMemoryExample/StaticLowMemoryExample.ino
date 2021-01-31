@@ -137,8 +137,8 @@ uint32_t WaitForData ()
         Serial.print ("    Error Waiting for messages.   ");
         return 0;
     }
-
-    return payload.nValue;
+    
+    return (uint32_t) payload.nValue;
 }
 
 void eventualThread (void* pValue)
@@ -152,36 +152,42 @@ void eventualThread (void* pValue)
     Serial.print (Cpx_GetID ());
     Serial.print (": Requested, Starting Up...");
 
-    while (nRemoteValue && Cpx_Yield ())
+    while (nRemoteValue)
     {
+        nRemoteValue = WaitForData ();
+
         Serial.print (">> Eventual Thread");
         Serial.print (Cpx_GetID ());
         Serial.print (": ");
         Serial.print (nValue++);
         Serial.print (": ");
-        Serial.print (nRemoteValue++);
+        Serial.print (nRemoteValue);
         Serial.print (F (", Sleep Time: "));
         Serial.print (Cpx_GetLastMomentum () - nLast);
 
         nLast = Cpx_GetLastMomentum ();
         Serial.println (F ("ms\e[0K\n"));
-
-        nRemoteValue = WaitForData ();
+        Serial.flush ();
+                    
+        Cpx_Yield ();
     }
 
-    Serial.print (">> Eventual Thread");
+    Serial.println ("------------------------------------------");
+    Serial.print ("Thread #"); 
     Serial.print (Cpx_GetID ());
-    Serial.print (": Thread done!");
+    Serial.println (" eventual thread DONE!");
+    Serial.println ("------------------------------------------");
     Serial.flush ();
-
+    
     Cpx_Yield ();
+
 }
 
 void ConsumerThread (void* pValue)
 {
-    //Cpx_EnableStaticBroker ((void*)nValues, brokerSubscriptions, sizeof (brokerSubscriptions), ThreadCounterMessageHandler);
+    Cpx_EnableStaticBroker ((void*)nValues, brokerSubscriptions, sizeof (brokerSubscriptions), ThreadCounterMessageHandler);
 
-    //Cpx_SubscribeTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1);
+    Cpx_SubscribeTopic (pszNotificationTag, sizeof (pszNotificationTag) - 1);
 
     unsigned long nLast = millis ();
 
@@ -222,7 +228,7 @@ void ConsumerThread (void* pValue)
         Serial.flush ();
 
         Cpx_Yield ();
-/*
+
         if (Cpx_GetStatusByID (2) == THREADL_NONE)
         {
             Cpx_CreateStaticThread (eventualThread, NULL, pStaticStack [0], sizeof (pStaticStack [0]), 100);
@@ -234,10 +240,12 @@ void ConsumerThread (void* pValue)
         {
             if (nCount == 15)
             {
-                nCount = 0;
                 if (Cpx_NotifyMessageOne (pszEventualTag, sizeof (pszEventualTag) - 1, 0, 0) == false)
                 {
                     nFail++;
+                }
+                {
+                   nCount = 0;
                 }
             }
             else
@@ -252,7 +260,7 @@ void ConsumerThread (void* pValue)
                 }
             }
         }
- */
+ 
     }
 }
 

@@ -241,9 +241,9 @@ extern "C"
 
     bool Cpx_StaticStart (CpxThread** ppStaticThread, size_t nStaticThreadSize)
     {
-        VERIFY (nStaticThreadSize > sizeof (CpxThread), false);
+        VERIFY (nStaticThreadSize > sizeof (CpxThread**), false);
         
-        return Cpx_CommonStart (Cpx_GetStaticContextSize (nStaticThreadSize), ppStaticThread);
+        return Cpx_CommonStart (nStaticThreadSize / sizeof (CpxThread**), ppStaticThread);
     }
 
     bool Cpx_Start (size_t nThreadPartitions)
