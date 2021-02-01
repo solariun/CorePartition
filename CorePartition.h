@@ -140,19 +140,19 @@ extern "C"
          */
         uint32_t nNotifyUID;
 
-        union 
+        union
         {
             uint32_t nSleepTime;
             void* pnVariableLockID;
-            CpxMsgPayload payload;  /* data */
-        } control;                
+            CpxMsgPayload payload; /* data */
+        } control;
 
         uint8_t nThreadController;
         uint8_t nStatus;
         uint8_t stackPage;
     } CpxThread;
 
-    /* Static Memory types */ 
+    /* Static Memory types */
     typedef uint8_t CpxStaticThread;
     typedef uint8_t CpxStaticBroker;
 
@@ -208,9 +208,9 @@ extern "C"
 
 /**
  * @brief   Return the full Static Thread context in bytes
- * 
+ *
  * @param   nStackMaxSize   Stack memory page size
- * 
+ *
  * @return  The size of the full Static Thread (context + stak memory page)
  */
 #define Cpx_GetStaticThreadSize(nStackMaxSize) (sizeof (CpxThread) + nStackMaxSize)
@@ -319,13 +319,13 @@ extern "C"
 
     /**
      * @brief   Get Full context size (Contex + stack + Broker)
-     * 
-     * @return size_t 
+     *
+     * @return size_t
      */
     size_t Cpx_GetContextSizeByID (size_t nID);
 
 /**
- * @brief Return Full context size from current thread 
+ * @brief Return Full context size from current thread
  */
 #define Cpx_GetContexSize() (Cpx_GetContextSizeByID (Cpx_GetID ()))
 
@@ -418,7 +418,7 @@ extern "C"
     /**
      * @brief Return the Secure Status for a thread ID
      *
-     * @param nID  Thread OD
+     * @param nID  Thread ID
      *
      * @return char  return 'S' for secure and 'N' for normal
      */
@@ -430,6 +430,43 @@ extern "C"
      * @return false in case there is none running
      */
     bool Cpx_IsCoreRunning (void);
+
+    /**
+     * @brief   Return if a Threads was statically initiated
+     *
+     * @param   nID     Thread ID
+     *
+     * @return  false   if it was not statically initiated
+     */
+    bool Cpx_IsThreadStaticByID (size_t nID);
+
+    /**
+     * @brief   Return if the current thread was statically initiated
+     *
+     * @param   nID     Thread ID
+     *
+     * @return  false   if it was not statically initiated
+     */
+#define Cpx_IsThreadStatic() Cpx_IsThreadStaticByID (Cpx_GetID ())
+
+    /**
+     * @brief   Return if a Thread's Broker interface was statically initiated
+     *
+     * @param   nID     Thread ID
+     *
+     * @return  false   if it was not statically initiated
+     */
+    bool Cpx_IsBrokerStaticByID (size_t nID);
+
+    /**
+     * @brief   Return if the curremt Thread's Broker interface
+     *          was statically initiated
+     *
+     * @param   nID     Thread ID
+     *
+     * @return  false   if it was not statically initiated
+     */
+#define Cpx_IsBrokerStatic() Cpx_IsThreadStaticByID (Cpx_GetID ())
 
     /**
      * @brief   Enable Broker for the current thread

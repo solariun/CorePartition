@@ -45,14 +45,19 @@
 CpxThread* pThreadContexts[5];
 
 /* Consummer and producer threads */
-CpxStaticThread pStaticCounter[3][Cpx_GetStaticThreadSize (25 * sizeof (size_t))];
-CpxStaticThread pStaticConsumer[1][Cpx_GetStaticThreadSize (30 * sizeof (size_t))];
+CpxStaticThread pStaticCounter[3][Cpx_GetStaticThreadSize (50 * sizeof (size_t))];
+CpxStaticThread pStaticConsumer[1][Cpx_GetStaticThreadSize (35 * sizeof (size_t))];
 
 /* Eventual Thread */
-CpxStaticThread pStaticStack[1][Cpx_GetStaticThreadSize (30 * sizeof (size_t))];
+CpxStaticThread pStaticStack[1][Cpx_GetStaticThreadSize (42 * sizeof (size_t))];
 
 /* Broker static memory */
 CpxStaticBroker brokerSubscriptions[Cpx_GetStaticBrokerSize (1)];
+
+
+/* Lock */
+
+CpxSmartLock rwLock;
 
 /*
  * Implementation
@@ -88,10 +93,11 @@ void ShowRunningThreads ()
             Serial.print (Cpx_GetContextSizeByID (nThreadID));
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
-            Serial.print ("ms, Static: ");
-            Serial.print ((pThreadContexts[nThreadID]->nThreadController & 1) ? "Y" : "N");
-            Serial.print ("Broker: ");
-            Serial.print ((pThreadContexts[nThreadID]->nThreadController & 2) ? "Y" : "N");
+            Serial.print ("ms\t Static Thrd: ");
+            Serial.print (Cpx_IsThreadStaticByID (nThreadID) ? 'Y' : 'N');
+            Serial.print (", Brkr: ");
+            Serial.print (Cpx_IsBrokerStaticByID (nThreadID) ? 'Y' : 'N');
+
             Serial.println ();
             nTotalMemory += Cpx_GetContextSizeByID (nThreadID);
             
@@ -126,10 +132,14 @@ void ThreadCounterMessageHandler (void* pContext, const char* pszTopic, size_t n
 {
     uint32_t* nValues = (uint32_t*)pContext;
 
+    Cpx_Lock (&rwLock);
+
     if (payload.nThreadID <= 2 && payload.nAttribute == THREAD_VALUES_ATTRB)
     {
         nValues[payload.nThreadID] = (uint32_t)payload.nValue;
     }
+
+    Cpx_Unlock (&rwLock);
 }
 
 const char pszEventualTag[] = "eventual";
@@ -203,14 +213,23 @@ void ConsumerThread (void* pValue)
 
     while (1)
     {
+        
         Serial.print (">>Thread");
         Serial.print (Cpx_GetID () + 1);
         Serial.print (": [");
+
+        Cpx_SharedLock (&rwLock);
+        
+        Cpx_Sleep (0); /* Scress lock */
+
         Serial.print (pnValues[0]);
         Serial.print (", ");
         Serial.print (pnValues[1]);
         Serial.print (", ");
         Serial.print (pnValues[2]);
+
+        Cpx_SharedUnlock (&rwLock);
+
         Serial.print ("], running: ");
         Serial.print (Cpx_GetNumberOfActiveThreads ());
         Serial.print (", Sleep Time: ");

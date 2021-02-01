@@ -675,6 +675,20 @@ extern "C"
         pCurrentThread->nNice = nNice;
     }
 
+    bool Cpx_IsThreadStaticByID (size_t nID)
+    {
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        
+        return (pCpxThread [nID]->nThreadController & CPX_CTRL_TYPE_STATIC) ? true : false;
+    }
+
+    bool Cpx_IsBrokerStaticByID (size_t nID)
+    {
+        VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
+        
+        return (pCpxThread [nID]->nThreadController & CPX_CTRL_BROKER_STATIC) ? true : false;
+    }
+
     /*
      * --------------------------------------------------
      *  BROKER BASED IPC IMPLEMENTATION -----------------
