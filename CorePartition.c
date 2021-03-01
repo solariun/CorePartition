@@ -150,7 +150,7 @@ extern "C"
 
     bool Cpx_IsCoreRunning (void)
     {
-        VERIFY (pCpxThread != NULL && pCurrentThread != NULL && nRunningThreads > 0, false);
+        VERIFY (pCpxThread != NULL && pCurrentThread != NULL, false);
 
         return true;
     }
@@ -521,7 +521,7 @@ extern "C"
 
     uint8_t Cpx_Yield (void)
     {
-        VERIFY (nRunningThreads > 0, 0);
+        VERIFY (pCurrentThread != NULL, 0);
 
         Cpx_UpdateExecTime ();
 
@@ -991,10 +991,10 @@ extern "C"
                     pCurrentThread->control.payload.nAttribute = 0;
                 }
 
-                nRunningThreads++;
-
                 nReturn = true;
             }
+            
+            nRunningThreads++;
         }
 
         return nReturn;
@@ -1062,7 +1062,6 @@ extern "C"
 
     bool Cpx_LockInit (CpxSmartLock* pLock)
     {
-        VERIFY (Cpx_IsCoreRunning (), false);
         VERIFY (pLock != NULL, false);
 
         pLock->nSharedLockCount = 0;
