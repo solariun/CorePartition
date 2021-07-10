@@ -409,6 +409,13 @@ extern "C"
     size_t Cpx_GetNumberOfActiveThreads (void);
 
     /**
+     * @brief Get Number of assigned Threads
+     *
+     * @return size_t number of threads
+     */
+    size_t Cpx_GetNumberOfThreads (void);
+
+    /**
      * @brief  Get Max Number of total active Threads
      *
      * @return size_t number of threads

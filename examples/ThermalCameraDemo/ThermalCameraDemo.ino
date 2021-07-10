@@ -140,7 +140,10 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     size_t nCount = 0;
 
     Serial.println ();
-    Serial.println (F ("Listing all running threads"));
+    Serial.print  (F("Listing all running threads "));
+    Serial.print  (Cpx_GetNumberOfActiveThreads ());
+    Serial.print  (":");
+    Serial.println  (Cpx_GetNumberOfThreads());
     Serial.println (F ("--------------------------------------"));
     Serial.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
@@ -328,7 +331,7 @@ void Thread1 (void* pValue)
 
     while (1)
     {
-        Serial.print (F ("\e[2;20H\e[K## Thread1: "));
+        Serial.print (F ("\e[2;20H\e[K## Led-Display 1: "));
         Serial.print (nValue++);
         Serial.print (F (", Sleep Time: "));
         Serial.print (millis () - start);
@@ -342,7 +345,7 @@ void Thread1 (void* pValue)
 
         if (nStep == 0)
         {
-            strcpy (szMessage, "CorePartition! :) works!");
+            strcpy (szMessage, "CorePartition! :) 2.7!");
 
             if (matrixTextScroller.show (0, 0, szMessage, sizeof (szMessage) - 1) == false) nStep = 1;
         }
@@ -358,9 +361,8 @@ void Thread1 (void* pValue)
     }
 }
 
-CpxSmartLock lock;
-
 char szPixel [20] = "";
+
 void Thread2 (void* pValue)
 {
     unsigned long start = millis ();
@@ -377,38 +379,43 @@ void Thread2 (void* pValue)
             Serial.print ("\e[2J");
         }
 
-        Serial.print (F ("\e[4;20H\e[K++ Thread2: "));
-        Serial.print (nValue++);
-        Serial.print (F (", Sleep Time: "));
-        Serial.print (millis () - start);
-        start = millis ();
-        Serial.println (F ("ms\n"));
+        Cpx_WaitVariableLock ((void*)&pixels, NULL);
+
+        ResetColor ();
 
         fMin = 1000, fMax = 0;
-        Cpx_SharedLock (&lock);
-
+        
         for (int i = AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
         {
             fMin = MIN (fMin, pixels[i - 1]);
             fMax = MAX (fMax, pixels[i - 1]);
         }
 
-        Cpx_Sleep (0);
+        Serial.print (F ("\e[4;20H\e[K++ IR-Show-2: "));
+        Serial.print (nValue++);
+        Serial.print (F (", Sleep Time: "));
+        Serial.print (millis () - start);
+        start = millis ();
+        Serial.print (F ("ms"));
+        Serial.print (" Min: ");
+        Serial.print (fMin);
+        Serial.print ("c, Max: ");
+        Serial.print (fMax);
+        Serial.println ("c");
 
-        SetLocation (1, 1);
+        Cpx_Sleep (0);
+        
+        SetLocation (8,1);
+        for (int i = 0; i < AMG88xx_PIXEL_ARRAY_SIZE; i++)
+        {
+            snprintf (szPixel, sizeof (szPixel)-1, "\033[48;5;%um  ", map (pixels[i - 1], fMin, fMax, 232, 255));
+            Serial.print (szPixel);
+            if ((i - 1) % 8 == 0) { ResetColor (); Cpx_Sleep(0); SetLocation (8-((i-1) / 8), 1);}
+        }
 
         ResetColor ();
 
-        for (int i = AMG88xx_PIXEL_ARRAY_SIZE; i > 0; i--)
-        {
-            snprintf (szPixel, sizeof (szPixel)-1, "\033[48;5;%um", map (pixels[i - 1], fMin, fMax, 232, 255));
-            Serial.print (szPixel);
-            if ((i - 1) % 8 == 0) { Cpx_Sleep(0); SetLocation ((i-1) / 8, 1); }
-        }
-
-        Cpx_SharedUnlock (&lock);
-
-        Cpx_Yield ();
+        Cpx_NotifyVariableLockAll((void*) &pixels, 0);
     }
 }
 
@@ -422,7 +429,7 @@ void Thread3 (void* pValue)
 
     while (1)
     {
-        Serial.print (F ("\e[6;20H\e[K>> Thread3: "));
+        Serial.print (F ("\e[6;20H\e[K>> IR-Read-3: "));
         Serial.print (nValue++);
         Serial.print (F (", Sleep Time: "));
         Serial.print ((uint32_t)Cpx_GetLastMomentum () - start);
@@ -431,14 +438,13 @@ void Thread3 (void* pValue)
 
         Serial.flush ();
         
-        Cpx_Lock (&lock);
-
         // read all the pixels
         amg.readPixels (pixels);
 
-        Cpx_Unlock (&lock);
-
-        Cpx_Yield ();
+        /* Wait for show thread to be ready. */
+        while (!Cpx_WaitingVariableLock ((void*)&pixels)) Cpx_Yield();
+        Cpx_NotifyVariableLockAll((void*) &pixels, 0);
+        Cpx_WaitVariableLock ((void*)&pixels, NULL);
     }
 }
 
@@ -470,7 +476,7 @@ void Thread5 (void* pValue)
     int nValue          = 0;
     unsigned long nLast = millis ();
 
-    Serial.print (F ("\e[8;20H\e[K>> Eventual Thread5: Starting up"));
+    Serial.print (F ("\e[8;20H\e[K>> Eventual Eventual-5: Starting up"));
 
     while (nValue < 5)
     {
@@ -562,28 +568,15 @@ void setup ()
 
     delay (2000);
 
-    // pinMode (2, OUTPUT);
-    // pinMode (3, OUTPUT);
-    // pinMode (4, OUTPUT);
-
-
-    /* To test interrupts jump port 2 and 5 */
-    // pinMode(nPinOutput, OUTPUT);
-
-    Cpx_LockInit (&lock);
-
-    // pinMode(nPinInput, INPUT_PULLUP);
-    // attachInterrupt(digitalPinToInterrupt(nPinInput), Cpx_YieldPreemptive, CHANGE);
-
     assert (Cpx_Start (5));
 
     assert (Cpx_CreateThread (Thread1, NULL, sizeof (size_t) * 60, 0));
 
-    assert (Cpx_CreateThread (Thread2, NULL, sizeof (size_t) * 20, 220));
+    assert (Cpx_CreateThread (Thread2, NULL, sizeof (size_t) * 20, 100));
 
-    assert (Cpx_CreateThread (Thread3, NULL, sizeof (size_t) * 18, 100));
+    assert (Cpx_CreateThread (Thread3, NULL, sizeof (size_t) * 18, 0));
 
-    assert (Cpx_CreateThread (Thread4, NULL, sizeof (size_t) * 10, 200));
+    assert (Cpx_CreateThread (Thread4, NULL, sizeof (size_t) * 10, 400));
 
     // assert (Cpx_CreateThread (Thread5, NULL, 11, 0));
 }

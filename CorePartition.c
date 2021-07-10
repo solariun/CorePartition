@@ -235,8 +235,7 @@ extern "C"
             size_t nCount = 0;
 
             for (nCount=0; nCount < nMaxThreads; nCount++)
-            {   
-                printf ("Initiating: %zu... \n", nCount);
+            {
                 pCpxThread [nCount] = NULL;
             }
         }
@@ -291,7 +290,7 @@ extern "C"
             /* Static initializations */
 
             pCpxThread[nThread] = (CpxThread*)pStaticContext;
-            
+
             pCpxThread[nThread]->nThreadController = CPX_CTRL_TYPE_STATIC;
         }
 
@@ -322,6 +321,7 @@ extern "C"
         pCpxThread[nThread]->control.payload = (CpxMsgPayload){0, 0, 0};
 
         nThreadCount++;
+        nRunningThreads++;
 
         return true;
     }
@@ -350,9 +350,8 @@ extern "C"
 
     static uint32_t Cpx_GetNextTime (size_t nThreadID)
     {
-        return (uint32_t) (pCpxThread[nThreadID]->nLastMomentun + ((THREADL_SLEEP != pCpxThread[nThreadID]->nStatus)
-                                                                           ? pCpxThread[nThreadID]->nNice
-                                                                           : pCpxThread[nThreadID]->control.nSleepTime));
+        return (uint32_t) (pCpxThread[nThreadID]->nLastMomentun + ((THREADL_SLEEP != pCpxThread[nThreadID]->nStatus) ?
+                pCpxThread[nThreadID]->nNice : pCpxThread[nThreadID]->control.nSleepTime));
     }
 
 #define _CPTHREAD(T) pCpxThread[T]
@@ -429,6 +428,7 @@ extern "C"
             pCpxThread[nCurrentThread] = NULL;
 
             nThreadCount--;
+            nRunningThreads--;
         }
     }
 
@@ -454,8 +454,6 @@ extern "C"
                     switch (pCurrentThread->nStatus)
                     {
                         case THREADL_START:
-
-                            nRunningThreads++;
 
                             pCurrentThread->nStatus = THREADL_RUNNING;
 
@@ -483,7 +481,7 @@ extern "C"
             pCurrentThread = pCpxThread[nCurrentThread];
             /*(nCurrentThread + 1) >= nMaxThreads ? 0 : (nCurrentThread + 1); */
 
-        } while (nRunningThreads);
+        } while (nRunningThreads > 0);
 
         pCurrentThread = NULL;
     }
@@ -678,14 +676,14 @@ extern "C"
     bool Cpx_IsThreadStaticByID (size_t nID)
     {
         VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
-        
+
         return (pCpxThread [nID]->nThreadController & CPX_CTRL_TYPE_STATIC) ? true : false;
     }
 
     bool Cpx_IsBrokerStaticByID (size_t nID)
     {
         VERIFY (Cpx_IsCoreRunning () && nID < nMaxThreads || NULL != pCpxThread[nID], 0);
-        
+
         return (pCpxThread [nID]->nThreadController & CPX_CTRL_BROKER_STATIC) ? true : false;
     }
 
@@ -835,11 +833,13 @@ extern "C"
 
         pCurrentThread->nStatus = THREADL_WAITTAG;
         pCurrentThread->nNotifyUID = Cpx_GetTopicID (pszTag, nTagLength);
+
         nRunningThreads--;
 
         Cpx_Yield ();
 
         nRunningThreads++;
+
         *payload = pCurrentThread->control.payload;
 
         return true;
@@ -993,7 +993,7 @@ extern "C"
 
                 nReturn = true;
             }
-            
+
             nRunningThreads++;
         }
 

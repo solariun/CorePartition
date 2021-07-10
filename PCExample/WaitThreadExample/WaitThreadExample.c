@@ -60,7 +60,7 @@ void PrintThreads ()
 
     printf ("------------------------------------\n");
 
-    for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
+    for (nCount = 0; nCount < Cpx_GetNumberOfThreads (); nCount++)
     {
         printf ("%c %-4zu %-10u %-10u  %u ms\n",
                 nCount == Cpx_GetID () ? '*' : ' ',
@@ -119,7 +119,7 @@ void Thread1 (void* pValue)
 
         PrintThreads ();
 
-        Cpx_Sleep (1000);    
+        Cpx_Sleep (1000);
     }
 }
 
@@ -128,7 +128,6 @@ void Thread1 (void* pValue)
  *
  *    ** REQUIRED **
  */
-
 void Cpx_SleepTicks (uint32_t nSleepTime)
 {
     usleep ((useconds_t)nSleepTime * 1000);
@@ -164,7 +163,11 @@ int main ()
     assert (Cpx_CreateThread (Thread1, NULL, 256, 0));
     assert (Cpx_CreateThread (kernel, NULL, 256, 250));
 
+    printf ("Starting Threads... \n");
+
     Cpx_Join ();
+
+    printf ("All threads stopped or where blocked.\n");
 
     return 0;
 }
