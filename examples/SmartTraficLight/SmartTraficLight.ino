@@ -393,7 +393,6 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
         Serial.print (nCount);
         Serial.print (F ("\t"));
         Serial.print (Cpx_GetStatusByID (nCount));
-        Serial.print (Cpx_IsSecureByID (nCount));
         Serial.print (F ("\t"));
         Serial.print (Cpx_GetNiceByID (nCount));
         Serial.print (F ("\t"));
@@ -693,7 +692,7 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
     delay (nSleepTime);
 }
 
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     while (!Serial)
         ;
@@ -718,8 +717,6 @@ void setup ()
     pinMode (13, OUTPUT);
 
     assert (Cpx_Start (4));
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (Cpx_CreateThread (TraficLight, NULL, 30 * sizeof (size_t), 500));
 

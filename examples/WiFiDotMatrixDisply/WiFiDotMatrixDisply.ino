@@ -144,7 +144,7 @@ void ShowRunningThreads (Stream& client)
     client.println ();
     client.println (F ("Listing all running threads"));
     client.println (F ("--------------------------------------"));
-    client.println (F ("ID\tName\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
+    client.println (F ("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
 
     for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
@@ -152,10 +152,8 @@ void ShowRunningThreads (Stream& client)
         {
             client.print (F ("\e[K"));
             client.print (nCount);
-            client.printf ("\t%-8s", Cpx_GetThreadNameByID (nCount));
             client.print (F ("\t"));
             client.print (Cpx_GetStatusByID (nCount));
-            client.print (Cpx_IsSecureByID (nCount));
             client.print (F ("\t"));
             client.print (Cpx_GetNiceByID (nCount));
             client.print (F ("\t"));
@@ -421,8 +419,6 @@ void LedDisplayShow (void* pValue)
 
     Cpx_SubscribeTopic (topicDisplay, sizeof (topicDisplay)-1);
 
-    Cpx_SetThreadNameByID (Cpx_GetID (), "Display", 7);
-
     uint8_t a = 0;
     uint8_t b = 0;
     uint8_t nOffset = 0;
@@ -602,7 +598,6 @@ public:
 
 void ClientHandler (void* pSrvClient)
 {
-    Cpx_SetThreadNameByID (Cpx_GetID (), "R_Client", 8);
     pSrvClient;
 
     WiFiClient client = server.available ();
@@ -637,7 +632,6 @@ void ClientHandler (void* pSrvClient)
 /// @param pValue Information injected from CorePartition on startup
 void TelnetListener (void* pValue)
 {
-    Cpx_SetThreadNameByID (Cpx_GetID (), "Listener", 8);
     WiFi.mode (WIFI_STA);
 
     WiFi.begin (ssid, password);
@@ -713,8 +707,6 @@ void TelnetListener (void* pValue)
 
 void SerialTerminalHandler (void* injection)
 {
-    Cpx_SetThreadNameByID (Cpx_GetID (), "Terminal", 8);
-
     Terminal serial (reinterpret_cast<Stream&> (Serial));
 
     CommandDisplay commandDisplay;
@@ -745,7 +737,7 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
 }
 
 /// Stack overflow Handler
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     while (!Serial)
         ;
@@ -805,8 +797,6 @@ void setup ()
         Serial.println ("Error staring up Threads.");
         exit (1);
     }
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (Cpx_CreateThread (SerialTerminalHandler, NULL, 500, 200));
     assert (Cpx_CreateThread (LedDisplayShow, NULL, 300, 80));

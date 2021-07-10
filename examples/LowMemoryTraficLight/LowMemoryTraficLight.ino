@@ -208,7 +208,7 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
     delay (nSleepTime);
 }
 
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     size_t nThreadID = Cpx_GetID () + 1;
     uint8_t nCount;
@@ -234,8 +234,6 @@ void setup ()
     bool status;
 
     assert (Cpx_Start (4));
-
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
 
     assert (Cpx_CreateThread (TraficLight, NULL, 10 * sizeof (size_t), 500));
 

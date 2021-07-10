@@ -123,9 +123,9 @@ void ShowRunningThreads ()
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetMaxStackSizeByID (nThreadID));
             Serial.print (F ("\t"));
-            Serial.print (Cpx_GetThreadContextSize ());
+            Serial.print (Cpx_GetStructContextSize ());
             Serial.print (F ("\t"));
-            Serial.print (Cpx_GetMaxStackSizeByID (nThreadID) + Cpx_GetThreadContextSize ());
+            Serial.print (Cpx_GetMaxStackSizeByID (nThreadID) + Cpx_GetStructContextSize ());
             Serial.print (F ("\t"));
             Serial.print (Cpx_GetLastDutyCycleByID (nThreadID));
             Serial.print ("ms");
@@ -224,7 +224,7 @@ void eventualThread (void* pValue)
     Cpx_Yield ();
 }
 
-uint8_t nStaticStack [Cpx_GetContextSize (40 * sizeof (size_t))];
+CpxStaticThread nStaticStack [Cpx_GetStaticThreadSize (50 * sizeof (size_t))];
 
 void Thread (void* pValue)
 {
@@ -259,7 +259,7 @@ void Thread (void* pValue)
         Serial.print ("ms, Nice: ");
         Serial.print (Cpx_GetNice ());
         Serial.print (", CTX: ");
-        Serial.print (Cpx_GetThreadContextSize ());
+        Serial.print (Cpx_GetStructContextSize ());
         Serial.print ("b, Stack: ");
         Serial.print (Cpx_GetStackSize ());
         Serial.print ("/");
@@ -279,7 +279,7 @@ void Thread (void* pValue)
 
         if (Cpx_GetStatusByID (4) == THREADL_NONE)
         {
-            Cpx_CreateStaticThread (eventualThread, NULL, (void*) nStaticStack, sizeof (nStaticStack), 100);
+            Cpx_CreateStaticThread (eventualThread, NULL, nStaticStack, sizeof (nStaticStack), 100);
             nCount = 1;
             nFail = 0;
         }

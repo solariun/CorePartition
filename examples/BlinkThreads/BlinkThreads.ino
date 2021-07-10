@@ -45,10 +45,10 @@ void Delay (uint64_t nSleep)
     uint32_t nMomentum =  millis();
 
     //delay (nSleep); return;
-    
+
     do {
         Cpx_Yield();
-    } while ((millis() - nMomentum ) <  nSleep);    
+    } while ((millis() - nMomentum ) <  nSleep);
 }
 
 
@@ -56,13 +56,13 @@ void Delay (uint64_t nSleep)
 void Thread1 (void* pValue)
 {
     uint8_t nPin = Cpx_GetID() + 1;
-    
+
     pinMode (nPin, OUTPUT);
-    
+
     while (1)
     {
         digitalWrite (nPin, HIGH);
-        
+
         Cpx_Yield ();
 
         digitalWrite (nPin, LOW);
@@ -84,13 +84,13 @@ void Cpx_SleepTicks (uint32_t nSleepTime)
     delay (nSleepTime);
 }
 
-void StackOverflowHandler ()
+void Cpx_StackOverflowHandler ()
 {
     size_t nThreadID = Cpx_GetID() + 1;
     uint8_t nCount;
-    
+
     pinMode (nThreadID, OUTPUT);
-    
+
     while (1)
     {
         for (nCount=0; nCount < nThreadID; nCount++)
@@ -100,7 +100,7 @@ void StackOverflowHandler ()
             digitalWrite (nThreadID, LOW);
             delay (150);
         }
-        
+
         delay (400); //550ms off
     }
 }
@@ -111,12 +111,12 @@ void StackOverflowHandler ()
 void __attribute__ ((noinline)) ShowRunningThreads ()
 {
     size_t nCount = 0;
-    
+
     Serial.println ();
     Serial.println (F("Listing all running threads"));
     Serial.println (F("--------------------------------------"));
     Serial.println (F("ID\tStatus\tNice\tStkUsed\tStkMax\tCtx\tUsedMem\tExecTime"));
-    
+
     for (nCount = 0; nCount < Cpx_GetNumberOfActiveThreads (); nCount++)
     {
         Serial.print (F("\e[K"));
@@ -141,7 +141,7 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
 void WhachDog (void* pValue)
 {
     Serial.begin(230400);
-    
+
     while (true)
     {
         ShowRunningThreads ();
@@ -155,11 +155,6 @@ void setup()
 {
 
     pinMode (0, OUTPUT);
-    
-    digitalWrite (0, HIGH);
-    delay (250);
-    digitalWrite (0, HIGH);
-    delay (250);
 
     digitalWrite (0, HIGH);
     delay (250);
@@ -170,7 +165,12 @@ void setup()
     delay (250);
     digitalWrite (0, HIGH);
     delay (250);
-    
+
+    digitalWrite (0, HIGH);
+    delay (250);
+    digitalWrite (0, HIGH);
+    delay (250);
+
 
 #ifdef _DEBUG
     assert (Cpx_Start (5));
@@ -178,10 +178,8 @@ void setup()
     assert (Cpx_Start (4));
 #endif
 
-    assert (Cpx_SetStackOverflowHandler (StackOverflowHandler));
-
     assert (Cpx_CreateThread (Thread1, NULL, 25, 50));
-    
+
     assert (Cpx_CreateThread (Thread1, NULL, 25, 1000));
 
     assert (Cpx_CreateThread (Thread1, NULL, 25, 812));
@@ -191,7 +189,7 @@ void setup()
 #ifdef _DEBUG
     assert (Cpx_CreateThread (WhachDog, 20, 200));
 #endif
-    
+
 }
 
 

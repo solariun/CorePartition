@@ -218,7 +218,7 @@ void setup ()
     Serial.println ("Starting up Thread....");
     Serial.flush ();
 
-    if (Cpx_StaticStart ((sizeof (ppThreadList) / sizeof (CpxThread**)), ppThreadList) == false)
+    if (Cpx_StaticStart (ppThreadList, sizeof (ppThreadList)) == false)
     {
         Serial.println ("Fail to start CorePartition.");
         exit (0);
@@ -242,13 +242,15 @@ void setup ()
 
     /* --------------------------------------------------------------------- */
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*) nStaticContext[0], sizeof (nStaticContext [0]), 1000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxStaticThread*) nStaticContext[0], sizeof (nStaticContext [0]), 1000));
 
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*) nStaticContext[1], sizeof (nStaticContext [1]), 1400));
-
-    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxThread*) nStaticContext[2], sizeof (nStaticContext [2]), 5000));
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxStaticThread*) nStaticContext[1], sizeof (nStaticContext [1]), 1400));
+    
+    assert (Cpx_CreateStaticThread (Consumer, NULL, (CpxStaticThread*) nStaticContext[2], sizeof (nStaticContext [2]), 5000));
 
     Cpx_Join ();
+
+    Serial.println ("Error...");
 
     ShowRunningThreads ();
 
