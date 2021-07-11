@@ -205,7 +205,7 @@ extern "C"
 
     static bool Cpx_CommonStart (size_t nThreadPartitions, CpxThread** ppStaticCpxThread)
     {
-        VERIFY (pCpxThread == NULL && nThreadCount == 0, false);
+        VERIFY (pCpxThread == NULL, false);
 
         nMaxThreads = nThreadPartitions;
 
@@ -405,6 +405,11 @@ extern "C"
     {
         if (pCurrentThread != NULL)
         {
+            if (pCurrentThread->nStatus != THREADL_WAITTAG && pCurrentThread->nStatus != THREADL_LOCK)
+            {
+                nRunningThreads--;
+            }
+
             if ((pCurrentThread->nThreadController & CPX_CTRL_BROKER_STATIC) == 0 && pCurrentThread->pSubscriptions != NULL)
             {
 #ifndef _CPX_NO_HEAP_

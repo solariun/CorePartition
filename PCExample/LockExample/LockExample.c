@@ -75,7 +75,7 @@ void Consumer (void* pValue)
             printf ("(%u: [%d]) ", nCount, nProducers[nCount]);
         }
 
-        printf (" LOCK: L:(%u), SL:(%zu)\n", lock.bExclusiveLock, lock.nSharedLockCount);
+        printf (" LOCK: L:(%u), SL:(%zu) Running: [%zu]\n", lock.bExclusiveLock, lock.nSharedLockCount, Cpx_GetNumberOfActiveThreads ());
 
         fflush (stdout);
 
