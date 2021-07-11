@@ -21,10 +21,12 @@ The CorePartitionOS also can transform your software into a multithread one, sin
 
 # Preemptive Threads
 
-     This OS is now ONLY preemptive, like that we can focus on bringing all the power of Atomic execution to you.
+     This OS is now ONLY COOPERATIVE, like that we can focus on bringing all the power of Atomic execution to you.
 
-# NEW1
+# NEW
 # 2.7.0
+
+- All functions now starts with Cpx_ instead of CorePartition_.
 
 - There will be no more SetStackOverflow, now just by using Cpx_StackOverflowHandler
 
