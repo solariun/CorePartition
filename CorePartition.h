@@ -158,6 +158,7 @@ extern "C"
     extern void Cpx_StackOverflowHandler (void);
 
     /* Official version */
+    static const char CpxVersionCode[]="2.7.0";
     static const char CpxVersion[] = "V2.7.0 from  " __TIMESTAMP__;
 
     /**
