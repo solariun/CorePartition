@@ -2,7 +2,7 @@
 
 Version 2.7.0 release
 
-![License information](https://raw.githubusercontent.com/solariun/CorePartition/master/License.png)
+![image](https://user-images.githubusercontent.com/1805792/125191254-6591cf80-e239-11eb-9e89-d7500e793cd4.png)
 
 CorePartitionOS is a Operational System for, virtually, ANYTHING, but will always use a SINGLE CORE, really lightweight (context ranging from 48 bytes for 8bits processor/microcontroller to 168 bytes for 64 bits processor), compatible with 8, 32, 64 and 128 bits Processors and Microcontrollers and can virtually work EVERYWHERE. The concept behind the CorePartitionOS is a powerful implementations based exclusively on C standard principles, based on an non-stack displacement, allowing the code zero-assembler but deploying real threads.
 
