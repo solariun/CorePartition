@@ -1,0 +1,1181 @@
+.TH "CorePartition.c" 3 "Sun Jul 11 2021" "CorePartition" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+CorePartition.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'CorePartition\&.h'\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBNOTRACE\fP   1 ? (void)0 : (void)printf"
+.br
+.ti -1c
+.RI "#define \fBVERIFY\fP(term,  ret)"
+.br
+.ti -1c
+.RI "#define \fBYYTRACE\fP   printf"
+.br
+.ti -1c
+.RI "#define \fBTRACE\fP   \fBNOTRACE\fP"
+.br
+.ti -1c
+.RI "#define \fBCpx_SetBit\fP(var,  bitValue)   (var |= bitBValue)"
+.br
+.ti -1c
+.RI "#define \fBCpx_UnsetBit\fP(var,  bitValue)   (var &= (~bitValue))"
+.br
+.ti -1c
+.RI "#define \fBCpx_ToggleBit\fP(var,  bitValue)   (var ^= bitValue)"
+.br
+.ti -1c
+.RI "#define \fBTHREADL_ER_STACKOVFLW\fP   1 /* Stack Overflow */"
+.br
+.ti -1c
+.RI "#define \fBTHREAD_FACTOR_MAXBYTES\fP   8"
+.br
+.ti -1c
+.RI "#define \fBTHREAD_NAME_MAX\fP   8"
+.br
+.ti -1c
+.RI "#define \fBCpx_SetState\fP(nNewState)   \fBpCurrentThread\fP\->nStatus = nNewState"
+.br
+.ti -1c
+.RI "#define \fBCpx_NowYield\fP()"
+.br
+.ti -1c
+.RI "#define \fBPOLY\fP   0x8408"
+.br
+.ti -1c
+.RI "#define \fB_CPTHREAD\fP(T)   \fBpCpxThread\fP[T]"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fB__cp_lock_type\fP { \fBCP_LOCK_NONE\fP = 0, \fBCP_LOCK_SIMPLE\fP, \fBCP_LOCK_SHARED\fP }"
+.br
+.ti -1c
+.RI "enum \fB__cpx_thread_controller_type\fP { \fBCPX_CTRL_TYPE_STATIC\fP = 1, \fBCPX_CTRL_BROKER_STATIC\fP = 2 }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "uint32_t \fBCpx_GetCurrentTick\fP (void)"
+.br
+.ti -1c
+.RI "void \fBCpx_SleepTicks\fP (uint32_t nSleepTime)"
+.br
+.ti -1c
+.RI "void \fBCpx_StackOverflowHandler\fP (void)"
+.br
+.ti -1c
+.RI "bool \fBCpx_IsCoreRunning\fP (void)"
+.br
+.RI "Report if there is any running thread\&. "
+.ti -1c
+.RI "void \fBCpx_InternalSetNice\fP (uint32_t nNice)"
+.br
+.ti -1c
+.RI "void \fBCpx_InternalSetStatus\fP (uint8_t nStatus)"
+.br
+.ti -1c
+.RI "uint16_t \fBCpx_CRC16\fP (const uint8_t *pData, size_t nSize, uint16_t nCRC)"
+.br
+.ti -1c
+.RI "bool \fBCpx_StaticStart\fP (\fBCpxThread\fP **ppStaticThread, size_t nStaticThreadSize)"
+.br
+.RI "Start CorePartition thread provisioning\&. "
+.ti -1c
+.RI "bool \fBCpx_Start\fP (size_t nThreadPartitions)"
+.br
+.RI "Start CorePartition thread provisioning\&. "
+.ti -1c
+.RI "bool \fBCpx_CreateThread\fP (void(*pFunction)(void *), void *pValue, size_t nStackMaxSize, uint32_t nNice)"
+.br
+.RI "Create a non-Isolated context Thread\&. "
+.ti -1c
+.RI "bool \fBCpx_CreateStaticThread\fP (void(*pFunction)(void *), void *pValue, \fBCpxStaticThread\fP *pStaticThread, size_t nStaticThreadSize, uint32_t nNice)"
+.br
+.RI "Create a Thread using a static Context + virtual stack page\&. "
+.ti -1c
+.RI "void \fBCpx_Join\fP (void)"
+.br
+.RI "This will start all the threads\&. "
+.ti -1c
+.RI "uint8_t \fBCpx_Yield\fP (void)"
+.br
+.RI "Function to be called inside a thread to change context\&. "
+.ti -1c
+.RI "void \fBCpx_SetSleep\fP (uint32_t nDelayTickTime)"
+.br
+.RI "Will set the thread sleep parameter before Yield\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetID\fP (void)"
+.br
+.RI "Get Current Thread ID\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetStackSizeByID\fP (size_t nID)"
+.br
+.RI "Get Current Thread ID\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetMaxStackSizeByID\fP (size_t nID)"
+.br
+.RI "Get total size of stack context page for a Thread ID\&. "
+.ti -1c
+.RI "uint32_t \fBCpx_GetNiceByID\fP (size_t nID)"
+.br
+.RI "Current Thread Nice\&. "
+.ti -1c
+.RI "uint8_t \fBCpx_GetStatusByID\fP (size_t nID)"
+.br
+.RI "Get a thread status for a thread ID\&. "
+.ti -1c
+.RI "uint32_t \fBCpx_GetLastDutyCycleByID\fP (size_t nID)"
+.br
+.RI "Last Duty Cycle of the current Thread\&. "
+.ti -1c
+.RI "uint32_t \fBCpx_GetLastMomentumByID\fP (size_t nID)"
+.br
+.RI "Get Current Thread last momentum on switch back\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetNumberOfActiveThreads\fP (void)"
+.br
+.RI "Get Number of total active Threads\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetNumberOfThreads\fP (void)"
+.br
+.RI "Get Number of assigned Threads\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetMaxNumberOfThreads\fP (void)"
+.br
+.RI "Get Max Number of total active Threads\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetStructContextSize\fP (void)"
+.br
+.RI "Get Thread context size\&. "
+.ti -1c
+.RI "size_t \fBCpx_GetContextSizeByID\fP (size_t nID)"
+.br
+.RI "Get Full context size (Contex + stack + Broker) "
+.ti -1c
+.RI "void \fBCpx_SetNice\fP (uint32_t nNice)"
+.br
+.RI "Set Current Thread Nice\&. "
+.ti -1c
+.RI "bool \fBCpx_IsThreadStaticByID\fP (size_t nID)"
+.br
+.RI "Return if a Threads was statically initiated\&. "
+.ti -1c
+.RI "bool \fBCpx_IsBrokerStaticByID\fP (size_t nID)"
+.br
+.RI "Return if a Thread's Broker interface was statically initiated\&. "
+.ti -1c
+.RI "bool \fBCpx_EnableStaticBroker\fP (void *pUserContext, \fBCpxStaticBroker\fP *pStaticBroker, size_t nStaticBrokerSize, \fBTopicCallback\fP callback)"
+.br
+.RI "Enable Broker for the current thread\&. "
+.ti -1c
+.RI "bool \fBCpx_EnableBroker\fP (void *pUserContext, uint16_t nMaxTopics, \fBTopicCallback\fP callback)"
+.br
+.RI "Enable Broker for the current thread\&. "
+.ti -1c
+.RI "bool \fBCpx_IsSubscribed\fP (const char *pszTopic, size_t length)"
+.br
+.RI "Check if the current thread already subscribe to a topic\&. "
+.ti -1c
+.RI "bool \fBCpx_SubscribeTopic\fP (const char *pszTopic, size_t length)"
+.br
+.RI "Subscribe for a specific topic\&. "
+.ti -1c
+.RI "bool \fBCpx_PublishTopic\fP (const char *pszTopic, size_t length, size_t nAttribute, uint64_t nValue)"
+.br
+.RI "Public a tuple Param and Value\&. "
+.ti -1c
+.RI "bool \fBCpx_WaitMessage\fP (const char *pszTag, size_t nTagLength, \fBCpxMsgPayload\fP *payload)"
+.br
+.RI "Wait for a specific notification from a given TAG and payload\&. "
+.ti -1c
+.RI "bool \fBCpx_Wait\fP (const char *pszTag, size_t nTagLength)"
+.br
+.RI "Wait for a specific notification from a given TAG\&. "
+.ti -1c
+.RI "bool \fBCpx_SetTopicID\fP (const char *pszTag, size_t nTagLength, uint32_t *pnTopicID)"
+.br
+.ti -1c
+.RI "bool \fBCpx_NotifyOne\fP (const char *pszTag, size_t nTagLength)"
+.br
+.RI "Notify ONE TAG assigned as waiting thread\&. "
+.ti -1c
+.RI "bool \fBCpx_NotifyMessageOne\fP (const char *pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)"
+.br
+.RI "Notify ONE TAGs assigned as waiting thread with a Message payload\&. "
+.ti -1c
+.RI "bool \fBCpx_NotifyAll\fP (const char *pszTag, size_t nTagLength)"
+.br
+.RI "Notify ALL TAGs assigned as waiting thread\&. "
+.ti -1c
+.RI "bool \fBCpx_NotifyMessageAll\fP (const char *pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)"
+.br
+.RI "Notify ALL TAGs assigned as waiting thread with a Message payload\&. "
+.ti -1c
+.RI "bool \fBCpx_WaitVariableLock\fP (void *pnLockID, size_t *pnStatus)"
+.br
+.RI "Wait for a Variable Locks notification\&. "
+.ti -1c
+.RI "size_t \fBCpx_NotifyVariableLock\fP (void *pnLockID, size_t nStatus, bool bOneOnly)"
+.br
+.RI "Notify all/one Variable lock waiting for notification\&. "
+.ti -1c
+.RI "size_t \fBCpx_WaitingVariableLock\fP (void *pnLockID)"
+.br
+.RI "Return how much threads are locked waiting for a variable notification\&. "
+.ti -1c
+.RI "bool \fBCpx_LockInit\fP (\fBCpxSmartLock\fP *pLock)"
+.br
+.RI "Init SmartLock variable\&. "
+.ti -1c
+.RI "bool \fBCpx_TryLock\fP (\fBCpxSmartLock\fP *pLock)"
+.br
+.RI "Like Lock() but only locks in case it is unlocked\&. "
+.ti -1c
+.RI "bool \fBCpx_Lock\fP (\fBCpxSmartLock\fP *pLock)"
+.br
+.RI "Do a exclusive Lock and set to Simple lock\&. "
+.ti -1c
+.RI "bool \fBCpx_SharedLock\fP (\fBCpxSmartLock\fP *pLock)"
+.br
+.RI "Can act as multiple locks\&. "
+.ti -1c
+.RI "bool \fBCpx_SharedUnlock\fP (\fBCpxSmartLock\fP *pLock)"
+.br
+.RI "Unlock shared locks\&. "
+.ti -1c
+.RI "bool \fBCpx_Unlock\fP (\fBCpxSmartLock\fP *pLock)"
+.br
+.RI "Unlock exclusive locks\&. "
+.ti -1c
+.RI "void * \fBCpx_GetLockID\fP ()"
+.br
+.ti -1c
+.RI "void * \fBCpx_GetLockIDByID\fP (size_t nID)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBCpxThread\fP ** \fBpCpxThread\fP = NULL"
+.br
+.ti -1c
+.RI "\fBCpxThread\fP * \fBpCurrentThread\fP = NULL"
+.br
+.ti -1c
+.RI "void * \fBpStartStck\fP = NULL"
+.br
+.ti -1c
+.RI "jmp_buf \fBjmpJoinPointer\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define _CPTHREAD(T)   \fBpCpxThread\fP[T]"
+
+.SS "#define Cpx_NowYield()"
+\fBValue:\fP
+.PP
+.nf
+    {                               \
+        Cpx_SetState (THREADL_NOW); \
+        Cpx_Yield ();               \
+    }
+.fi
+.SS "#define Cpx_SetBit(var, bitValue)   (var |= bitBValue)"
+
+.SS "#define Cpx_SetState(nNewState)   \fBpCurrentThread\fP\->nStatus = nNewState"
+
+.SS "#define Cpx_ToggleBit(var, bitValue)   (var ^= bitValue)"
+
+.SS "#define Cpx_UnsetBit(var, bitValue)   (var &= (~bitValue))"
+
+.SS "#define NOTRACE   1 ? (void)0 : (void)printf"
+
+.SS "#define POLY   0x8408"
+
+.SS "#define THREAD_FACTOR_MAXBYTES   8"
+
+.SS "#define THREAD_NAME_MAX   8"
+
+.SS "#define THREADL_ER_STACKOVFLW   1 /* Stack Overflow */"
+
+.SS "#define TRACE   \fBNOTRACE\fP"
+
+.SS "#define VERIFY(term, ret)"
+\fBValue:\fP
+.PP
+.nf
+    if (!(term))          \
+    {                     \
+        return ret;       \
+    }
+.fi
+.SS "#define YYTRACE   printf"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fB__cp_lock_type\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fICP_LOCK_NONE \fP\fP
+.TP
+\fB\fICP_LOCK_SIMPLE \fP\fP
+.TP
+\fB\fICP_LOCK_SHARED \fP\fP
+.SS "enum \fB__cpx_thread_controller_type\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fICPX_CTRL_TYPE_STATIC \fP\fP
+.TP
+\fB\fICPX_CTRL_BROKER_STATIC \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "uint16_t Cpx_CRC16 (const uint8_t * pData, size_t nSize, uint16_t nCRC)"
+
+.SS "bool Cpx_CreateStaticThread (void(*)(void *) pFunction, void * pValue, \fBCpxStaticThread\fP * pStaticThread, size_t nStaticThreadSize, uint32_t nNice)"
+
+.PP
+Create a Thread using a static Context + virtual stack page\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpFunction\fP Function (void Function (void* dataPointer)) as thread main 
+.br
+\fIpValue\fP data that will be injected on Thread creation 
+.br
+\fIpStaticThread\fP The Static context + virtual stack pointer 
+.br
+\fInStaticThreadSize\fP Size of the Static Thread in bytes 
+.br
+\fInNice\fP When in time it is good to be used
+.RE
+.PP
+\fBNote\fP
+.RS 4
+No memory will be created\&.
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false In case of parameter error 
+.RE
+.PP
+
+.SS "bool Cpx_CreateThread (void(*)(void *) pFunction, void * pValue, size_t nStackMaxSize, uint32_t nNice)"
+
+.PP
+Create a non-Isolated context Thread\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpFunction\fP Function (void Function (void* dataPointer)) as thread main 
+.br
+\fIpValue\fP data that will be injected on Thread creation 
+.br
+\fInStackMaxSize\fP Size of the Stack to be used 
+.br
+\fInNice\fP When in time it is good to be used
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false fails on more provisioned threads or no more memory to create it
+.RE
+.PP
+\fBNote\fP
+.RS 4
+All threads will be create with the size of stack plus context size (~100 bytes) 
+.RE
+.PP
+
+.SS "bool Cpx_EnableBroker (void * pUserContext, uint16_t nMaxTopics, \fBTopicCallback\fP callback)"
+
+.PP
+Enable Broker for the current thread\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpUserContext\fP The default context to be ejected if needed 
+.br
+\fInMaxTopics\fP Max topics to be handled by the current thread 
+.br
+\fIcallback\fP Call back to be used to process thread Synchronously
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false failed to create the broker context for the current thread
+.RE
+.PP
+\fBNote\fP
+.RS 4
+The default context must not be part of the thread§ stack, or it will be invalid on callback time, please use global variables or from heap (new or malloc memory), AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR A ALLOCATED MEMORY\&. 
+.RE
+.PP
+
+.SS "bool Cpx_EnableStaticBroker (void * pUserContext, \fBCpxStaticBroker\fP * pStaticBroker, size_t nStaticBrokerSize, \fBTopicCallback\fP callback)"
+
+.PP
+Enable Broker for the current thread\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpUserContext\fP The default context to be ejected if needed 
+.br
+\fIpStaticBroker\fP Static Broker \fBCpxSubscriptions\fP pointer 
+.br
+\fInStaticBrokerSize\fP Static Broker \fBCpxSubscriptions\fP pointer size in bytes 
+.br
+\fIcallback\fP Call back to be used to process thread Synchronously
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false failed to create the broker context for the current thread
+.RE
+.PP
+\fBNote\fP
+.RS 4
+The default context must not be part of the thread stack, or it will be invalid on callback time, please use global variables or from heap (new or malloc memory), AGAIN: NEVER USE A LOCAL FUNCTION VARIABLE AS CONTEXT, USE A GLOBAL VARIABLE OR A ALLOCATED MEMORY\&. 
+.RE
+.PP
+
+.SS "size_t Cpx_GetContextSizeByID (size_t nID)"
+
+.PP
+Get Full context size (Contex + stack + Broker) 
+.PP
+\fBReturns\fP
+.RS 4
+size_t 
+.RE
+.PP
+
+.SS "uint32_t Cpx_GetCurrentTick (void)"
+
+.SS "size_t Cpx_GetID (void)"
+
+.PP
+Get Current Thread ID\&. 
+.PP
+\fBReturns\fP
+.RS 4
+size_t Thread ID 
+.RE
+.PP
+
+.SS "uint32_t Cpx_GetLastDutyCycleByID (size_t nID)"
+
+.PP
+Last Duty Cycle of the current Thread\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+uint32_t time in Tick
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Tick will represent the overridden time interface otherwise it will be a single context switch to each\&. 
+.RE
+.PP
+
+.SS "uint32_t Cpx_GetLastMomentumByID (size_t nID)"
+
+.PP
+Get Current Thread last momentum on switch back\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+uint32_t the LastMomentum in Tick
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Tick will represent the overridden time interface otherwise it will be a single context switch to each\&. 
+.RE
+.PP
+
+.SS "void* Cpx_GetLockID (void)"
+
+.SS "void* Cpx_GetLockIDByID (size_t nID)"
+
+.SS "size_t Cpx_GetMaxNumberOfThreads (void)"
+
+.PP
+Get Max Number of total active Threads\&. 
+.PP
+\fBReturns\fP
+.RS 4
+size_t number of threads 
+.RE
+.PP
+
+.SS "size_t Cpx_GetMaxStackSizeByID (size_t nID)"
+
+.PP
+Get total size of stack context page for a Thread ID\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+size_t total size of stack context page 
+.RE
+.PP
+
+.SS "uint32_t Cpx_GetNiceByID (size_t nID)"
+
+.PP
+Current Thread Nice\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+uint32_t Nice representing tick
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Tick will represent the overridden time interface otherwise it will be a single context switch to each 
+.RE
+.PP
+
+.SS "size_t Cpx_GetNumberOfActiveThreads (void)"
+
+.PP
+Get Number of total active Threads\&. 
+.PP
+\fBReturns\fP
+.RS 4
+size_t number of threads 
+.RE
+.PP
+
+.SS "size_t Cpx_GetNumberOfThreads (void)"
+
+.PP
+Get Number of assigned Threads\&. 
+.PP
+\fBReturns\fP
+.RS 4
+size_t number of threads 
+.RE
+.PP
+
+.SS "size_t Cpx_GetStackSizeByID (size_t nID)"
+
+.PP
+Get Current Thread ID\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP A valid ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+size_t Thread ID
+.RE
+.PP
+\fBNote\fP
+.RS 4
+if a non valid ID is provided it will return 0 
+.RE
+.PP
+
+.SS "uint8_t Cpx_GetStatusByID (size_t nID)"
+
+.PP
+Get a thread status for a thread ID\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+uint8_t Actual thread context 
+.RE
+.PP
+
+.SS "size_t Cpx_GetStructContextSize (void)"
+
+.PP
+Get Thread context size\&. 
+.PP
+\fBReturns\fP
+.RS 4
+size_t total size of the thread context 
+.RE
+.PP
+
+.SS "void Cpx_InternalSetNice (uint32_t nNice)"
+
+.SS "void Cpx_InternalSetStatus (uint8_t nStatus)"
+
+.SS "bool Cpx_IsBrokerStaticByID (size_t nID)"
+
+.PP
+Return if a Thread's Broker interface was statically initiated\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if it was not statically initiated 
+.RE
+.PP
+
+.SS "bool Cpx_IsCoreRunning (void)"
+
+.PP
+Report if there is any running thread\&. 
+.PP
+\fBReturns\fP
+.RS 4
+false in case there is none running 
+.RE
+.PP
+
+.SS "bool Cpx_IsSubscribed (const char * pszTopic, size_t length)"
+
+.PP
+Check if the current thread already subscribe to a topic\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTopic\fP The topic for information 
+.br
+\fIlength\fP The size of the topic string
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if it was not subscribed 
+.RE
+.PP
+
+.SS "bool Cpx_IsThreadStaticByID (size_t nID)"
+
+.PP
+Return if a Threads was statically initiated\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInID\fP Thread ID
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if it was not statically initiated 
+.RE
+.PP
+
+.SS "void Cpx_Join (void)"
+
+.PP
+This will start all the threads\&. 
+.PP
+\fBNote\fP
+.RS 4
+At least ONE thread must be defines before using this function 
+.RE
+.PP
+
+.SS "bool Cpx_Lock (\fBCpxSmartLock\fP * pLock)"
+
+.PP
+Do a exclusive Lock and set to Simple lock\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpLock\fP The Lock variable
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false the lock is null
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Wait till Lock is unlocked (type none) and lock it set to type Simple and lock, SharedLock will wait till it is unlocked\&. 
+.RE
+.PP
+
+.SS "bool Cpx_LockInit (\fBCpxSmartLock\fP * pLock)"
+
+.PP
+Init SmartLock variable\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpLock\fP The Lock variable
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false the lock is null
+.RE
+.PP
+\fBNote\fP
+.RS 4
+If you re initialise it will unlock all locks 
+.RE
+.PP
+
+.SS "bool Cpx_NotifyAll (const char * pszTag, size_t nTagLength)"
+
+.PP
+Notify ALL TAGs assigned as waiting thread\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTag\fP The Tag string value 
+.br
+\fInTagLength\fP The length of the tag
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true At least one thread will be notified;
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Please note that any notification triggers a context switch yield 
+.RE
+.PP
+
+.SS "bool Cpx_NotifyMessageAll (const char * pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)"
+
+.PP
+Notify ALL TAGs assigned as waiting thread with a Message payload\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTag\fP The TAG string value 
+.br
+\fInTagLength\fP The length of the tag 
+.br
+\fInAttribute\fP The Attribute Value to be sent 
+.br
+\fInValue\fP The Value of the Attribute to be sent
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true At least one thread will be notified;
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Please note that any notification triggers a context switch yield 
+.RE
+.PP
+
+.SS "bool Cpx_NotifyMessageOne (const char * pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)"
+
+.PP
+Notify ONE TAGs assigned as waiting thread with a Message payload\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTag\fP The Tag string value 
+.br
+\fInTagLength\fP The length of the tag 
+.br
+\fInAttribute\fP The Attribute Value to be sent 
+.br
+\fInValue\fP The Value of the Attribute to be sent
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true At least one thread will be notified;
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Please note that any notification triggers a context switch yield 
+.RE
+.PP
+
+.SS "bool Cpx_NotifyOne (const char * pszTag, size_t nTagLength)"
+
+.PP
+Notify ONE TAG assigned as waiting thread\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTag\fP The Tag string value 
+.br
+\fInTagLength\fP The length of the tag
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true At least one thread will be notified;
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Please note that any notification triggers a context switch yield 
+.RE
+.PP
+
+.SS "size_t Cpx_NotifyVariableLock (void * nLockID, size_t nStatus, bool bOneOnly)"
+
+.PP
+Notify all/one Variable lock waiting for notification\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInLockID\fP Variable address 
+.br
+\fInStatus\fP Payload to be sent, a size_t 
+.br
+\fIbOneOnly\fP If true only one is notified
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if LockID is invalid (== 0) or no data 
+.RE
+.PP
+
+.SS "bool Cpx_PublishTopic (const char * pszTopic, size_t length, size_t nAttribute, uint64_t nValue)"
+
+.PP
+Public a tuple Param and Value\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTopic\fP Topic name to publish 
+.br
+\fIlength\fP The size of the topic string 
+.br
+\fInAttribute\fP A attribute to be use to identify the value 
+.br
+\fInValue\fP A value for the attribute (tuple)
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true If at least one subscriber received the data\&. 
+.RE
+.PP
+
+.SS "void Cpx_SetNice (uint32_t nNice)"
+
+.PP
+Set Current Thread Nice\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInNice\fP Nice to be used 
+.RE
+.PP
+
+.SS "void Cpx_SetSleep (uint32_t nDelayTickTime)"
+
+.PP
+Will set the thread sleep parameter before Yield\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInDelayTickTime\fP How much ticks to sleep
+.RE
+.PP
+\fBNote\fP
+.RS 4
+if Time has been overridden it tick will correspond to the time frame used by sleep overridden function 
+.RE
+.PP
+
+.SS "bool Cpx_SetTopicID (const char * pszTag, size_t nTagLength, uint32_t * pnTopicID)"
+
+.SS "bool Cpx_SharedLock (\fBCpxSmartLock\fP * pLock)"
+
+.PP
+Can act as multiple locks\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpLock\fP The Lock variable
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false If lock is null
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Can acquire multiples locks and lock() will wait till all multiples locks has been unlocked to lock exclusively 
+.RE
+.PP
+
+.SS "bool Cpx_SharedUnlock (\fBCpxSmartLock\fP * pLock)"
+
+.PP
+Unlock shared locks\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpLock\fP The Lock variable
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false If lock is null 
+.RE
+.PP
+
+.SS "void Cpx_SleepTicks (uint32_t nSleepTime)"
+
+.SS "void Cpx_StackOverflowHandler (void)"
+
+.SS "bool Cpx_Start (size_t nThreadPartitions)"
+
+.PP
+Start CorePartition thread provisioning\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInThreadPartitions\fP Number of threads to be provisioned
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true true if successfully created all provisioned threads 
+.RE
+.PP
+
+.SS "bool Cpx_StaticStart (\fBCpxThread\fP ** ppStaticThread, size_t nStaticThreadSize)"
+
+.PP
+Start CorePartition thread provisioning\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIppStaticThread\fP Static Thread pointer type CpxThread** 
+.br
+\fInStaticThreadSize\fP Static Thread size in bytes
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true true if successfully created all provisioned threads 
+.RE
+.PP
+
+.SS "bool Cpx_SubscribeTopic (const char * pszTopic, size_t length)"
+
+.PP
+Subscribe for a specific topic\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTopic\fP The topic to listen for information 
+.br
+\fIlength\fP The size of the topic string
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if there is no more room for a new subscription 
+.RE
+.PP
+
+.SS "bool Cpx_TryLock (\fBCpxSmartLock\fP * pLock)"
+
+.PP
+Like Lock() but only locks in case it is unlocked\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpLock\fP The Lock variable
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false If lock is null or lock is locked
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Wait till exclusive Lock is unlocked (type none) and lock it set to type Simple and lock, SharedLock will wait till it is unlocked\&. 
+.RE
+.PP
+
+.SS "bool Cpx_Unlock (\fBCpxSmartLock\fP * pLock)"
+
+.PP
+Unlock exclusive locks\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpLock\fP The Lock variable
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false If lock is null 
+.RE
+.PP
+
+.SS "bool Cpx_Wait (const char * pszTag, size_t nTagLength)"
+
+.PP
+Wait for a specific notification from a given TAG\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTag\fP The Tag string value 
+.br
+\fInTagLength\fP The length of the tag
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+true For success on receiving notification 
+.RE
+.PP
+
+.SS "size_t Cpx_WaitingVariableLock (void * nLockID)"
+
+.PP
+Return how much threads are locked waiting for a variable notification\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInLockID\fP Variable address
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+size_t How much active waiting for a variable 
+.RE
+.PP
+
+.SS "bool Cpx_WaitMessage (const char * pszTag, size_t nTagLength, \fBCpxMsgPayload\fP * payload)"
+
+.PP
+Wait for a specific notification from a given TAG and payload\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpszTag\fP The Tag string value 
+.br
+\fInTagLength\fP The length of the tag 
+.br
+\fIpayload\fP The payload with the information sent by other thread
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if an error occurred
+.RE
+.PP
+\fBNote\fP
+.RS 4
+if a Tag was notified using NotifyOne or NotifyAll the thread will receive 0 otherwise will receive the same value sent\&. 
+.RE
+.PP
+
+.SS "bool Cpx_WaitVariableLock (void * nLockID, size_t * pnStatus)"
+
+.PP
+Wait for a Variable Locks notification\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fInLockID\fP Variable address 
+.br
+\fIpnStatus\fP Payload to be sent, a size_t
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+false if LockID is invalid (== 0) or no data 
+.RE
+.PP
+
+.SS "uint8_t Cpx_Yield (void)"
+
+.PP
+Function to be called inside a thread to change context\&. 
+.PP
+\fBReturns\fP
+.RS 4
+true always return true while the thread is valid
+.RE
+.PP
+\fBNote\fP
+.RS 4
+Cooperative state yield, should not be used with preemption for speed reasons, that will not complay with LockKernel, for this use PreemptionYield\&. 
+.RE
+.PP
+
+.SH "Variable Documentation"
+.PP 
+.SS "jmp_buf jmpJoinPointer"
+
+.SS "\fBCpxThread\fP** pCpxThread = NULL"
+
+.SS "\fBCpxThread\fP* pCurrentThread = NULL"
+
+.SS "void* pStartStck = NULL"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for CorePartition from the source code\&.

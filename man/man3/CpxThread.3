@@ -1,0 +1,129 @@
+.TH "CpxThread" 3 "Sun Jul 11 2021" "CorePartition" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+CpxThread
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <CorePartition\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "void * \fBpLastStack\fP"
+.br
+.ti -1c
+.RI "\fBCpxSubscriptions\fP * \fBpSubscriptions\fP"
+.br
+.ti -1c
+.RI "union {"
+.br
+.ti -1c
+.RI "   jmp_buf \fBjmpRegisterBuffer\fP"
+.br
+.ti -1c
+.RI "   struct {"
+.br
+.ti -1c
+.RI "      void(* \fBpFunction\fP )(void *pStart)"
+.br
+.ti -1c
+.RI "      void * \fBpValue\fP"
+.br
+.ti -1c
+.RI "   } \fBfunc\fP"
+.br
+.ti -1c
+.RI "} \fBmem\fP"
+.br
+.ti -1c
+.RI "size_t \fBnStackMaxSize\fP"
+.br
+.ti -1c
+.RI "size_t \fBnStackSize\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBnNice\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBnLastMomentun\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBnExecTime\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBnNotifyUID\fP"
+.br
+.ti -1c
+.RI "union {"
+.br
+.ti -1c
+.RI "   uint32_t \fBnSleepTime\fP"
+.br
+.ti -1c
+.RI "   void * \fBpnVariableLockID\fP"
+.br
+.ti -1c
+.RI "   \fBCpxMsgPayload\fP \fBpayload\fP"
+.br
+.ti -1c
+.RI "} \fBcontrol\fP"
+.br
+.ti -1c
+.RI "uint8_t \fBnThreadController\fP"
+.br
+.ti -1c
+.RI "uint8_t \fBnStatus\fP"
+.br
+.ti -1c
+.RI "uint8_t \fBstackPage\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "union { \&.\&.\&. }  CpxThread::control"
+
+.SS "struct { \&.\&.\&. }  CpxThread::func"
+
+.SS "jmp_buf CpxThread::jmpRegisterBuffer"
+
+.SS "union { \&.\&.\&. }  CpxThread::mem"
+
+.SS "uint32_t CpxThread::nExecTime"
+
+.SS "uint32_t CpxThread::nLastMomentun"
+
+.SS "uint32_t CpxThread::nNice"
+
+.SS "uint32_t CpxThread::nNotifyUID"
+
+.SS "uint32_t CpxThread::nSleepTime"
+
+.SS "size_t CpxThread::nStackMaxSize"
+
+.SS "size_t CpxThread::nStackSize"
+
+.SS "uint8_t CpxThread::nStatus"
+
+.SS "uint8_t CpxThread::nThreadController"
+
+.SS "\fBCpxMsgPayload\fP CpxThread::payload"
+
+.SS "void(* CpxThread::pFunction) (void *pStart)"
+
+.SS "void* CpxThread::pLastStack"
+
+.SS "void* CpxThread::pnVariableLockID"
+
+.SS "\fBCpxSubscriptions\fP* CpxThread::pSubscriptions"
+
+.SS "void* CpxThread::pValue"
+
+.SS "uint8_t CpxThread::stackPage"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for CorePartition from the source code\&.

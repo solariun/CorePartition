@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['cpx_5fgetcontexsize_261',['Cpx_GetContexSize',['../_core_partition_8h.html#ad093922da43922a73b668e2e8ebd0a57',1,'CorePartition.h']]],
+  ['cpx_5fgetlastdutycycle_262',['Cpx_GetLastDutyCycle',['../_core_partition_8h.html#abc2f2588368ae8a377c066c7e2946658',1,'CorePartition.h']]],
+  ['cpx_5fgetlastmomentum_263',['Cpx_GetLastMomentum',['../_core_partition_8h.html#a98380481ec803d863bcdb6eda609cc10',1,'CorePartition.h']]],
+  ['cpx_5fgetmaxstacksize_264',['Cpx_GetMaxStackSize',['../_core_partition_8h.html#a21cc2d01cfdc3c9eb36b0751abef47f7',1,'CorePartition.h']]],
+  ['cpx_5fgetnice_265',['Cpx_GetNice',['../_core_partition_8h.html#a08c72f8aed93cab0fc4a6db9706715bf',1,'CorePartition.h']]],
+  ['cpx_5fgetstacksize_266',['Cpx_GetStackSize',['../_core_partition_8h.html#a31e6eb0f1ed72a3faa23aee4be5b159d',1,'CorePartition.h']]],
+  ['cpx_5fgetstaticbrokermaxtopics_267',['Cpx_GetStaticBrokerMaxTopics',['../_core_partition_8h.html#a3c1b9f4fc970ae8518e8663e56ec8527',1,'CorePartition.h']]],
+  ['cpx_5fgetstaticbrokersize_268',['Cpx_GetStaticBrokerSize',['../_core_partition_8h.html#a52da97f6edaa30a837f6858e769e91b1',1,'CorePartition.h']]],
+  ['cpx_5fgetstaticcontextsize_269',['Cpx_GetStaticContextSize',['../_core_partition_8h.html#ad0ba96a1960d506e21fb9254e6ee263f',1,'CorePartition.h']]],
+  ['cpx_5fgetstaticthreadsize_270',['Cpx_GetStaticThreadSize',['../_core_partition_8h.html#a6cb00ac80c1be0fbbfe0218db3220463',1,'CorePartition.h']]],
+  ['cpx_5fgetstatus_271',['Cpx_GetStatus',['../_core_partition_8h.html#a08e5b3a5cb81250b93ab56451caa4037',1,'CorePartition.h']]],
+  ['cpx_5fisbrokerstatic_272',['Cpx_IsBrokerStatic',['../_core_partition_8h.html#acaf215582e722ebf7375ec3dd1780358',1,'CorePartition.h']]],
+  ['cpx_5fisthreadstatic_273',['Cpx_IsThreadStatic',['../_core_partition_8h.html#aa644c1084bb5f6d683d295e201f22081',1,'CorePartition.h']]],
+  ['cpx_5fnotifyvariablelockall_274',['Cpx_NotifyVariableLockAll',['../_core_partition_8h.html#a8385f4893e65d9eb9004a88dd1bc48a4',1,'CorePartition.h']]],
+  ['cpx_5fnotifyvariablelockone_275',['Cpx_NotifyVariableLockOne',['../_core_partition_8h.html#a39e240a99a8487a6d823024a30a6eef6',1,'CorePartition.h']]],
+  ['cpx_5fnowyield_276',['Cpx_NowYield',['../_core_partition_8c.html#aaa1161370c44a7bd7b346f139410618c',1,'CorePartition.c']]],
+  ['cpx_5fsetbit_277',['Cpx_SetBit',['../_core_partition_8c.html#a5a253f768d4ed3efcdd73832604e4564',1,'CorePartition.c']]],
+  ['cpx_5fsetstate_278',['Cpx_SetState',['../_core_partition_8c.html#af13af4b4da3e1a96ebc4cc5164f112b2',1,'CorePartition.c']]],
+  ['cpx_5fsleep_279',['Cpx_Sleep',['../_core_partition_8h.html#aa5b404ddf9236ba406c468deb15c3d74',1,'CorePartition.h']]],
+  ['cpx_5ftogglebit_280',['Cpx_ToggleBit',['../_core_partition_8c.html#a10579624979edf7773eae923b1cd73ea',1,'CorePartition.c']]],
+  ['cpx_5funsetbit_281',['Cpx_UnsetBit',['../_core_partition_8c.html#a452494dec9874c9c3b8dacf811ca8664',1,'CorePartition.c']]]
+];
