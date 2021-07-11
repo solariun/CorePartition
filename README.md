@@ -25,6 +25,7 @@ The CorePartitionOS also can transform your software into a multithread one, sin
 
 # NEW
 # 2.7.0
+- NOW it has MIT license more free more options.
 
 - All functions now starts with Cpx_ instead of CorePartition_.
 
