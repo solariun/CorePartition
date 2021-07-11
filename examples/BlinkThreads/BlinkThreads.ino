@@ -32,8 +32,6 @@
 //
 // See LICENSE file for the complete information
 
-
-
 #include "CorePartition.h"
 
 #include "Arduino.h"
@@ -50,8 +48,6 @@ void Delay (uint64_t nSleep)
         Cpx_Yield();
     } while ((millis() - nMomentum ) <  nSleep);
 }
-
-
 
 void Thread1 (void* pValue)
 {
@@ -71,8 +67,6 @@ void Thread1 (void* pValue)
     }
 
 }
-
-
 
 static uint32_t Cpx_GetCurrentTick()
 {
@@ -137,7 +131,6 @@ void __attribute__ ((noinline)) ShowRunningThreads ()
     }
 }
 
-
 void WhachDog (void* pValue)
 {
     Serial.begin(230400);
@@ -150,7 +143,6 @@ void WhachDog (void* pValue)
 }
 #endif
 
-
 void setup()
 {
 
@@ -159,18 +151,17 @@ void setup()
     digitalWrite (0, HIGH);
     delay (250);
     digitalWrite (0, HIGH);
+    delay(250);
+
+    digitalWrite (0, HIGH);
+    delay (250);
+    digitalWrite(0, HIGH);
     delay (250);
 
     digitalWrite (0, HIGH);
     delay (250);
-    digitalWrite (0, HIGH);
-    delay (250);
-
-    digitalWrite (0, HIGH);
-    delay (250);
-    digitalWrite (0, HIGH);
-    delay (250);
-
+    digitalWrite(0, HIGH);
+    delay(250);
 
 #ifdef _DEBUG
     assert (Cpx_Start (5));
@@ -189,10 +180,7 @@ void setup()
 #ifdef _DEBUG
     assert (Cpx_CreateThread (WhachDog, 20, 200));
 #endif
-
 }
-
-
 
 void loop()
 {
