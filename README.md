@@ -67,6 +67,8 @@ The CorePartitionOS also can transform your software into a multithread one, sin
 - Now you can name a thread up to 8 characters
 - Experimental FreeRTOS support
 
+# Testimonials
+![image](https://user-images.githubusercontent.com/1805792/125501709-538b5ebb-2234-493a-ba2b-dbfd9bf05b35.png)
 
 # Arduino
 
