@@ -47,6 +47,11 @@ extern "C"
 #include <stdio.h>
 #include <string.h>
 
+    /* Official version */
+    #define CPX_VERSION "2.7.1"
+    static const char CpxVersionCode[]=CPX_VERSION;
+    static const char CpxVersion[] = CPX_VERSION "/" __TIMESTAMP__;
+
     /*
      * IMPORTANT!
      * KEEP RUNNING STATES ALWAYS
@@ -156,10 +161,6 @@ extern "C"
     extern uint32_t Cpx_GetCurrentTick (void);
     extern void Cpx_SleepTicks (uint32_t);
     extern void Cpx_StackOverflowHandler (void);
-
-    /* Official version */
-    static const char CpxVersionCode[]="2.7.0";
-    static const char CpxVersion[] = "V2.7.0 from  " __TIMESTAMP__;
 
     /**
      * @brief Start CorePartition thread provisioning
@@ -541,6 +542,8 @@ extern "C"
      *
      * @return  true    If at least one subscriber received the data.
      *
+     * @note    By nature, publish is safe, although, any Broker handler should NEVER call
+     *          for any function that change context and always use safe functions instead.
      */
     bool Cpx_PublishTopic (const char* pszTopic, size_t length, size_t nAttribute, uint64_t nValue);
 
@@ -567,6 +570,19 @@ extern "C"
     bool Cpx_NotifyOne (const char* pszTag, size_t nTagLength);
 
     /**
+     * @brief   Safely notify ONE TAG assigned as waiting thread
+     *
+     * @param   pszTag      The Tag string value
+     * @param   nTagLength  The length of the tag
+     *
+     * @return true         At least one thread will be notified;
+     *
+     * @note    This will not trigger context change, ideal for IRQs.
+     *          Will be processed on next Context Change call.
+     */
+    bool Cpx_SafeNotifyOne (const char* pszTag, size_t nTagLength);
+
+    /**
      * @brief   Notify ONE TAGs assigned as waiting thread with a Message payload
      *
      * @param   pszTag      The Tag string value
@@ -581,6 +597,21 @@ extern "C"
     bool Cpx_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue);
 
     /**
+     * @brief   Safely notify ONE TAGs assigned as waiting thread with a Message payload
+     *
+     * @param   pszTag      The Tag string value
+     * @param   nTagLength  The length of the tag
+     * @param   nAttribute  The Attribute Value to be sent
+     * @param   nValue      The Value of the Attribute to be sent
+     *
+     * @return true         At least one thread will be notified;
+     *
+     * @note    This will not trigger context change, ideal for IRQs.
+     *          Will be processed on next Context Change call.
+     */
+    bool Cpx_SafeNotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue);
+
+    /**
      * @brief   Notify ALL TAGs assigned as waiting thread
      *
      * @param   pszTag      The Tag string value
@@ -591,6 +622,19 @@ extern "C"
      * @note    Please note that any notification triggers a context switch yield
      */
     bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength);
+
+    /**
+     * @brief   Safely notify ALL TAGs assigned as waiting thread
+     *
+     * @param   pszTag      The Tag string value
+     * @param   nTagLength  The length of the tag
+     *
+     * @return true         At least one thread will be notified;
+     *
+     * @note    This will not trigger context change, ideal for IRQs.
+     *          Will be processed on next Context Change call.
+     */
+    bool Cpx_SafelyNotifyAll (const char* pszTag, size_t nTagLength);
 
     /**
      * @brief   Notify ALL TAGs assigned as waiting thread with a Message payload
@@ -605,6 +649,21 @@ extern "C"
      * @note    Please note that any notification triggers a context switch yield
      */
     bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue);
+
+    /**
+     * @brief   Safely notify ALL TAGs assigned as waiting thread with a Message payload
+     *
+     * @param   pszTag      The TAG string value
+     * @param   nTagLength  The length of the tag
+     * @param   nAttribute  The Attribute Value to be sent
+     * @param   nValue      The Value of the Attribute to be sent
+     *
+     * @return true         At least one thread will be notified;
+     *
+     * @note    This will not trigger context change, ideal for IRQs.
+     *          Will be processed on next Context Change call.
+     */
+    bool Cpx_SafelyNotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue);
 
     /**
      * @brief   Wait for a specific notification from a given TAG
@@ -729,6 +788,20 @@ extern "C"
      */
     size_t Cpx_NotifyVariableLock (void* nLockID, size_t nStatus, bool bOneOnly);
 
+    /**
+     * @brief   Safely notify all/one Variable lock waiting for notification
+     *
+     * @param nLockID   Variable address
+     * @param nStatus   Payload to be sent, a size_t
+     * @param bOneOnly  If true only one is notified
+     *
+     * @return false    if LockID is invalid (== 0) or no data
+     *
+     * @note    This will not trigger context change, ideal for IRQs.
+     *          Will be processed on next Context Change call.
+     */
+    size_t Cpx_SafeNotifyVariableLock (void* nLockID, size_t nStatus, bool bOneOnly);
+
 /**
  * @brief   Notify one Variable lock waiting for notification
  *
@@ -741,6 +814,20 @@ extern "C"
 #define Cpx_NotifyVariableLockOne(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, true)
 
 /**
+ * @brief   Safely notify one Variable lock waiting for notification
+ *
+ * @param nLockID   LockID size_t used to notify
+ * @param nStatus   Payload to be sent, a size_t
+ * @param bOneOnly  If true only one is notified
+ *
+ * @return false    if LockID is invalid (== 0) or no data
+ *
+ * @note    This will not trigger context change, ideal for IRQs.
+ *          Will be processed on next Context Change call.
+ */
+#define Cpx_SafeNotifyVariableLockOne(nLockID, nStatus) Cpx_SafeNotifyVariableLock (nLockID, nStatus, true)
+
+/**
  * @brief   Notify all Variable lock waiting for notification
  *
  * @param nLockID   LockID size_t used to notify
@@ -750,6 +837,20 @@ extern "C"
  * @return false    if LockID is invalid (== 0) or no data
  */
 #define Cpx_NotifyVariableLockAll(nLockID, nStatus) Cpx_NotifyVariableLock (nLockID, nStatus, false)
+
+/**
+ * @brief   Safely notify all Variable lock waiting for notification
+ *
+ * @param nLockID   LockID size_t used to notify
+ * @param nStatus   Payload to be sent, a size_t
+ * @param bOneOnly  If true only one is notified
+ *
+ * @return false    if LockID is invalid (== 0) or no data
+ *
+ * @note    This will not trigger context change, ideal for IRQs.
+ *          Will be processed on next Context Change call.
+ */
+#define Cpx_SafelyNotifyVariableLockAll(nLockID, nStatus) Cpx_SafelyNotifyVariableLock (nLockID, nStatus, false)
 
     void* Cpx_GetLockID (void);
 

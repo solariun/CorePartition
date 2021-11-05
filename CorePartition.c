@@ -911,7 +911,7 @@ extern "C"
         return bReturn;
     }
 
-    bool Cpx_NotifyOne (const char* pszTag, size_t nTagLength)
+    bool Cpx_SafeNotifyOne (const char* pszTag, size_t nTagLength)
     {
         bool bResult = false;
 
@@ -919,12 +919,19 @@ extern "C"
 
         bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, true);
 
+        return bResult;
+    }
+
+    bool Cpx_NotifyOne (const char* pszTag, size_t nTagLength)
+    {
+        bool bResult = Cpx_SafeNotifyOne (pszTag, nTagLength);
+
         Cpx_NowYield ();
 
         return bResult;
     }
 
-    bool Cpx_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
+    bool Cpx_SafeNotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
     {
         bool bResult = false;
 
@@ -932,12 +939,19 @@ extern "C"
 
         bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, true);
 
+        return bResult;
+    }
+
+    bool Cpx_NotifyMessageOne (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
+    {
+        bool bResult = Cpx_SafeNotifyMessageOne (pszTag, nTagLength, nAttribute, nValue);
+
         Cpx_NowYield ();
 
         return bResult;
     }
 
-    bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength)
+    bool Cpx_SafeNotifyAll (const char* pszTag, size_t nTagLength)
     {
         bool bResult = false;
 
@@ -945,18 +959,32 @@ extern "C"
 
         bResult = Cpx_Notify (pszTag, nTagLength, 0, 0, false);
 
+        return bResult;
+    }
+
+    bool Cpx_NotifyAll (const char* pszTag, size_t nTagLength)
+    {
+        bool bResult = Cpx_SafeNotifyAll (pszTag, nTagLength);
+
         Cpx_NowYield ();
 
         return bResult;
     }
 
-    bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
+    bool Cpx_SafeNotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
     {
         bool bResult = false;
 
         VERIFY (Cpx_IsCoreRunning (), false);
 
         bResult = Cpx_Notify (pszTag, nTagLength, nAttribute, nValue, false);
+
+        return bResult;
+    }
+
+    bool Cpx_NotifyMessageAll (const char* pszTag, size_t nTagLength, size_t nAttribute, uint64_t nValue)
+    {
+        bool bResult = Cpx_SafeNotifyMessageAll (pszTag, nTagLength, nAttribute, nValue);
 
         Cpx_NowYield ();
 
@@ -1000,7 +1028,7 @@ extern "C"
         return nReturn;
     }
 
-    size_t Cpx_NotifyVariableLock (void* pnLockID, size_t nStatus, bool bOneOnly)
+    size_t Cpx_SafeNotifyVariableLock (void* pnLockID, size_t nStatus, bool bOneOnly)
     {
         size_t nNotifiedCount = 0;
 
@@ -1033,6 +1061,18 @@ extern "C"
         }
 
         return nNotifiedCount;
+    }
+
+    size_t Cpx_NotifyVariableLock (void* pnLockID, size_t nStatus, bool bOneOnly)
+    {
+        size_t nCounter = Cpx_SafeNotifyVariableLock (pnLockID, nStatus, bOneOnly);
+
+        if (nCounter)
+        {
+            Cpx_NowYield ();
+        }
+
+        return nCounter;
     }
 
     size_t Cpx_WaitingVariableLock (void* pnLockID)
