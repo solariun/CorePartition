@@ -1,6 +1,6 @@
 # CorePartitionOS
 
-Version 2.7.0 release
+Version 2.7.1 release
 
 ![image](https://user-images.githubusercontent.com/1805792/125191254-6591cf80-e239-11eb-9e89-d7500e793cd4.png)
 
@@ -24,6 +24,9 @@ The CorePartitionOS also can transform your software into a multithread one, sin
      This OS is now ONLY COOPERATIVE, like that we can focus on bringing all the power of Atomic execution to you.
 
 # NEW
+# 2.7.1
+- Safe functions for all notifications and publish for been used on interrupt request time.
+
 # 2.7.0
 - NOW it has MIT license more free more options.
 
@@ -43,9 +46,6 @@ The CorePartitionOS also can transform your software into a multithread one, sin
 - Dropping support for secure threads, I will implement a more modular due to the next version.
 
 - Dropping support to Preemptive Threads, you can still use the core with timer to trigger it, but, Locks are not tuned for that, be advised.
-
-### Working in progress
-     IPCs for interrupt request time. Soon a 2.7.1 will be released.
 
 # 2.6.1
 
